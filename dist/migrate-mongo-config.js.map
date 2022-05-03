@@ -1,1 +1,0 @@
-{"version":3,"file":"migrate-mongo-config.js","sourceRoot":"","sources":["../migrate-mongo-config.ts"],"names":[],"mappings":";AAIA,+CAA+C;AAE/C,iBAAS;IACP,OAAO,EAAE;QACP,GAAG,EAAE,IAAA,sBAAW,GAAE;QAClB,YAAY,EAAE,OAAO,CAAC,GAAG,CAAC,YAAY;KACvC;IAGD,aAAa,EAAE,YAAY;IAG3B,uBAAuB,EAAE,YAAY;IAGrC,sBAAsB,EAAE,KAAK;IAI7B,WAAW,EAAE,KAAK;IAGlB,YAAY,EAAE,UAAU;CACzB,CAAA"}
