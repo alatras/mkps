@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { getMongoUri } from "../utils/database";
 
 @Controller()
 export class AppController {
@@ -8,7 +7,6 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    return getMongoUri()
-    // return this.appService.getHello();
+    return this.appService.getHello();
   }
 }
