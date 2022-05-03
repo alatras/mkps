@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(
+                artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '5',
+                daysToKeepStr: '60',
+                numToKeepStr: '20')
+        )
+        disableConcurrentBuilds()
+        disableResume()
+        timeout(time: 1, unit: 'HOURS')
+        ansiColor('xterm')
+    }
+
+    stages {
+        stage('Creating .env file') {
+            steps {
+                script {
+                    def account_id = sh (script: "aws sts get-caller-identity --query 'Account' --output text", returnStdout: true).trim()
+                    def secret_id = "arn:aws:secretsmanager:${params.aws_region}:${account_id}:secret:/${params.environment}/service/mongo"
+
+                    def name = sh (script: "aws secretsmanager get-secret-value --region ${params.aws_region} --secret-id ${secret_id} | jq -r .SecretString | jq -r .name", returnStdout: true)
+                    def url = sh (script: "aws secretsmanager get-secret-value --region ${params.aws_region} --secret-id ${secret_id} | jq -r .SecretString | jq -r .url", returnStdout: true)
+
+                    def data = "MONGODB_NAME=${name}MONGODB_URI=${url}"
+
+                    writeFile(file: '.env', text: "${data}")
+                }
+            }
+        }
+
+        stage('Install packages') {
+            steps {
+                script {
+                    sh (script: "npm install", returnStdout: true)
+                }
+            }
+        }
+        
+        stage('Run Migrate') {
+            steps {
+                script {
+                    sh (script: "npm run migrate", returnStdout: true)
+                }
+            }
+        }        
+    }
+}
