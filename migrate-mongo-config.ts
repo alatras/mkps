@@ -1,7 +1,3 @@
-// import * as dotenv from 'dotenv'
-// import { getMongoUri } from "./utils/database";
-// dotenv.config()
-
 import { getMongoUri } from "./utils/database";
 
 export = {
