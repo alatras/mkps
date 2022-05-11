@@ -1,6 +1,6 @@
 import { Document } from 'mongoose'
 import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Transform } from 'class-transformer'
+import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 
 export type UserDocument = User & Document
@@ -19,7 +19,7 @@ export const Auth0UserMetadata = {
   kycStatus: { type: String }
 }
 
-@Schema({ _id: false })
+@Schema({ _id: false, timestamps: true })
 export class AuthProvider {
   @Prop()
   id: string
@@ -32,7 +32,7 @@ export class AuthProvider {
   })
   name: Provider
 
-  @Prop({})
+  @Prop()
   updatedAt: Date
 
   @Prop()
@@ -40,11 +40,15 @@ export class AuthProvider {
 
   @Prop(raw(Auth0UserMetadata))
   metadata?: Record<string, any>
+
+  constructor(partial: Partial<AuthProvider>) {
+    Object.assign(this, partial)
+  }
 }
 
-@Schema({ collection: 'users' })
+@Schema({ collection: 'users', timestamps: true })
 export class User extends Document {
-  @Transform(({ value }) => MUUID.from(value).toString())
+  @Transform(({ value }) => value.toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
@@ -56,12 +60,13 @@ export class User extends Document {
   avnPubKey: string
 
   @Prop({ required: false, default: null })
-  stripeCustomerId?: string
+  stripeCustomerId: string
 
   @Prop({ required: false, default: null })
   stripeAccountId: string
 
   @Prop({ type: AuthProvider })
+  @Type(() => AuthProvider)
   provider: AuthProvider
 
   @Prop([String])

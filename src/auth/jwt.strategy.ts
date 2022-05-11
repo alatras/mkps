@@ -40,7 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.authService.validateUser(payload)
 
     return {
-      uuid: user._id,
+      _id: user._id,
       stripeCustomerId: user.stripeCustomerId,
       stripeAccountId: user.stripeAccountId,
       provider: user.provider,
