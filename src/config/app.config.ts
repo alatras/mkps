@@ -27,7 +27,7 @@ export default registerAs('app', () => ({
     sqsAvnTransactionsUrl: process.env.AWS_SQS_AVN_TRANSACTIONS_URL,
     sqsEthEventsUrl: process.env.AWS_SQS_ETH_EVENTS_URL,
     s3BucketNameAssets: process.env.AWS_S3_BUCKET_NAME_ASSETS,
-    s3BucketNameNftOrig: process.env.AWS_S3_BUCKET_NAME_NFT_ORIG,
+    s3BucketNameUserOrig: process.env.AWS_S3_BUCKET_NAME_NFT_ORIG,
     s3BucketRegion: process.env.AWS_S3_BUCKET_REGION
   }
 }))
