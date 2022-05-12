@@ -8,7 +8,7 @@ import {
 import { UserService } from './user.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../auth/permissions.guard'
-import { Permissions } from '../auth/permissions.decorator'
+import { Permissions } from '../auth/decorators/permissions.decorator'
 import { Request as ExpressRequest } from 'express'
 import { UserResponseDto } from './dto/user-response.dto'
 import MongooseClassSerializerInterceptor from '../interceptors/mongoose-class-serializer.interceptor'

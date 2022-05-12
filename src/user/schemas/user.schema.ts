@@ -46,7 +46,7 @@ export class AuthProvider {
   }
 }
 
-@Schema({ collection: 'users', timestamps: true })
+@Schema({ collection: 'users', timestamps: true, versionKey: false })
 export class User extends Document {
   @Transform(({ value }) => value.toString())
   @Prop({

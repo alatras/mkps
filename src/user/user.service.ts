@@ -29,7 +29,7 @@ export class UserService {
 
   async createUser(provider: Pick<AuthProvider, 'id' | 'name'>) {
     return this.userModel.create({
-      provider: { ...provider, },
+      provider: { ...provider },
       ethAddresses: [],
       createdAt: new Date()
     })
