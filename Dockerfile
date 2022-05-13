@@ -14,8 +14,8 @@ WORKDIR /usr/src/app
 # Install app dependencies
 COPY ./docker-entrypoint.sh /usr/src/app/docker-entrypoint.sh
 COPY ./src /usr/src/app/src/
-COPY ./locales /usr/src/app/locales/
-COPY ./content /usr/src/app/content/
+#COPY ./locales /usr/src/app/locales/
+#COPY ./content /usr/src/app/content/
 COPY ./package.json /usr/src/app/package.json
 COPY ./package-lock.json /usr/src/app/package-lock.json
 COPY ./tsconfig.json /usr/src/app/tsconfig.json
@@ -39,7 +39,6 @@ COPY --from=build /usr/src/app /usr/src/app
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /home/nft-be /home/nft-be
 COPY --from=build /usr/src/app/node_modules /usr/local/lib/node_modules
-#COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 WORKDIR /usr/src/app
 
