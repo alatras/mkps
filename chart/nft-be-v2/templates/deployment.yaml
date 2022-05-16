@@ -328,7 +328,7 @@ spec:
           emptyDir: { }
         - name: filebeat-config
           configMap:
-            name: filebeat-configmap-be
+            name: filebeat-configmap-be-v2
             items:
               - key: filebeat.yml
                 path: filebeat.yml
