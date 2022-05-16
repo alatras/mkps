@@ -15,7 +15,7 @@ function MongooseClassSerializerInterceptor(
         return document
       }
 
-      return plainToClass(classToIntercept, document.toJSON())
+      return plainToClass(classToIntercept, document.toObject())
     }
 
     private prepareResponse(
@@ -32,7 +32,10 @@ function MongooseClassSerializerInterceptor(
       response: PlainLiteralObject | PlainLiteralObject[],
       options: ClassTransformOptions
     ) {
-      return super.serialize(this.prepareResponse(response), options)
+      return super.serialize(this.prepareResponse(response), {
+        ...options,
+        enableCircularCheck: true
+      })
     }
   }
 }

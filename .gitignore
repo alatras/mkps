@@ -28,6 +28,7 @@ yarn-error.log*
 # Optional eslint cache
 .eslintcache
 
+coverage/
 node_modules/
 build/
 dist/

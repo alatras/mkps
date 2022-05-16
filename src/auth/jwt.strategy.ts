@@ -3,7 +3,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt'
 import { Injectable } from '@nestjs/common'
 import { passportJwtSecret } from 'jwks-rsa'
 import { ConfigService } from '@nestjs/config'
-import { AuthService } from './services/auth/auth.service'
+import { AuthService } from './services/auth.service'
 
 export interface JwtPayload {
   iss: string
@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         jwksRequestsPerMinute: 5,
         jwksUri: `${configService.get<string>(
           'app.auth0.domain'
-        )}.well-known/jwks.json`,
+        )}.well-known/jwks.json`
       }),
 
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -40,7 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.authService.validateUser(payload)
 
     return {
-      uuid: user._id,
+      _id: user._id,
       stripeCustomerId: user.stripeCustomerId,
       stripeAccountId: user.stripeAccountId,
       provider: user.provider,

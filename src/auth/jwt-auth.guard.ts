@@ -1,24 +1,14 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  Optional,
-  UnauthorizedException
-} from '@nestjs/common'
-import { promisify } from 'util'
-import { expressjwt } from 'express-jwt'
-import { expressJwtSecret } from 'jwks-rsa'
-import { ConfigService } from '@nestjs/config'
+import { ExecutionContext, Injectable, Optional } from '@nestjs/common'
 import { AuthGuard, AuthModuleOptions } from '@nestjs/passport'
 import { Reflector } from '@nestjs/core'
-import { ALLOW_ANONYMOUS_META_KEY } from './allow-anonymous.decorator'
+import { JWT_OPTIONAL_META_KEY } from './decorators/jwt-optional.decorator'
 import { Observable } from 'rxjs'
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
-    @Optional() protected readonly options: AuthModuleOptions,
-    private readonly reflector: Reflector
+    private readonly reflector: Reflector,
+    @Optional() protected readonly options?: AuthModuleOptions
   ) {
     super(options)
   }
@@ -26,14 +16,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext
   ): boolean | Promise<boolean> | Observable<boolean> {
-    // Handle anonymous access
-    const isAnonymousAllowed =
+    const isJwtOptional =
       this.reflector.get<boolean>(
-        ALLOW_ANONYMOUS_META_KEY,
+        JWT_OPTIONAL_META_KEY,
         context.getHandler()
       ) ||
-      this.reflector.get<boolean>(ALLOW_ANONYMOUS_META_KEY, context.getClass())
-    if (isAnonymousAllowed) {
+      this.reflector.get<boolean>(JWT_OPTIONAL_META_KEY, context.getClass())
+
+    if (isJwtOptional) {
       return true
     }
 
