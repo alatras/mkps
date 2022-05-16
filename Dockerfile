@@ -35,15 +35,9 @@ RUN chown -R 9992:9992 "/home/nft-be"
 RUN chown -R 9992:9992 "/usr/src/app"
 RUN chown -R 9992:9992 "/tmp"
 
-FROM 696165561482.dkr.ecr.us-east-2.amazonaws.com/base:node_distroless_16_3c462f1cfa02_27_10_21
-
-COPY --from=build /usr/src/app /usr/src/app
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /home/nft-be /home/nft-be
-COPY --from=build /usr/src/app/node_modules /usr/local/lib/node_modules
-
 WORKDIR /usr/src/app
 
 USER nft-be
 
-CMD [ "build/src/server.js" ]
+CMD [ "/bin/sh", "/usr/src/app/docker-entrypoint.sh" ]
+
