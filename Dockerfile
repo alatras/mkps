@@ -21,7 +21,7 @@ COPY ./package-lock.json /usr/src/app/package-lock.json
 COPY ./tsconfig.json /usr/src/app/tsconfig.json
 #COPY ./tsconfig.build.json /usr/src/app/tsconfig.json
 COPY ./tsconfig.build.json /usr/src/app/tsconfig.build.json
-COPY ./utils /usr
+COPY ./utils /usr/src/
 COPY ./config /usr/src/app/config
 COPY ./rds-combined-ca-bundle.pem /usr/src/app/rds-combined-ca-bundle.pem
 COPY ./config/nftProperties/$PACKAGE/nftProperties.json /usr/src/app/src/utils/nftProperties/nftProperties.json
