@@ -76,7 +76,6 @@ pipeline {
         stage('Deploy') {
             steps {
                 dir('chart/nft-be-v2') {
-                    sh "helm uninstall nft-be-v2 -n ${namespace} || true"
                     sh "helm upgrade --install --set image.tag=${tag} nft-be-v2 -f ${helm_chart} . -n ${namespace}"
                 }
             }
