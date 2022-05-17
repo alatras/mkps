@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: 355170820084.dkr.ecr.us-east-2.amazonaws.com/be-v2
@@ -69,8 +69,8 @@ resources:
 
 autoscaling:
   enabled: enable
-  minReplicas: 2
-  maxReplicas: 4
+  minReplicas: 1
+  maxReplicas: 1
   targetCPUUtilizationPercentage: 75
   targetMemoryUtilizationPercentage: 85
 
