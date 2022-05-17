@@ -1,0 +1,106 @@
+{
+  "properties": [
+    {
+      "key": "description",
+      "label": "NFT.FIELD.DESCRIPTION.LABEL",
+      "hintText": "NFT.FIELD.DESCRIPTION.HINT",
+      "placeholder": "NFT.FIELD.DESCRIPTION.PLACEHOLDER",
+      "type": "markdownText",
+      "required": true,
+      "filterable": false,
+      "isDisabled": false
+    },
+    {
+      "key": "unlockableEnabled",
+      "label": "NFT.FIELD.UNLOCKABLE.LABEL",
+      "hintText": "NFT.FIELD.UNLOCKABLE.HINT",
+      "type": "switch",
+      "required": false,
+      "filterable": false,
+      "isDisabled": false,
+      "content": [
+        {
+          "if": {
+            "key": "unlockableEnabled",
+            "value": true
+          },
+          "key": "unlockableContentFields",
+          "type": "box",
+          "filterable": false,
+          "content": [
+            {
+              "key": "unlockableClaimType",
+              "label": "NFT.FIELD.UNLOCKABLE.CLAIM.TYPE.LABEL",
+              "hintText": "NFT.FIELD.UNLOCKABLE.CLAIM.TYPE.HINT",
+              "placeholder": "NFT.FIELD.UNLOCKABLE.CLAIM.TYPE.PLACEHOLDER",
+              "type": "select",
+              "required": true,
+              "filterable": false,
+              "isDisabled": false,
+              "options": [
+                {
+                  "key": "oneTime",
+                  "label": "One Time",
+                  "value": "oneTime"
+                },
+                {
+                  "key": "unlimited",
+                  "label": "Unlimited",
+                  "value": "unlimited"
+                },
+                {
+                  "key": "custom",
+                  "label": "Custom Value",
+                  "value": "custom"
+                }
+              ]
+            },
+            {
+              "if": {
+                "key": "unlockableClaimType",
+                "value": "custom"
+              },
+              "key": "unlockableClaimLimit",
+              "label": "NFT.FIELD.UNLOCKABLE.CLAIM.LIMIT.LABEL",
+              "hintText": "NFT.FIELD.UNLOCKABLE.CLAIM.LIMIT.HINT",
+              "type": "number",
+              "required": true,
+              "filterable": false,
+              "isDisabled": false
+            },
+            {
+              "key": "unlockablePreviewText",
+              "label": "NFT.FIELD.UNLOCKABLE.PREVIEW.TEXT.LABEL",
+              "hintText": "NFT.FIELD.UNLOCKABLE.PREVIEW.TEXT.HINT",
+              "placeholder": "NFT.FIELD.UNLOCKABLE.PREVIEW.TEXT.PLACEHOLDER",
+              "type": "multiLineText",
+              "required": true,
+              "filterable": false,
+              "isDisabled": false
+            },
+            {
+              "key": "unlockableDescription",
+              "label": "NFT.FIELD.UNLOCKABLE.DESCRIPTION.LABEL",
+              "hintText": "NFT.FIELD.UNLOCKABLE.DESCRIPTION.HINT",
+              "placeholder": "NFT.FIELD.UNLOCKABLE.DESCRIPTION.PLACEHOLDER",
+              "type": "markdownText",
+              "required": true,
+              "filterable": false,
+              "isDisabled": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "supply",
+      "label": "NFT.FIELD.SUPPLY.LABEL",
+      "hintText": "NFT.FIELD.SUPPLY.HINT",
+      "placeholder": "NFT.FIELD.SUPPLY.PLACEHOLDER",
+      "type": "number",
+      "required": false,
+      "filterable": false,
+      "isDisabled": true
+    }
+  ]
+}
