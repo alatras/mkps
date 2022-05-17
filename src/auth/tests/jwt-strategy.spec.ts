@@ -15,10 +15,8 @@ import * as dotenv from 'dotenv'
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` })
 
 jest.mock('auth0', () => ({
-  // @ts-ignore
   AuthenticationClient: jest.fn(() => ({
-    // @ts-ignore
-    passwordGrant: params =>
+    passwordGrant: async () =>
       Promise.resolve({
         access_token: 'test'
       })
