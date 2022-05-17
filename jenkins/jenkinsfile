@@ -27,14 +27,14 @@ pipeline {
 
                     namespace = "app-${params.environment}"
                     helm_chart = "values-${params.account_name}-${params.environment}.yaml"                    
-                    tag = "$BUILD_NUMBER"
+                    tag = "v$BUILD_NUMBER"
                     latest = "latest"
 
                     if ("${params.account_name}" == "prod") {
                         helm_chart = "values-prod.yaml"                        
                     } 
                     else if ("${params.account_name}" == "test") {
-                        tag = "${params.environment}-$BUILD_NUMBER"
+                        tag = "v${params.environment}-$BUILD_NUMBER"
                         latest = "${params.environment}-latest"
                         helm_chart = "values.yaml" 
                         
