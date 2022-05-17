@@ -1,4 +1,4 @@
-import { getMongoUri } from "./utils/database";
+import { getMongoUri } from './utils/database'
 
 export = {
   mongodb: {
