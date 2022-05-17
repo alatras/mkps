@@ -13,18 +13,18 @@ export class UserService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userModel.find().exec()
+    return this.userModel.find().lean()
   }
 
   async findOneByProvider(id: string, name: Provider): Promise<User> {
     return this.userModel
       .findOne({ 'provider.id': id, 'provider.name': name })
-      .exec()
+      .lean()
   }
 
   async createUser(provider: Pick<AuthProvider, 'id' | 'name'>) {
     return this.userModel.create({
-      provider,
+      provider: { ...provider },
       ethAddresses: [],
       createdAt: new Date()
     })

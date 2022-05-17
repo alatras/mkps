@@ -109,7 +109,7 @@ then
 fi
 
 # CLEANUP and EXTRA
-echo "PORT=5001" >> .env
+echo "PORT=5002" >> .env
 echo "ENVIRONMENT=local" >> .env
 echo "WEB_APP_URL=http://localhost:4001" >> .env
 echo "IS_SQS_DISABLED=1" >> .env
