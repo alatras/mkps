@@ -19,7 +19,7 @@ import {
   NftStatus,
   UnlockableContent
 } from '../schemas/nft.schema'
-import {  User } from '../../user/schemas/user.schema'
+import { User } from '../../user/schemas/user.schema'
 import * as MUUID from 'uuid-mongodb'
 
 export class AssetDto {

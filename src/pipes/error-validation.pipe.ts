@@ -26,7 +26,7 @@ export class ErrorValidationPipe extends ValidationPipe {
       forbidNonWhitelisted: true,
       forbidUnknownValues: true,
       validationError: { target: false },
-      ...args,
+      ...args
     })
   }
 }
