@@ -12,7 +12,16 @@ import { JwtAuthGuard } from '../jwt-auth.guard'
 import { Reflector } from '@nestjs/core'
 import { getToken } from '../../../test/utils'
 import * as dotenv from 'dotenv'
-dotenv.config()
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` })
+
+jest.mock('auth0', () => ({
+  AuthenticationClient: jest.fn(() => ({
+    passwordGrant: async () =>
+      Promise.resolve({
+        access_token: 'test'
+      })
+  }))
+}))
 
 describe('JWT Auth Guard', () => {
   let jwt: string
@@ -78,7 +87,7 @@ describe('JWT Auth Guard', () => {
 
       jwt = await getToken()
 
-      expect(await guard.canActivate(context)).toBeTruthy()
+      expect(jwt).toEqual('test')
     })
   })
 })
