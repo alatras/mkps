@@ -1,0 +1,10 @@
+{
+  "paymentAuthorised": "Payment Authorised",
+  "pastEndTime": "End time cannot be in the past",
+  "maximumAuctionTime": "NFTs can be auctioned for a maximum of 30 days",
+  "expiredAuction": "Unable to withdraw NFT from expired auction",
+  "purchaseOnlyBuyNow": "You can only purchase NFTs in a \"Buy Now\" auction",
+  "minimumListingPrice": "Minimum auction listing price must be at least $0.50",
+  "purchasingWrongCurrency": "Purchasing not enabled in this currency",
+  "minimumAuctionTime": "End date must be at least 15 minutes after listing the item for sale."
+}

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Logger, Module } from '@nestjs/common'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { MongooseModule } from '@nestjs/mongoose'
@@ -18,6 +18,6 @@ import { NftModule } from './nft/nft.module'
     NftModule
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: [AppService, Logger]
 })
 export class AppModule {}

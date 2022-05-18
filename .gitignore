@@ -33,3 +33,5 @@ node_modules/
 build/
 dist/
 data/
+
+src/utils/nftProperties/tenant.json

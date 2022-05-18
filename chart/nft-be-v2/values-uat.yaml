@@ -8,7 +8,7 @@ image:
   repository: 696165561482.dkr.ecr.us-east-2.amazonaws.com/be-v2
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: dev-latest
+  tag: uat-latest
 
 imagePullSecrets: []
 nameOverride: ""

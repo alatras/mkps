@@ -1,0 +1,41 @@
+{
+  "properties": [
+    {
+      "key": "name",
+      "label": "NFT.FIELD.NAME.LABEL",
+      "hintText": "NFT.FIELD.NAME.HINT",
+      "placeholder": "NFT.FIELD.NAME.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": false,
+      "isDisabled": false
+    },
+    {
+      "key": "category",
+      "label": "NFT.FIELD.CATEGORY.LABEL",
+      "hintText": "NFT.FIELD.CATEGORY.HINT",
+      "placeholder": "NFT.FIELD.CATEGORY.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": true
+    },
+    {
+      "key": "genre",
+      "label": "NFT.FIELD.GENRE.LABEL",
+      "hintText": "NFT.FIELD.GENRE.HINT",
+      "placeholder": "NFT.FIELD.GENRE.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": true
+    },
+    {
+      "key": "artist",
+      "label": "NFT.FIELD.ARTIST.LABEL",
+      "hintText": "NFT.FIELD.ARTIST.HINT",
+      "placeholder": "NFT.FIELD.ARTIST.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": true
+    }
+  ]
+}

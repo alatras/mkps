@@ -1,0 +1,80 @@
+{
+  "Validation": {
+    "default": "Validation Failed"
+  },
+  "BadRequest": {
+    "default": "Invalid Input",
+    "noImages": "Images must be supplied.",
+    "contentAlreadyClaimed": "Unlockable content has already been claimed.",
+    "notEnoughAda": "Insufficient funds - You do not have enough ADA to place this bid. ADA balance: ",
+    "nftMustHaveName": "Nft must have a name",
+    "negativeUnlockableContentQuantity": "Quantity must be a positive number"
+  },
+  "Unauthorized": {
+    "default": "Server requires user authentication",
+    "notKycVerified": "User is not KYC verified",
+    "stripeOnboardingIncomplete": "The user has not completed their stripe account onboarding.",
+    "noConnectedStripeAccount": "Nft cannot be sold with fiat if the user has not connected a stripe account.",
+    "noAventusAddress": "User doesn't have a public Aventus address",
+    "tokenExpired": "Token expired"
+  },
+  "Payment": {
+    "default": "Payment required"
+  },
+  "Forbidden": {
+    "default": "User not authorized",
+    "noBearerToken": "No bearer token",
+    "noToken": "No token"
+  },
+  "NotFound": {
+    "default": "Content not found",
+    "nft": "NFT not found",
+    "user": "User not found",
+    "auction": "Auction not found",
+    "bid": "Bid not found",
+    "avnTransaction": "Avn Transaction not found",
+    "ethereumEvent": "Ethereum Event not found",
+    "auctionWinner": "Auction Winner not found",
+    "paymentMethod": "Payment method not found"
+  },
+  "MethodNotAllowed": {
+    "default": "Method not allowed"
+  },
+  "NotAcceptable": {
+    "default": "Not acceptable"
+  },
+  "Timeout": {
+    "default": "The request has timed out"
+  },
+  "Conflict": {
+    "default": "Conflict",
+    "auctionOnHiddenNft": "Cannot create an auction on a hidden NFT",
+    "alreadyOnSale": "Nft already on sale"
+  },
+  "Gone": {
+    "default": "Gone"
+  },
+  "LengthRequired": {
+    "default": "'Content-Length' header missing"
+  },
+  "Unprocessable": {
+    "default": "Server cannot process the request"
+  },
+  "TooManyRequests": {
+    "default": "Too many requests"
+  },
+  "General": {
+    "default": "Oops, something went wrong. Please try again later.",
+    "stripe": "There was an issue with finalising your payment. Please try again later.",
+    "bid": "We cannot process your bid at this time. Please try again later."
+  },
+  "NotImplemented": {
+    "default": "Not Implemented"
+  },
+  "BadGateway": {
+    "default": "Bad Gateway"
+  },
+  "Unavailable": {
+    "default": "Service unavailable. Please try again later."
+  }
+}
