@@ -43,7 +43,9 @@ const format = winston.format.combine(
       }, message)
     }
 
-    return `${info.timestamp} ${info.level}: ${message}${data}`
+    const context = info['context'] ? ` [${info['context']}] ` : ' '
+
+    return `${info.timestamp} ${info.level}:${context}${message}${data}`
   }),
   errors({ stack: true })
 )

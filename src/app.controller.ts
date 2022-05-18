@@ -3,10 +3,9 @@ import { AppService } from './app.service'
 
 @Controller()
 export class AppController {
-  constructor(
-    private readonly appService: AppService,
-    private readonly logger: Logger
-  ) {}
+  private readonly logger = new Logger(AppService.name)
+
+  constructor(private readonly appService: AppService) {}
 
   @Get()
   getVersion() {
