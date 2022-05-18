@@ -1,0 +1,8 @@
+{
+  "appRunning": "App running in Spanish",
+  "auctionClosing": "Auction is closing. Please wait",
+  "notKycVerified": "User is not KYC verified",
+  "auctionWithdrawalOrFinished": "Auction withdrawal or finished",
+  "bidAmountTooLow": "Bid value must be greater than or equal to: ",
+  "hiddenFlagOnSale": "Cant set/unset hidden flag while Nft is on sale"
+}

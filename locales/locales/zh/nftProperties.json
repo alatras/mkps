@@ -1,0 +1,21 @@
+{
+  "testKey": "Test Key Translation",
+  "NFT.FIELD.NAME.LABEL": "Name of NFT",
+  "NFT.FIELD.NAME.PLACEHOLDER": "Enter name",
+  "NFT.FIELD.STATUS.LABEL": "Status",
+  "NFT.FIELD.STATUS.PLACEHOLDER": "Enter status",
+  "NFT.FIELD.DESCRIPTION.LABEL": "NFT Description",
+  "NFT.FIELD.DESCRIPTION.PLACEHOLDER": "Enter description",
+  "NFT.FIELD.COLLECTION.LABEL": "Collection",
+  "NFT.FIELD.COLLECTION.PLACEHOLDER": "Enter collection name",
+  "NFT.FIELD.SPORT.LABEL": "Sport",
+  "NFT.FIELD.SPORT.PLACEHOLDER": "Enter sport name",
+  "NFT.FIELD.ATHLETE.LABEL": "Athlete",
+  "NFT.FIELD.ATHLETE.PLACEHOLDER": "Enter athlete name",
+  "NFT.FIELD.ARTIST.LABEL": "Artist",
+  "NFT.FIELD.ARTIST.PLACEHOLDER": "Enter artist name",
+  "NFT.FIELD.CATEGORY.LABEL": "Category",
+  "NFT.FIELD.CATEGORY.PLACEHOLDER": "Enter category name",
+  "NFT.FIELD.GENRE.LABEL": "Genre / Sub Category",
+  "NFT.FIELD.GENRE.PLACEHOLDER": "Enter Genre / Sub Category"
+}

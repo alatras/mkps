@@ -1,0 +1,50 @@
+{
+  "properties": [
+    {
+      "key": "name",
+      "label": "NFT.FIELD.NAME.LABEL",
+      "hintText": "NFT.FIELD.NAME.HINT",
+      "placeholder": "NFT.FIELD.NAME.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": false,
+      "isDisabled": false
+    },
+    {
+      "key": "sport",
+      "label": "NFT.FIELD.SPORT.LABEL",
+      "hintText": "NFT.FIELD.SPORT.HINT",
+      "placeholder": "NFT.FIELD.SPORT.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": true
+    },
+    {
+      "key": "collection",
+      "label": "NFT.FIELD.COLLECTION.LABEL",
+      "hintText": "NFT.FIELD.COLLECTION.HINT",
+      "placeholder": "NFT.FIELD.COLLECTION.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": true
+    },
+    {
+      "key": "athlete",
+      "label": "NFT.FIELD.ATHLETE.LABEL",
+      "hintText": "NFT.FIELD.ATHLETE.HINT",
+      "placeholder": "NFT.FIELD.ATHLETE.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": true
+    },
+    {
+      "key": "artist",
+      "label": "NFT.FIELD.ARTIST.LABEL",
+      "hintText": "NFT.FIELD.ARTIST.HINT",
+      "placeholder": "NFT.FIELD.ARTIST.PLACEHOLDER",
+      "type": "singleLineText",
+      "required": true,
+      "filterable": true
+    }
+  ]
+}

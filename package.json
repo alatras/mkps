@@ -6,7 +6,10 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prebuild": "rimraf build",
+    "copy": "cp ./config/nftProperties/eos/nftProperties.json ./src/utils/nftProperties/tenant.json",
+    "prebuild": "rimraf build && npm run copy",
+    "predev": "npm run copy",
+    "pretest": "npm run copy",
     "build": "nest build",
     "pretty": "prettier --config ./.prettierrc.json --check '**/*.{ts,json}'",
     "pretty:fix": "prettier --config ./.prettierrc.json --write '**/*.{ts,json}'",
