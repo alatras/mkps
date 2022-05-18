@@ -39,6 +39,7 @@ export enum NftPropertyTypes {
 
 // replace me once implemented
 const i18next = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   t: (s: string, o: any) => s
 }
 
