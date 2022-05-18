@@ -1,17 +1,55 @@
 import { PartialType } from '@nestjs/mapped-types'
 import {
+  IsArray,
   IsBoolean,
   IsDate,
+  IsEnum,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
-  IsUUID,
   ValidateNested
 } from 'class-validator'
-import { Type } from 'class-transformer'
-import { Asset, ImagesSet } from '../schemas/nft.schema'
-import { User } from '../../user/schemas/user.schema'
+import { Exclude, Expose, Transform, Type } from 'class-transformer'
+import {
+  Asset,
+  AssetType,
+  ImagesSet,
+  Nft,
+  NftStatus,
+  UnlockableContent
+} from '../schemas/nft.schema'
+import {  User } from '../../user/schemas/user.schema'
+import * as MUUID from 'uuid-mongodb'
+
+export class AssetDto {
+  @IsString()
+  url: string
+
+  @IsString()
+  key: string
+
+  @IsEnum(AssetType)
+  type: AssetType
+}
+
+export class ImagesSetDto {
+  @ValidateNested()
+  @Type(() => AssetDto)
+  small: AssetDto
+
+  @ValidateNested()
+  @Type(() => AssetDto)
+  medium: AssetDto
+
+  @ValidateNested()
+  @Type(() => AssetDto)
+  large: AssetDto
+
+  @ValidateNested()
+  @Type(() => AssetDto)
+  original: AssetDto
+}
 
 export class CreateUnlockableContentDto {
   @IsString()
@@ -25,38 +63,89 @@ export class CreateUnlockableContentDto {
 }
 
 export class CreateNftDto {
-  id?: string
+  @IsString()
+  @IsOptional()
+  id: string
+
+  @IsString()
   name: string
 
   @IsOptional()
+  @ValidateNested()
+  @Type(() => ImagesSetDto)
+  image: ImagesSetDto
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @Type(() => AssetDto)
+  assets?: AssetDto[]
+
+  @ValidateNested()
+  @Type(() => CreateUnlockableContentDto)
+  unlockableContent?: CreateUnlockableContentDto
+
+  @IsObject()
+  properties: Record<string, any>
+}
+
+@Exclude()
+export class NftResponseDto {
+  @Expose()
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @IsString()
+  _id: string
+
+  @Expose()
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @IsString()
+  minterId: User
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Asset)
+  @Expose()
+  assets: Asset[]
+
+  @Expose()
+  @IsDate()
+  createdAt: Date
+
+  @IsBoolean()
+  isHidden: boolean
+
+  @Expose()
+  @Type(() => UnlockableContent)
+  unlockableContent: UnlockableContent
+
+  @Expose()
+  @IsString()
+  avnAddress?: string
+
+  @Expose()
+  @IsString()
+  year?: string
+
+  @Expose()
   @Type(() => ImagesSet)
   image?: ImagesSet
 
-  @Type(() => User)
-  @IsUUID()
-  owner?: string
+  @Expose()
+  @IsEnum(NftStatus)
+  status: NftStatus
 
-  @IsDate()
-  createdAt?: Date
+  @Expose()
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @IsString()
+  owner: string
 
-  @IsDate()
-  updatedAt?: Date
-
-  @ValidateNested({ each: true })
-  @IsOptional()
-  @Type(() => Asset)
-  assets?: Asset
-
-  @IsBoolean()
-  isHidden?: boolean
-
-  @IsUUID()
-  minterId?: string
-
+  @Expose()
   @IsObject()
-  unlockableContent?: CreateUnlockableContentDto
-}
+  properties: Record<string, any>
 
-export class NftResponseDto {}
+  constructor(partial: Partial<Nft>) {
+    Object.assign(this, partial)
+  }
+}
 
 export class UpdateNftDto extends PartialType(CreateNftDto) {}

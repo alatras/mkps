@@ -21,16 +21,17 @@ export enum NftStatus {
 
 @Schema({ _id: false, typeKey: '$type' })
 export class Asset {
-  @Prop()
+  @Prop({ $type: String, required: true })
   url: string
 
-  @Prop()
+  @Prop({ $type: String, required: true })
   key: string
 
   @Prop({
-    type: String,
-    enum: Object.keys(AssetType),
+    $type: String,
+    enum: AssetType,
     required: true,
+    default: AssetType.image
   })
   type: AssetType
 }
@@ -43,7 +44,7 @@ export class UnlockableContent {
   @Prop({ required: true })
   quantity: number
 
-  @Prop({ required: true })
+  @Prop({ required: true, default: 0 })
   claimedCount: number
 
   @Prop()
@@ -56,19 +57,21 @@ export class UnlockableContent {
 @Schema({ _id: false })
 export class ImagesSet {
   @Prop({ type: Asset })
+  @Type(() => Asset)
   small: Asset
 
   @Prop({ type: Asset })
+  @Type(() => Asset)
   medium: Asset
 
   @Prop({ type: Asset })
+  @Type(() => Asset)
   large: Asset
 
   @Prop({ type: Asset })
+  @Type(() => Asset)
   original: Asset
 }
-
-export type NftDocument = Nft & Document
 
 @Schema({ collection: 'nfts', versionKey: false })
 export class Nft extends Document {
@@ -81,9 +84,8 @@ export class Nft extends Document {
   _id: object
 
   @Prop({
-    type: User,
+    type: 'object',
     value: { type: 'Buffer' },
-    default: () => MUUID.v4(),
     ref: User.name,
     required: true
   })
@@ -124,7 +126,6 @@ export class Nft extends Document {
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    default: () => MUUID.v4(),
     ref: User.name,
     required: true
   })
