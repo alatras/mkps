@@ -3,8 +3,6 @@ import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 
-// export type UserDocument = User & Document
-
 export enum Provider {
   auth0 = 'google-oauth2'
 }
@@ -27,7 +25,7 @@ export class AuthProvider {
   @Prop({
     type: String,
     required: true,
-    enum: Object.keys(Provider),
+    enum: Provider,
     default: Provider.auth0
   })
   name: Provider
