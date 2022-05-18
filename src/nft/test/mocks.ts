@@ -36,4 +36,3 @@ export class NftMock {
   static findOneAndUpdate = jest.fn().mockResolvedValue(getMockNft())
   static deleteOne = jest.fn().mockResolvedValue(true)
 }
-
