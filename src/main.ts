@@ -5,6 +5,7 @@ import { ConsoleTransportInstance } from 'winston/lib/winston/transports'
 import DailyRotateFile from 'winston-daily-rotate-file'
 
 import { AppModule } from './app.module'
+import { HttpExceptionsFilter } from './filters/http-exceptions.filter'
 
 const levels = {
   error: 0,
@@ -78,7 +79,9 @@ async function bootstrap() {
   })
 
   app.enableCors()
+  app.useGlobalFilters(new HttpExceptionsFilter())
 
   await app.listen(5002)
 }
+
 bootstrap()

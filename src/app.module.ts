@@ -7,13 +7,15 @@ import { ConfigModule } from '@nestjs/config'
 import config from './config/app.config'
 import { AuthModule } from './auth/auth.module'
 import { UserModule } from './user/user.module'
+import { NftModule } from './nft/nft.module'
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ load: [config], isGlobal: true }),
+    MongooseModule.forRootAsync({ useFactory: () => getMongoOptions() }),
     AuthModule,
     UserModule,
-    ConfigModule.forRoot({ load: [config], isGlobal: true }),
-    MongooseModule.forRootAsync({ useFactory: () => getMongoOptions() })
+    NftModule
   ],
   controllers: [AppController],
   providers: [AppService, Logger]

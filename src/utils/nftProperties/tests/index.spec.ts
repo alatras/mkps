@@ -1,9 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing'
 import { getNftProperties } from '..'
 
 describe('Nft Properties', () => {
-  beforeEach(async () => {})
-
   describe('Get Nft Properties', () => {
     it('should return a list of filters', () => {
       const properties = getNftProperties()

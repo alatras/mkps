@@ -3,7 +3,7 @@ import {
   PlainLiteralObject,
   Type
 } from '@nestjs/common'
-import { ClassTransformOptions, plainToClass } from 'class-transformer'
+import { ClassTransformOptions, plainToInstance } from 'class-transformer'
 import { Document } from 'mongoose'
 
 function MongooseClassSerializerInterceptor(
@@ -15,7 +15,7 @@ function MongooseClassSerializerInterceptor(
         return document
       }
 
-      return plainToClass(classToIntercept, document.toObject())
+      return plainToInstance(classToIntercept, document.toObject())
     }
 
     private prepareResponse(

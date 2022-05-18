@@ -10,8 +10,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../auth/permissions.guard'
 import { Permissions } from '../auth/decorators/permissions.decorator'
 import { Request as ExpressRequest } from 'express'
-import { UserResponseDto } from './dto/user-response.dto'
+import { UserResponseDto } from './dto/user.dto'
 import MongooseClassSerializerInterceptor from '../interceptors/mongoose-class-serializer.interceptor'
+import { User } from './schemas/user.schema'
 
 @Controller('users')
 export class UserController {
@@ -33,6 +34,11 @@ export class UserController {
   async getLoggedInUser(
     @Request() req: ExpressRequest
   ): Promise<UserResponseDto> {
-    return new UserResponseDto(req.user)
+    const user = await this.userService.findOneByProvider(
+      (req.user as User).provider.id,
+      (req.user as User).provider.name
+    )
+
+    return new UserResponseDto(user)
   }
 }

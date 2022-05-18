@@ -1,7 +1,21 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
-import { IsArray, IsString } from 'class-validator'
+import { IsArray, IsString, ValidateNested } from 'class-validator'
 import { AuthProvider, User } from '../schemas/user.schema'
 import * as MUUID from 'uuid-mongodb'
+
+export class AuthProviderDto {
+  @IsString()
+  id: string
+
+  @IsString()
+  name: string
+}
+
+export class CreateUserDto {
+  @ValidateNested()
+  @Type(() => AuthProvider)
+  provider: AuthProviderDto
+}
 
 @Exclude()
 export class UserResponseDto {
