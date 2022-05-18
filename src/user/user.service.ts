@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { AuthProvider, Provider, User } from './schemas/user.schema'
+import { Provider, User } from './schemas/user.schema'
+import { CreateUserDto } from './dto/user.dto'
 
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
-
-  async create(createUserDto): Promise<User> {
-    const createdUser = new this.userModel(createUserDto)
-    return createdUser.save()
-  }
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().lean()
@@ -22,11 +18,10 @@ export class UserService {
       .lean()
   }
 
-  async createUser(provider: Pick<AuthProvider, 'id' | 'name'>) {
-    return this.userModel.create({
-      provider: { ...provider },
-      ethAddresses: [],
-      createdAt: new Date()
+  async createUser(createUserDto: CreateUserDto) {
+    return await this.userModel.create({
+      provider: createUserDto.provider,
+      ethAddresses: []
     })
   }
 }

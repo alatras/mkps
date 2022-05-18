@@ -3,6 +3,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { User } from '../../user/schemas/user.schema'
+import { Asset, ImagesSet } from './asset.schema'
 
 export enum AssetType {
   image = 'image',
@@ -19,23 +20,6 @@ export enum NftStatus {
   owned = 'Owned'
 }
 
-@Schema({ _id: false, typeKey: '$type' })
-export class Asset {
-  @Prop({ $type: String, required: true })
-  url: string
-
-  @Prop({ $type: String, required: true })
-  key: string
-
-  @Prop({
-    $type: String,
-    enum: AssetType,
-    required: true,
-    default: AssetType.image
-  })
-  type: AssetType
-}
-
 @Schema({ _id: false })
 export class UnlockableContent {
   @Prop({ required: true })
@@ -48,33 +32,16 @@ export class UnlockableContent {
   claimedCount: number
 
   @Prop()
-  isClaimable: boolean
+  isClaimable?: boolean
 
   @Prop()
   details: string
 }
 
-@Schema({ _id: false })
-export class ImagesSet {
-  @Prop({ type: Asset })
-  @Type(() => Asset)
-  small: Asset
-
-  @Prop({ type: Asset })
-  @Type(() => Asset)
-  medium: Asset
-
-  @Prop({ type: Asset })
-  @Type(() => Asset)
-  large: Asset
-
-  @Prop({ type: Asset })
-  @Type(() => Asset)
-  original: Asset
-}
+export type NftDocument = Nft & Document
 
 @Schema({ collection: 'nfts', versionKey: false })
-export class Nft extends Document {
+export class Nft {
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({
     type: 'object',
@@ -89,8 +56,9 @@ export class Nft extends Document {
     ref: User.name,
     required: true
   })
+  @Transform(({ value }) => MUUID.from(value).toString())
   @Type(() => User)
-  minterId: User
+  minterId: object
 
   @Prop([Asset])
   assets: Asset[]
@@ -129,8 +97,9 @@ export class Nft extends Document {
     ref: User.name,
     required: true
   })
+  @Transform(({ value }) => MUUID.from(value).toString())
   @Type(() => User)
-  owner: User
+  owner: object
 
   @Prop({ type: 'object', required: true })
   properties: Record<string, any>

@@ -10,15 +10,17 @@ export class AuthService {
   async validateUser(payload: JwtPayload): Promise<User> {
     const [provider, id] = payload.sub.split('|')
 
-    const user = await this.userService.findOneByProvider(
+    let user = await this.userService.findOneByProvider(
       id,
       provider as Provider
     )
 
     if (!user) {
-      return await this.userService.createUser({
-        name: provider as Provider,
-        id
+      user = await this.userService.createUser({
+        provider: {
+          name: provider as Provider,
+          id
+        }
       })
     }
 

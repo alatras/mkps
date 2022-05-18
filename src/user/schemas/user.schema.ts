@@ -44,8 +44,15 @@ export class AuthProvider {
   }
 }
 
-@Schema({ collection: 'users', timestamps: true, versionKey: false })
-export class User extends Document {
+export type UserDocument = User & Document
+
+@Schema({
+  collection: 'users',
+  versionKey: false,
+  autoCreate: true,
+  timestamps: true
+})
+export class User {
   @Transform(({ value }) => value.toString())
   @Prop({
     type: 'object',
@@ -69,6 +76,12 @@ export class User extends Document {
 
   @Prop([String])
   ethAddresses: string[]
+
+  @Prop()
+  createdAt: Date
+
+  @Prop()
+  updatedAt: Date
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

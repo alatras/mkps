@@ -11,45 +11,12 @@ import {
   ValidateNested
 } from 'class-validator'
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
-import {
-  Asset,
-  AssetType,
-  ImagesSet,
-  Nft,
-  NftStatus,
-  UnlockableContent
-} from '../schemas/nft.schema'
+import { Nft, NftStatus, UnlockableContent } from '../schemas/nft.schema'
 import { User } from '../../user/schemas/user.schema'
 import * as MUUID from 'uuid-mongodb'
-
-export class AssetDto {
-  @IsString()
-  url: string
-
-  @IsString()
-  key: string
-
-  @IsEnum(AssetType)
-  type: AssetType
-}
-
-export class ImagesSetDto {
-  @ValidateNested()
-  @Type(() => AssetDto)
-  small: AssetDto
-
-  @ValidateNested()
-  @Type(() => AssetDto)
-  medium: AssetDto
-
-  @ValidateNested()
-  @Type(() => AssetDto)
-  large: AssetDto
-
-  @ValidateNested()
-  @Type(() => AssetDto)
-  original: AssetDto
-}
+import { AssetDto, ImagesSetDto } from './asset.dto'
+import { Asset, ImagesSet } from '../schemas/asset.schema'
+import { Document } from 'mongoose'
 
 export class CreateUnlockableContentDto {
   @IsString()
@@ -65,10 +32,10 @@ export class CreateUnlockableContentDto {
 export class CreateNftDto {
   @IsString()
   @IsOptional()
-  id: string
+  id?: string
 
   @IsString()
-  name: string
+  name?: string
 
   @IsOptional()
   @ValidateNested()
@@ -87,6 +54,10 @@ export class CreateNftDto {
 
   @IsObject()
   properties: Record<string, any>
+
+  constructor(partial: Partial<Nft>) {
+    Object.assign(this, partial)
+  }
 }
 
 @Exclude()
@@ -103,8 +74,6 @@ export class NftResponseDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => Asset)
-  @Expose()
   assets: Asset[]
 
   @Expose()
@@ -144,6 +113,10 @@ export class NftResponseDto {
   properties: Record<string, any>
 
   constructor(partial: Partial<Nft>) {
+    if (partial instanceof Document) {
+      partial = partial.toObject()
+    }
+
     Object.assign(this, partial)
   }
 }
