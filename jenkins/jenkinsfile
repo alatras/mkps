@@ -55,21 +55,19 @@ pipeline {
                 sh "aws ecr get-login-password --region ${params.aws_region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com"
                 sh "aws ecr get-login-password --region ${aws_region_base} | docker login --username AWS --password-stdin ${account_id_base}.dkr.ecr.${aws_region_base}.amazonaws.com"
 
-                sh "docker build -t ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/be-v2:${tag}  --build-arg PACKAGE=${package_name} --build-arg ENVIRONMENT=${params.environment} -t ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/be-v2:${latest} --build-arg PACKAGE=${package_name} --build-arg ENVIRONMENT=${params.environment} ."
+                sh "docker build -t ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/be-v2:${tag}  --build-arg PACKAGE=${package_name} --build-arg ENVIRONMENT=${params.environment} ."
             }
         }
 
         stage('Publish') {
             steps {
                 sh "docker push ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/be-v2:${tag}"
-                sh "docker push ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/be-v2:${latest}"
             }
         }
 
         stage('Clean') {
             steps {
                 sh "docker image rm ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/be-v2:${tag}"
-                sh "docker image rm ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/be-v2:${latest}"
             }
         }
 
