@@ -1,4 +1,4 @@
-FROM 696165561482.dkr.ecr.us-east-2.amazonaws.com/base:node_16.11.1-alpine3.14 as build
+FROM node:16.16.0-alpine3.15 AS build
 
 ARG PACKAGE=veremusic
 ENV PACKAGE=${PACKAGE}
