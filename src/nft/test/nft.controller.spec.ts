@@ -3,7 +3,8 @@ import { NftController } from '../nft.controller'
 import { NftService } from '../nft.service'
 import { getModelToken } from '@nestjs/mongoose'
 import { Nft } from '../schemas/nft.schema'
-import { getMockNft } from './mocks'
+import { getMockNft, getMockNftHistory } from './mocks'
+import { NftHistory } from '../schemas/nft-history.schema'
 
 describe('NftController', () => {
   let controller: NftController
@@ -13,7 +14,8 @@ describe('NftController', () => {
       controllers: [NftController],
       providers: [
         NftService,
-        { provide: getModelToken(Nft.name), useValue: getMockNft() }
+        { provide: getModelToken(NftHistory.name), useValue: getMockNftHistory() },
+        { provide: getModelToken(Nft.name), useValue: getMockNft() },
       ]
     }).compile()
 

@@ -4,23 +4,27 @@ import { NftController } from './nft.controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { Nft, NftSchema } from './schemas/nft.schema'
 import { NftHistory, NftHistorySchema } from './schemas/nft-history.schema'
+import { EditionModule } from '../edition/edition.module'
+import { DbCollections } from 'src/shared/enum'
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      {
+    EditionModule,
+    MongooseModule.forFeature(
+      [{
         name: Nft.name,
         schema: NftSchema,
-        collection: 'nfts'
+        collection: DbCollections.NFTs
       },
       {
         name: NftHistory.name,
         schema: NftHistorySchema,
-        collection: 'nftHistory'
+        collection: DbCollections.NftHistory
       }
-    ])
+      ]),
   ],
   controllers: [NftController],
-  providers: [NftService]
+  providers: [NftService],
+  exports: [NftService]
 })
-export class NftModule {}
+export class NftModule { }

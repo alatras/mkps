@@ -1,20 +1,25 @@
 import { Document } from 'mongoose'
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
-import { Prop, SchemaFactory } from '@nestjs/mongoose'
-import { AuctionType, Currency } from '../../shared/enums'
+import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose'
+import { AuctionType, Currency, DbCollections } from '../../shared/enum'
+import { HistoryType } from '../../shared/enum/historyType'
 
-export enum HistoryType {
-  minted = 'minted',
-  listed = 'listed',
-  bid = 'bid',
-  purchased = 'purchased',
-  cancelled = 'cancelled',
-  transferred = 'transferred',
-  unlockableContentClaimed = 'unlockableContentClaimed'
-}
+export type NftHistoryDocument = NftHistory & Document
 
-export class NftHistory extends Document {
+@Schema({
+  collection: DbCollections.NftHistory,
+  versionKey: false,
+})
+export class NftHistory {
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    default: () => MUUID.v4()
+  })
+  _id: object
+
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({
     type: 'object',
@@ -36,31 +41,31 @@ export class NftHistory extends Document {
   userAddress: string
 
   @Prop()
-  fromAddress: string
+  fromAddress?: string
 
   @Prop({ type: String, enum: HistoryType })
-  saleType: AuctionType
+  saleType?: AuctionType
 
   @Prop()
-  amount: string
+  amount?: string
 
   @Prop()
-  toAddress: string
+  toAddress?: string
 
   @Prop({ required: true })
-  createdAt: Date
-
-  @Prop({ required: true })
-  updatedAt: Date
-
-  @Prop({ required: true })
-  transactionHash?: string
+  transactionHash: string
 
   @Prop({ type: String, enum: HistoryType })
-  currency: Currency
+  currency?: Currency
 
   @Prop({ type: String, required: true, enum: HistoryType })
-  type: HistoryType
+  type?: HistoryType
+
+  @Prop()
+  createdAt?: Date
+
+  @Prop()
+  updatedAt?: Date
 }
 
 export const NftHistorySchema = SchemaFactory.createForClass(NftHistory)

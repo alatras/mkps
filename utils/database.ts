@@ -8,7 +8,8 @@ export const getMongoUri = () => {
   }
 
   if (mongoUri === 'mongodb://localhost:27017') {
-    return `${mongoUri}?sslValidate=false&retryWrites=false&directConnection=true`
+    // May add: ?sslValidate=false&retryWrites=false&directConnection=true
+    return mongoUri
   }
 
   const urlParts = mongoUri.split('?')
@@ -23,6 +24,8 @@ export const getMongoUri = () => {
   return `${urlParts[0]}?retryWrites=false&directConnection=true&${query}`
 }
 
-export const getMongoOptions = (): MongooseModuleOptions => {
-  return { dbName: process.env.MONGODB_NAME ?? undefined, uri: getMongoUri() }
+// TODO test mongo connection on app start
+export const getMongoString = (): string => {
+  const l = getMongoUri() + "/" + process.env.MONGODB_NAME
+  return l
 }

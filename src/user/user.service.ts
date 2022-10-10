@@ -6,7 +6,7 @@ import { CreateUserDto } from './dto/user.dto'
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) { }
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().lean()
@@ -15,6 +15,12 @@ export class UserService {
   async findOneByProvider(id: string, name: Provider): Promise<User> {
     return this.userModel
       .findOne({ 'provider.id': id, 'provider.name': name })
+      .lean()
+  }
+
+  async findOneById(id: string): Promise<User> {
+    return this.userModel
+      .findOne({ _id: id })
       .lean()
   }
 

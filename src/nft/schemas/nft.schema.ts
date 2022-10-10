@@ -4,6 +4,7 @@ import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { User } from '../../user/schemas/user.schema'
 import { Asset, ImagesSet } from './asset.schema'
+import { DbCollections } from '../../shared/enum'
 
 export enum AssetType {
   image = 'image',
@@ -40,7 +41,10 @@ export class UnlockableContent {
 
 export type NftDocument = Nft & Document
 
-@Schema({ collection: 'nfts', versionKey: false })
+@Schema({
+  collection: DbCollections.NFTs,
+  versionKey: false,
+})
 export class Nft {
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({
@@ -64,10 +68,10 @@ export class Nft {
   assets: Asset[]
 
   @Prop()
-  createdAt: Date
+  createdAt?: Date
 
   @Prop()
-  updatedAt: Date
+  updatedAt?: Date
 
   @Prop({ required: true })
   isHidden: boolean
@@ -76,7 +80,16 @@ export class Nft {
   unlockableContent: UnlockableContent
 
   @Prop()
+  isMinted?: boolean
+
+  @Prop()
   avnAddress?: string
+
+  @Prop()
+  editionId?: string
+
+  @Prop()
+  eid?: string
 
   @Prop()
   year?: string

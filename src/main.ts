@@ -81,7 +81,7 @@ async function bootstrap() {
   app.enableCors()
   app.useGlobalFilters(new HttpExceptionsFilter())
 
-  await app.listen(5002)
+  await app.listen(process.env.PORT || 5002)
 }
 
 bootstrap()

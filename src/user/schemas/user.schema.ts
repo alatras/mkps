@@ -2,6 +2,7 @@ import { Document } from 'mongoose'
 import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
+import { DbCollections } from '../../shared/enum'
 
 export enum Provider {
   auth0 = 'google-oauth2'
@@ -47,7 +48,7 @@ export class AuthProvider {
 export type UserDocument = User & Document
 
 @Schema({
-  collection: 'users',
+  collection: DbCollections.Users,
   versionKey: false,
   autoCreate: true,
   timestamps: true
