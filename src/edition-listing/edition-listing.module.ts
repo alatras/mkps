@@ -3,7 +3,7 @@ import { EditionListingController } from './edition-listing.controller'
 import { EditionListingService } from './edition-listing.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { EditionListing, EditionListingSchema } from './schemas/edition-listing.schema'
-import { DbCollections } from 'src/shared/enum'
+import { DbCollections } from '../shared/enum'
 
 @Module({
   imports: [

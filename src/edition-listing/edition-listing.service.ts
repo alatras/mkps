@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { EditionListingStatus } from 'src/shared/enum/editionListingStatus'
+import { EditionListingStatus } from '../shared/enum/editionListingStatus'
 import { EditionListing } from './schemas/edition-listing.schema'
 
 @Injectable()

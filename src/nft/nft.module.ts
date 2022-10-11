@@ -5,7 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { Nft, NftSchema } from './schemas/nft.schema'
 import { NftHistory, NftHistorySchema } from './schemas/nft-history.schema'
 import { EditionModule } from '../edition/edition.module'
-import { DbCollections } from 'src/shared/enum'
+import { DbCollections } from '../shared/enum'
 
 @Module({
   imports: [

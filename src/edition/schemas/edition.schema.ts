@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import { AuctionType, DbCollections } from '../../shared/enum'
+import { Transform } from "class-transformer"
+import * as MUUID from "uuid-mongodb"
 
 export type NftEditionDocument = NftEdition & Document
 
@@ -11,6 +13,14 @@ export type NftEditionDocument = NftEdition & Document
   timestamps: true
 })
 export class NftEdition {
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    default: () => MUUID.v4()
+  })
+  _id: object
+
   @Prop()
   name: string
 
@@ -33,14 +43,15 @@ export class NftEdition {
   @Prop()
   isHidden: boolean
 
+  // @Transform(({ value }) => MUUID.from(value).toString())
   @Prop()
   nfts: object[]
 
   @Prop()
-  createdAt: Date
+  createdAt?: Date
 
   @Prop()
-  updatedAt: Date
+  updatedAt?: Date
 
   @Prop()
   listingType?: AuctionType.fixedPrice | AuctionType.freeClaim

@@ -1,8 +1,10 @@
 import { AssetType, Nft, NftStatus } from '../schemas/nft.schema'
 import * as MUUID from 'uuid-mongodb'
 import { NftHistory } from '../schemas/nft-history.schema'
-import { AuctionType, Currency } from '../../shared/enum'
+import { AuctionStatus, AuctionType, Currency } from '../../shared/enum'
 import { HistoryType } from '../../shared/enum/historyType'
+import { NftEdition } from '../../edition/schemas/edition.schema'
+import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 
 export const getMockNft = (): Nft => {
   return {
@@ -44,6 +46,40 @@ export const getMockNftHistory = (): NftHistory => {
     transactionHash: 'hash',
     currency: Currency.ADA,
     type: HistoryType.bid,
+  }
+}
+
+export const getNftEdition = (): NftEdition => {
+  return {
+    _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
+    name: 'test',
+    avnId: '3d94506a-e29b-4cfe-b20c-3f65653245fa',
+    listingIndex: 10,
+    availableCount: 10,
+    quantity: 2,
+    ownedCount: 1,
+    isHidden: false,
+    nfts: [MUUID.from('3d94506a-e29b-4cfe-b20c-3f65653245fa')],
+  }
+}
+
+export const getEditionListing = (): EditionListing => {
+  return {
+    _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
+    edition: { _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002') },
+    seller: {
+      _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
+      ethAddress: 'address',
+      avnPubKey: '',
+    },
+    currency: Currency.ADA,
+    status: AuctionStatus.open,
+    reservePrice: '',
+    winner: null,
+    type: AuctionType.airdrop,
+    endTime: new Date(),
+    requestId: '',
+    quantity: 10,
   }
 }
 

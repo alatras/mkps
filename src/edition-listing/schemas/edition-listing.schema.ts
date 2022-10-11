@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import { Transform } from 'class-transformer'
 import { Document } from 'mongoose'
 import { AuctionStatus, AuctionType, Currency, DbCollections } from '../../shared/enum'
+import * as MUUID from 'uuid-mongodb'
 
 class Edition {
   _id: object
@@ -34,6 +36,14 @@ export type EditionListingDocument = EditionListing & Document
   timestamps: true
 })
 export class EditionListing {
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    default: () => MUUID.v4()
+  })
+  _id: object
+
   @Prop()
   edition: Edition
 
@@ -74,7 +84,10 @@ export class EditionListing {
   quantity: number
 
   @Prop()
-  updatedAt: Date
+  createdAt?: Date
+
+  @Prop()
+  updatedAt?: Date
 }
 
 export const EditionListingSchema = SchemaFactory.createForClass(EditionListing)

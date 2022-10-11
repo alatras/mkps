@@ -16,6 +16,7 @@ import { User } from '../user/schemas/user.schema'
 import { AvnTransactionState, AvnTransactionType } from '../shared/enum'
 import { NftService } from '../nft/nft.service'
 import { uuidFrom } from '../utils'
+import { AvnTransactionMintResponse } from './response/anv-transaction-mint-response'
 
 @Injectable()
 export class AvnTransactionService {
@@ -35,7 +36,7 @@ export class AvnTransactionService {
   async createMintAvnTransaction(
     nftUuid: string,
     requestId?: string,
-  ): Promise<AvnMintTransaction | Error> {
+  ): Promise<AvnTransactionMintResponse | Error> {
     const nft = await this.nftService.findOneById(nftUuid)
     if (!nft) {
       throw new NotFoundException('NFT not found')
