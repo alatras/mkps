@@ -21,6 +21,7 @@ import { EditionService } from '../edition/edition.service'
 import { NftEdition } from '../edition/schemas/edition.schema'
 import { EditionListingService } from '../edition-listing/edition-listing.service'
 import { EditionListing } from '../edition-listing/schemas/edition-listing.schema'
+import { LogService } from '../log/log.service'
 
 describe('AvnTransactionController', () => {
   let controller: AvnTransactionController
@@ -28,6 +29,7 @@ describe('AvnTransactionController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        LogService,
         AvnTransactionService,
         UserService,
         NftService,

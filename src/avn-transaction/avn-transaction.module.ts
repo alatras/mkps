@@ -6,11 +6,13 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { AvnTransaction, AvnTransactionSchema } from './schemas/avn-transaction.schema'
 import { DbCollections } from '../shared/enum'
 import { NftModule } from '../nft/nft.module'
+import { LogModule } from 'src/log/log.module'
 
 @Module({
   controllers: [AvnTransactionController],
   providers: [AvnTransactionService],
   imports: [
+    LogModule,
     NftModule,
     UserModule,
     MongooseModule.forFeature([
