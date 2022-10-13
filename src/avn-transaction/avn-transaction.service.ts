@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {Injectable, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { from as _uuidFrom } from 'uuid-mongodb'
 import * as MUUID from 'uuid-mongodb'
 import { UserService } from '../user/user.service'
 import { InvalidDataError } from '../core/errors'

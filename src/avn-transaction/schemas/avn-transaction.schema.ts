@@ -86,6 +86,12 @@ export class AvnTransaction {
 
   @Prop()
   history: AvnMintHistory[]
+
+  @Prop()
+  createdAt?: Date
+
+  @Prop()
+  updatedAt?: Date
 }
 
 export const AvnTransactionSchema = SchemaFactory.createForClass(AvnTransaction)

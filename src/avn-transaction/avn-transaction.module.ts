@@ -7,10 +7,14 @@ import { AvnTransaction, AvnTransactionSchema } from './schemas/avn-transaction.
 import { DbCollections } from '../shared/enum'
 import { NftModule } from '../nft/nft.module'
 import { LogModule } from 'src/log/log.module'
+import { AvnTransactionChangeStreamService } from './avn-transaction-change-stream.service'
 
 @Module({
   controllers: [AvnTransactionController],
-  providers: [AvnTransactionService],
+  providers: [
+    AvnTransactionService,
+    AvnTransactionChangeStreamService,
+  ],
   imports: [
     LogModule,
     NftModule,

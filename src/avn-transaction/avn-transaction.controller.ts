@@ -8,7 +8,7 @@ import { AvnTransactionMintResponse } from './response/anv-transaction-mint-resp
 
 @Controller('avn-transaction')
 export class AvnTransactionController {
-  private log: LoggerService;
+  private log: LoggerService
   constructor(
     private avnTransactionService: AvnTransactionService,
     private logService: LogService,
