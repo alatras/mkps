@@ -11,7 +11,7 @@ import { NftModule } from './nft/nft.module'
 import { AvnTransactionModule } from './avn-transaction/avn-transaction.module'
 import { EditionModule } from './edition/edition.module'
 import { EditionListingModule } from './edition-listing/edition-listing.module'
-import { LogModule } from './log/log.module';
+import { LogModule } from './log/log.module'
 
 @Module({
   imports: [
@@ -28,4 +28,4 @@ import { LogModule } from './log/log.module';
   controllers: [AppController],
   providers: [AppService, Logger]
 })
-export class AppModule { }
+export class AppModule {}

@@ -6,13 +6,16 @@ import { EditionListing } from './schemas/edition-listing.schema'
 
 @Injectable()
 export class EditionListingService {
-  constructor(@InjectModel(EditionListing.name) private editionListingModel: Model<EditionListing>) { }
+  constructor(
+    @InjectModel(EditionListing.name)
+    private editionListingModel: Model<EditionListing>
+  ) {}
 
   async getPreviousListingForEdition(
     editionId: string,
-    status?: EditionListingStatus,
+    status?: EditionListingStatus
   ): Promise<EditionListing | null> {
-    const filter = { 'edition._id': editionId, 'status': undefined }
+    const filter = { 'edition._id': editionId, status: undefined }
 
     if (status) {
       filter.status = status

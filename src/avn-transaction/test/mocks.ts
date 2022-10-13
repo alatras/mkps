@@ -10,12 +10,14 @@ export const getAvnTransaction = (): AvnTransaction => {
     data: {
       unique_external_ref: '',
       userId: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
-      royalties: [{
-        recipient_t1_address: '',
-        rate: {
-          parts_per_million: 10
+      royalties: [
+        {
+          recipient_t1_address: '',
+          rate: {
+            parts_per_million: 10
+          }
         }
-      }]
+      ]
     },
     state: AvnTransactionState.AVN_REJECTED,
     history: []

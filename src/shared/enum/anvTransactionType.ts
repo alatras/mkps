@@ -14,5 +14,5 @@ export enum AvnTransactionType {
   AvnCancelNftListing = 'AvnCancelNftListing',
   AvnEndBatchListing = 'AvnEndBatchListing',
   AvnTransferTo = 'AvnTransferTo',
-  AvnMintTo = 'AvnMintTo',
+  AvnMintTo = 'AvnMintTo'
 }

@@ -5,5 +5,5 @@ export enum AuctionStatus {
   sold = 'Sold',
   withdraw = 'Withdraw',
   error = 'Error',
-  bidChargeFailed = 'bidChargeFailed',
+  bidChargeFailed = 'bidChargeFailed'
 }

@@ -7,5 +7,5 @@ export enum HistoryType {
   transferred = 'transferred',
   unlockableContentClaimed = 'unlockableContentClaimed',
   editionListed = 'editionListed',
-  editionListingCancelled = 'editionListingCancelled',
+  editionListingCancelled = 'editionListingCancelled'
 }

@@ -3,7 +3,12 @@ import { getModelToken } from '@nestjs/mongoose'
 import { NftController } from '../nft.controller'
 import { NftService } from '../nft.service'
 import { Nft } from '../schemas/nft.schema'
-import { getEditionListing, getMockNft, getMockNftHistory, getNftEdition } from './mocks'
+import {
+  getEditionListing,
+  getMockNft,
+  getMockNftHistory,
+  getNftEdition
+} from './mocks'
 import { NftHistory } from '../schemas/nft-history.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftEdition } from '../../edition/schemas/edition.schema'
@@ -20,11 +25,17 @@ describe('NftController', () => {
         NftService,
         EditionService,
         EditionListingService,
-        { provide: getModelToken(NftHistory.name), useValue: getMockNftHistory() },
+        {
+          provide: getModelToken(NftHistory.name),
+          useValue: getMockNftHistory()
+        },
         { provide: getModelToken(Nft.name), useValue: getMockNft() },
         { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
-        { provide: getModelToken(EditionListing.name), useValue: getEditionListing() },
-      ],
+        {
+          provide: getModelToken(EditionListing.name),
+          useValue: getEditionListing()
+        }
+      ]
     }).compile()
 
     controller = module.get<NftController>(NftController)

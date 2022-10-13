@@ -45,7 +45,7 @@ export const getMockNftHistory = (): NftHistory => {
     toAddress: 'to some address',
     transactionHash: 'hash',
     currency: Currency.ADA,
-    type: HistoryType.bid,
+    type: HistoryType.bid
   }
 }
 
@@ -59,7 +59,7 @@ export const getNftEdition = (): NftEdition => {
     quantity: 2,
     ownedCount: 1,
     isHidden: false,
-    nfts: [MUUID.from('3d94506a-e29b-4cfe-b20c-3f65653245fa')],
+    nfts: [MUUID.from('3d94506a-e29b-4cfe-b20c-3f65653245fa')]
   }
 }
 
@@ -70,7 +70,7 @@ export const getEditionListing = (): EditionListing => {
     seller: {
       _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
       ethAddress: 'address',
-      avnPubKey: '',
+      avnPubKey: ''
     },
     currency: Currency.ADA,
     status: AuctionStatus.open,
@@ -79,12 +79,12 @@ export const getEditionListing = (): EditionListing => {
     type: AuctionType.airdrop,
     endTime: new Date(),
     requestId: '',
-    quantity: 10,
+    quantity: 10
   }
 }
 
 export class NftMock {
-  constructor(private data) { }
+  constructor(private data) {}
   create = jest.fn().mockResolvedValue(this.data)
   static find = jest.fn().mockResolvedValue([getMockNft()])
   static findOne = jest.fn().mockResolvedValue(getMockNft())

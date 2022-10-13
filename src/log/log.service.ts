@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common';
+import { LoggerService } from '@nestjs/common'
 import { WinstonModule } from 'nest-winston'
 import * as winston from 'winston'
 import { ConsoleTransportInstance } from 'winston/lib/winston/transports'

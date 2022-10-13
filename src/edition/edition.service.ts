@@ -12,31 +12,30 @@ export class EditionService {
   constructor(
     @InjectModel(NftEdition.name) private nftEditionModel: Model<NftEdition>,
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
-    private editionListing: EditionListingService,
-  ) {
-  }
+    private editionListing: EditionListingService
+  ) {}
 
   async updateEditionCounts(editionId: string) {
     const previousEditionListing =
       await this.editionListing.getPreviousListingForEdition(
         editionId,
-        EditionListingStatus.open,
-      );
+        EditionListingStatus.open
+      )
 
-    const availableStatuses = [NftStatus.forSale];
+    const availableStatuses = [NftStatus.forSale]
 
     if (previousEditionListing) {
-      availableStatuses.push(NftStatus.minted);
+      availableStatuses.push(NftStatus.minted)
     }
 
     let availableCount = await this.nftModel.countDocuments({
       editionId: editionId,
-      status: { $in: availableStatuses },
+      status: { $in: availableStatuses }
     })
 
     const ownedCount = await this.nftModel.countDocuments({
       editionId: editionId,
-      status: { $in: [NftStatus.owned, NftStatus.saleClosing] },
+      status: { $in: [NftStatus.owned, NftStatus.saleClosing] }
     })
 
     if (previousEditionListing?.pendingEthereumTransactions) {
@@ -56,9 +55,9 @@ export class EditionService {
         $set: {
           availableCount: Math.max(availableCount, 0),
           ownedCount: Math.max(ownedCount, 0),
-          updatedAt: new Date(),
-        },
-      },
+          updatedAt: new Date()
+        }
+      }
     )
   }
 }

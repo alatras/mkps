@@ -14,7 +14,7 @@ import {
   getMockNft,
   getMockNftHistory,
   getNftEdition,
-  NftMock,
+  NftMock
 } from '../nft/test/mocks'
 import { NftHistory } from '../nft/schemas/nft-history.schema'
 import { EditionService } from '../edition/edition.service'
@@ -37,14 +37,24 @@ describe('AvnTransactionController', () => {
         EditionListingService,
         { provide: getModelToken(User.name), useValue: getMockUser() },
         { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
-        { provide: getModelToken(Nft.name), useValue: new NftMock(getMockNft()) },
-        { provide: getModelToken(NftHistory.name), useValue: getMockNftHistory() },
-        { provide: getModelToken(AvnTransaction.name), useValue: getAvnTransaction() },
-        { provide: getModelToken(EditionListing.name), useValue: getEditionListing() },
+        {
+          provide: getModelToken(Nft.name),
+          useValue: new NftMock(getMockNft())
+        },
+        {
+          provide: getModelToken(NftHistory.name),
+          useValue: getMockNftHistory()
+        },
+        {
+          provide: getModelToken(AvnTransaction.name),
+          useValue: getAvnTransaction()
+        },
+        {
+          provide: getModelToken(EditionListing.name),
+          useValue: getEditionListing()
+        }
       ],
-      controllers: [
-        AvnTransactionController,
-      ],
+      controllers: [AvnTransactionController]
     }).compile()
 
     controller = module.get<AvnTransactionController>(AvnTransactionController)

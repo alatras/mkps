@@ -5,5 +5,5 @@ export enum NftStatus {
   saleOpening = 'Sale opening',
   forSale = 'For sale',
   saleClosing = 'Sale closing',
-  owned = 'Owned',
+  owned = 'Owned'
 }

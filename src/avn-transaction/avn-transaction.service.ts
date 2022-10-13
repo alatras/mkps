@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import * as MUUID from 'uuid-mongodb'
@@ -9,7 +9,7 @@ import {
   AvnMintTransactionData,
   AvnTransaction,
   Royalties,
-  RoyaltyRate,
+  RoyaltyRate
 } from './schemas/avn-transaction.schema'
 import { User } from '../user/schemas/user.schema'
 import { AvnTransactionState, AvnTransactionType } from '../shared/enum'
@@ -20,10 +20,11 @@ import { AvnTransactionMintResponse } from './response/anv-transaction-mint-resp
 @Injectable()
 export class AvnTransactionService {
   constructor(
-    @InjectModel(AvnTransaction.name) private avnTransactionModel: Model<AvnTransaction>,
+    @InjectModel(AvnTransaction.name)
+    private avnTransactionModel: Model<AvnTransaction>,
     private userService: UserService,
-    private nftService: NftService,
-  ) { }
+    private nftService: NftService
+  ) {}
 
   /**
    * Create a new doc in AvnTransactions collection to mint NFT.
@@ -34,7 +35,7 @@ export class AvnTransactionService {
    */
   async createMintAvnTransaction(
     nftUuid: string,
-    requestId?: string,
+    requestId?: string
   ): Promise<AvnTransactionMintResponse | Error> {
     const nft = await this.nftService.findOneById(nftUuid)
     if (!nft) {
@@ -54,7 +55,7 @@ export class AvnTransactionService {
     const data: AvnMintTransactionData = {
       unique_external_ref: nftUuid,
       userId: uuidFrom(user._id as MUUID.MUUID),
-      royalties,
+      royalties
     }
 
     const newDoc: AvnMintTransaction = {
@@ -62,7 +63,7 @@ export class AvnTransactionService {
       type: AvnTransactionType.MintSingleNft,
       data: data,
       state: AvnTransactionState.NEW,
-      history: [],
+      history: []
     }
 
     return await this.avnTransactionModel.create(newDoc)
@@ -72,35 +73,35 @@ export class AvnTransactionService {
     try {
       const decodedRoyalties = Buffer.from(
         process.env.ROYALTIES ?? '',
-        'base64',
+        'base64'
       ).toString('ascii')
 
       const royalties = JSON.parse(decodedRoyalties)
 
       if (Array.isArray(royalties)) {
         return royalties.map(
-          (r) =>
+          r =>
             <Royalties>{
               recipient_t1_address: r.recipient_t1_address,
               rate: <RoyaltyRate>{
-                parts_per_million: r.rate.parts_per_million,
-              },
-            },
-        );
+                parts_per_million: r.rate.parts_per_million
+              }
+            }
+        )
       }
 
       return [
         <Royalties>{
           recipient_t1_address: royalties.recipient_t1_address,
           rate: <RoyaltyRate>{
-            parts_per_million: royalties.rate.parts_per_million,
-          },
-        },
-      ];
+            parts_per_million: royalties.rate.parts_per_million
+          }
+        }
+      ]
     } catch (e) {
       throw new Error(
-        `avn-service - invalid ROYALTIES value specified in config: ${e.toString()}`,
-      );
+        `avn-service - invalid ROYALTIES value specified in config: ${e.toString()}`
+      )
     }
   }
 }

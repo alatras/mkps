@@ -15,13 +15,10 @@ export class NftService {
   constructor(
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
     @InjectModel(NftHistory.name) private nftHistoryModel: Model<NftHistory>,
-    private editionService: EditionService,
-  ) { }
+    private editionService: EditionService
+  ) {}
 
-  async create(
-    userId: string,
-    createNftDto: CreateNftDto
-  ): Promise<Nft> {
+  async create(userId: string, createNftDto: CreateNftDto): Promise<Nft> {
     const nftDraft = {
       ...createNftDto,
       isHidden: true,
@@ -34,37 +31,41 @@ export class NftService {
   }
 
   async findOneById(id: string): Promise<Nft> {
-    return this.nftModel
-      .findOne({ _id: uuidFrom(id) })
-      .lean()
+    return this.nftModel.findOne({ _id: uuidFrom(id) }).lean()
   }
 
   async updateOneById(id: string, updatedValues: Partial<Nft>) {
-    return await this.nftModel
-      .findOneAndUpdate({ _id: id }, {
+    return await this.nftModel.findOneAndUpdate(
+      { _id: id },
+      {
         $set: {
           ...updatedValues,
-          updatedAt: new Date(),
-        },
-      }, {
-        returnDocument: 'after',
-      })
+          updatedAt: new Date()
+        }
+      },
+      {
+        returnDocument: 'after'
+      }
+    )
   }
 
   async countNfts(filter: Record<string, any>): Promise<number> {
-    return this.nftModel.countDocuments(filter);
+    return this.nftModel.countDocuments(filter)
   }
 
   async setStatusToNft(id: string, status: NftStatus): Promise<Nft> {
-    const nft = await this.nftModel
-      .findOneAndUpdate({ _id: id }, {
+    const nft = await this.nftModel.findOneAndUpdate(
+      { _id: id },
+      {
         $set: {
           status,
-          updatedAt: new Date(),
-        },
-      }, {
-        returnDocument: 'after',
-      })
+          updatedAt: new Date()
+        }
+      },
+      {
+        returnDocument: 'after'
+      }
+    )
 
     // if the NFT is part of an edition
     // we want to recalculate the counts of that edition
@@ -80,27 +81,28 @@ export class NftService {
   }
 
   async addHistoryMinted(
-    historyParams: Omit<NftHistory, 'type'>,
+    historyParams: Omit<NftHistory, 'type'>
   ): Promise<NftHistory> {
     const doc: NftHistory = {
       ...historyParams,
-      type: HistoryType.minted,
+      type: HistoryType.minted
       // TODO test check createdAt and updatedAt
-    };
-    // 
+    }
+    //
     const history = doc.transactionHash
-      ? await this.nftHistoryModel
-        .findOne<NftHistory>({ transactionHash: doc.transactionHash })
-      : null;
+      ? await this.nftHistoryModel.findOne<NftHistory>({
+          transactionHash: doc.transactionHash
+        })
+      : null
 
     if (history == null) {
-      await this.nftHistoryModel.create(doc);
+      await this.nftHistoryModel.create(doc)
     } else {
-      const { createdAt: _, ...docUpdated } = doc;
+      const { createdAt: _, ...docUpdated } = doc
       await this.nftHistoryModel.updateOne(
         { transactionHash: doc.transactionHash },
-        { $set: { ...docUpdated, updatedAt: new Date() } },
-      );
+        { $set: { ...docUpdated, updatedAt: new Date() } }
+      )
     }
 
     return doc

@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common'
 import { EditionListingController } from './edition-listing.controller'
 import { EditionListingService } from './edition-listing.service'
 import { MongooseModule } from '@nestjs/mongoose'
-import { EditionListing, EditionListingSchema } from './schemas/edition-listing.schema'
+import {
+  EditionListing,
+  EditionListingSchema
+} from './schemas/edition-listing.schema'
 import { DbCollections } from '../shared/enum'
 
 @Module({
@@ -19,4 +22,4 @@ import { DbCollections } from '../shared/enum'
   providers: [EditionListingService],
   exports: [EditionListingService]
 })
-export class EditionListingModule { }
+export class EditionListingModule {}

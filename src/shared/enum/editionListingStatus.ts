@@ -4,5 +4,5 @@ export enum EditionListingStatus {
   closing = 'Closing',
   unconfirmed = 'Unconfirmed',
   ended = 'Ended',
-  error = 'Error',
+  error = 'Error'
 }

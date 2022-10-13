@@ -1,7 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Transform } from 'class-transformer'
 import { Document } from 'mongoose'
-import { AuctionStatus, AuctionType, Currency, DbCollections } from '../../shared/enum'
+import {
+  AuctionStatus,
+  AuctionType,
+  Currency,
+  DbCollections
+} from '../../shared/enum'
 import * as MUUID from 'uuid-mongodb'
 
 class Edition {
@@ -11,10 +16,10 @@ class Edition {
 
 class AuctionSellerBase {
   _id: object
-  avnPubKey: string | null;
+  avnPubKey: string | null
 }
 
-class AuctionWinner extends AuctionSellerBase { }
+class AuctionWinner extends AuctionSellerBase {}
 
 class EthAuctionSeller extends AuctionSellerBase {
   ethAddress?: string

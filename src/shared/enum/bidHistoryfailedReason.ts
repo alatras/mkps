@@ -1,4 +1,4 @@
 export interface BidHistoryfailedReason {
-  userErrorMessage: string;
-  internalErrorMessage: string;
+  userErrorMessage: string
+  internalErrorMessage: string
 }

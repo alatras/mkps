@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import { AuctionType, DbCollections } from '../../shared/enum'
-import { Transform } from "class-transformer"
-import * as MUUID from "uuid-mongodb"
+import { Transform } from 'class-transformer'
+import * as MUUID from 'uuid-mongodb'
 
 export type NftEditionDocument = NftEdition & Document
 
@@ -43,7 +43,6 @@ export class NftEdition {
   @Prop()
   isHidden: boolean
 
-  // @Transform(({ value }) => MUUID.from(value).toString())
   @Prop()
   nfts: object[]
 

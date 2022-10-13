@@ -3,7 +3,13 @@ import { getModelToken } from '@nestjs/mongoose'
 import * as MUUID from 'uuid-mongodb'
 import { NftService } from '../nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
-import { getEditionListing, getMockNft, NftMock, getMockNftHistory, getNftEdition } from './mocks'
+import {
+  getEditionListing,
+  getMockNft,
+  NftMock,
+  getMockNftHistory,
+  getNftEdition
+} from './mocks'
 import { NftHistory } from '../schemas/nft-history.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftEdition } from '../../edition/schemas/edition.schema'
@@ -16,13 +22,22 @@ describe('NftService', () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        NftService, 
+        NftService,
         EditionService,
         EditionListingService,
-        { provide: getModelToken(Nft.name), useValue: new NftMock(getMockNft()) },
-        { provide: getModelToken(NftHistory.name), useValue: getMockNftHistory() },
+        {
+          provide: getModelToken(Nft.name),
+          useValue: new NftMock(getMockNft())
+        },
+        {
+          provide: getModelToken(NftHistory.name),
+          useValue: getMockNftHistory()
+        },
         { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
-        { provide: getModelToken(EditionListing.name), useValue: getEditionListing() },
+        {
+          provide: getModelToken(EditionListing.name),
+          useValue: getEditionListing()
+        }
       ]
     }).compile()
 

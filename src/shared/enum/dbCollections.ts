@@ -4,5 +4,5 @@ export enum DbCollections {
   NFTs = 'nfts',
   NftHistory = 'nftHistory',
   Editions = 'editions',
-  EditionListings = 'editionListings',
+  EditionListings = 'editionListings'
 }

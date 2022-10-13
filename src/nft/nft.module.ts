@@ -10,8 +10,8 @@ import { DbCollections } from '../shared/enum'
 @Module({
   imports: [
     EditionModule,
-    MongooseModule.forFeature(
-      [{
+    MongooseModule.forFeature([
+      {
         name: Nft.name,
         schema: NftSchema,
         collection: DbCollections.NFTs
@@ -21,10 +21,10 @@ import { DbCollections } from '../shared/enum'
         schema: NftHistorySchema,
         collection: DbCollections.NftHistory
       }
-      ]),
+    ])
   ],
   controllers: [NftController],
   providers: [NftService],
   exports: [NftService]
 })
-export class NftModule { }
+export class NftModule {}

@@ -20,10 +20,10 @@ import { EditionListingModule } from '../edition-listing/edition-listing.module'
         schema: NftSchema,
         collection: 'nfts'
       }
-    ]),
+    ])
   ],
   controllers: [EditionController],
   providers: [EditionService],
   exports: [EditionService]
 })
-export class EditionModule { }
+export class EditionModule {}

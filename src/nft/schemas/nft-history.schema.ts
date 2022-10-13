@@ -9,7 +9,7 @@ export type NftHistoryDocument = NftHistory & Document
 
 @Schema({
   collection: DbCollections.NftHistory,
-  versionKey: false,
+  versionKey: false
 })
 export class NftHistory {
   @Transform(({ value }) => MUUID.from(value).toString())

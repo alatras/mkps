@@ -43,7 +43,7 @@ export type NftDocument = Nft & Document
 
 @Schema({
   collection: DbCollections.NFTs,
-  versionKey: false,
+  versionKey: false
 })
 export class Nft {
   @Transform(({ value }) => MUUID.from(value).toString())

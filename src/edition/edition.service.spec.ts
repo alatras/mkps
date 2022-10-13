@@ -8,7 +8,7 @@ import { EditionListingService } from '../edition-listing/edition-listing.servic
 import { EditionListing } from '../edition-listing/schemas/edition-listing.schema'
 
 describe('EditionService', () => {
-  let service: EditionService;
+  let service: EditionService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -17,14 +17,17 @@ describe('EditionService', () => {
         EditionService,
         { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
         { provide: getModelToken(Nft.name), useValue: getMockNft() },
-        { provide: getModelToken(EditionListing.name), useValue: getEditionListing() },
-      ],
-    }).compile();
+        {
+          provide: getModelToken(EditionListing.name),
+          useValue: getEditionListing()
+        }
+      ]
+    }).compile()
 
-    service = module.get<EditionService>(EditionService);
-  });
+    service = module.get<EditionService>(EditionService)
+  })
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-});
+    expect(service).toBeDefined()
+  })
+})
