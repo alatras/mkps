@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { NftEdition, NftEditionSchema } from './schemas/edition.schema'
 import { Nft, NftSchema } from '../nft/schemas/nft.schema'
 import { EditionListingModule } from '../edition-listing/edition-listing.module'
+import { DbCollections } from 'src/shared/enum'
 
 @Module({
   imports: [
@@ -13,12 +14,12 @@ import { EditionListingModule } from '../edition-listing/edition-listing.module'
       {
         name: NftEdition.name,
         schema: NftEditionSchema,
-        collection: 'editions'
+        collection: DbCollections.Editions
       },
       {
         name: Nft.name,
         schema: NftSchema,
-        collection: 'nfts'
+        collection: DbCollections.NFTs
       }
     ])
   ],

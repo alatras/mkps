@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { User, UserSchema } from './schemas/user.schema'
 import { UserService } from './user.service'
 import { UserController } from './user.controller'
+import { DbCollections } from 'src/shared/enum'
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { UserController } from './user.controller'
       {
         name: User.name,
         schema: UserSchema,
-        collection: 'users'
+        collection: DbCollections.Users
       }
     ])
   ],
