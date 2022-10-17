@@ -4,9 +4,13 @@ import { User, UserSchema } from './schemas/user.schema'
 import { UserService } from './user.service'
 import { UserController } from './user.controller'
 import { DbCollections } from 'src/shared/enum'
+import { ConfigModule } from '@nestjs/config'
+import { LogModule } from 'src/log/log.module'
 
 @Module({
   imports: [
+    LogModule,
+    ConfigModule,
     MongooseModule.forFeature([
       {
         name: User.name,

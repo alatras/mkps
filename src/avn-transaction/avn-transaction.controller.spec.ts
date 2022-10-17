@@ -22,6 +22,7 @@ import { NftEdition } from '../edition/schemas/edition.schema'
 import { EditionListingService } from '../edition-listing/edition-listing.service'
 import { EditionListing } from '../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../log/log.service'
+import { ConfigService } from '@nestjs/config'
 
 describe('AvnTransactionController', () => {
   let controller: AvnTransactionController
@@ -29,6 +30,7 @@ describe('AvnTransactionController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        ConfigService,
         LogService,
         AvnTransactionService,
         UserService,

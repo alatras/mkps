@@ -1,22 +1,37 @@
 import {
+  Body,
   Controller,
   Get,
+  Patch,
   Request,
+  UnauthorizedException,
   UseGuards,
-  UseInterceptors
+  UseInterceptors,
+  InternalServerErrorException,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common'
+import { LoggerService } from '@nestjs/common'
+import { LogService } from '../log/log.service'
 import { UserService } from './user.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../auth/permissions.guard'
 import { Permissions } from '../auth/decorators/permissions.decorator'
 import { Request as ExpressRequest } from 'express'
-import { UserResponseDto } from './dto/user.dto'
+import { UpdateAuth0Dto, UpdateUserDto, UserResponseDto } from './dto/user.dto'
 import MongooseClassSerializerInterceptor from '../interceptors/mongoose-class-serializer.interceptor'
-import { User } from './schemas/user.schema'
+import { Provider, User } from './schemas/user.schema'
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  private log: LoggerService
+
+  constructor(
+    private readonly userService: UserService,
+    private logService: LogService,
+  ) {
+    this.log = this.logService.getLogger()
+  }
 
   @UseInterceptors(MongooseClassSerializerInterceptor(UserResponseDto))
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -40,5 +55,62 @@ export class UserController {
     )
 
     return new UserResponseDto(user)
+  }
+
+  @UseInterceptors(MongooseClassSerializerInterceptor(UserResponseDto))
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  async updateUser(
+    @Request() req: ExpressRequest,
+    @Body() dto: UpdateUserDto
+  ): Promise<UserResponseDto> {
+    const user = await this.userService.updateUser(
+      (req.user as User).provider.id,
+      (req.user as User).provider.name,
+      dto,
+    )
+
+    return new UserResponseDto(user)
+  }
+
+  @UseInterceptors(MongooseClassSerializerInterceptor(UserResponseDto))
+  @UseGuards(JwtAuthGuard)
+  @Patch('auth0-email')
+  async updateAuth0Email(
+    @Request() req: ExpressRequest,
+    @Body() dto: UpdateAuth0Dto
+  ): Promise<UserResponseDto> {
+    try {
+      const providerName = (req.user as User).provider.name
+      if (providerName !== Provider.auth0) {
+        throw new UnauthorizedException('Invalid provider')
+      }
+
+      const user: User = (req as any).user
+
+      const updated = await this.userService.updateAuth0Email(
+        (req.user as User).provider.id,
+        providerName,
+        user,
+        dto.email,
+      )
+
+      return new UserResponseDto(updated)
+    } catch (err) {
+      this.log.error(
+        `UserController - cannot update Auth0 email" ` + dto.email,
+        err
+      )
+      switch (err.status) {
+        case 404:
+          throw new NotFoundException(err.message)
+        case 400:
+          throw new BadRequestException(err.message)
+        case 500:
+          throw new InternalServerErrorException(err.message)
+        default:
+          throw new InternalServerErrorException(err.message)
+      }
+    }
   }
 }

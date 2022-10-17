@@ -23,7 +23,7 @@ export class AvnTransactionService {
     @InjectModel(AvnTransaction.name)
     private avnTransactionModel: Model<AvnTransaction>,
     private userService: UserService,
-    private nftService: NftService
+    private nftService: NftService,
   ) {}
 
   /**

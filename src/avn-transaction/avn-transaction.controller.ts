@@ -1,4 +1,12 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  InternalServerErrorException,
+  NotFoundException,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { LogService } from '../log/log.service'
@@ -33,10 +41,20 @@ export class AvnTransactionController {
       return create
     } catch (err) {
       this.log.error(
-        'AvnTransactionController - cannot create AVN transaction:',
-        dto
+        `AvnTransactionController - cannot create AVN transaction for NFT `
+        + dto.nftId + dto.requestId,
+        err
       )
-      return err
+      switch (err.status) {
+        case 404:
+          throw new NotFoundException(err.message)
+        case 400:
+          throw new BadRequestException(err.message)
+        case 500:
+          throw new InternalServerErrorException(err.message)
+        default:
+          throw new InternalServerErrorException(err.message)
+      }
     }
   }
 }
