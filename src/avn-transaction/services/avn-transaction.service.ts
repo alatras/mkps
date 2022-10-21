@@ -2,23 +2,27 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import * as MUUID from 'uuid-mongodb'
-import { UserService } from '../user/user.service'
-import { InvalidDataError } from '../core/errors'
+import { UserService } from '../../user/user.service'
+import { InvalidDataError } from '../../core/errors'
 import {
   AvnMintTransaction,
   AvnMintTransactionData,
   AvnTransaction,
   Royalties,
   RoyaltyRate
-} from './schemas/avn-transaction.schema'
-import { User } from '../user/schemas/user.schema'
-import { AvnTransactionState, AvnTransactionType } from '../shared/enum'
-import { NftService } from '../nft/nft.service'
-import { uuidFrom } from '../utils'
-import { AvnTransactionMintResponse } from './response/anv-transaction-mint-response'
+} from '../schemas/avn-transaction.schema'
+import { User } from '../../user/schemas/user.schema'
+import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
+import { NftService } from '../../nft/services/nft.service'
+import { uuidFrom } from '../../utils'
+import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
+import { ClientProxy } from '@nestjs/microservices'
+import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 
 @Injectable()
 export class AvnTransactionService {
+  private client: ClientProxy
+
   constructor(
     @InjectModel(AvnTransaction.name)
     private avnTransactionModel: Model<AvnTransaction>,
@@ -103,5 +107,16 @@ export class AvnTransactionService {
         `avn-service - invalid ROYALTIES value specified in config: ${e.toString()}`
       )
     }
+  }
+
+  async handleAvnTransactionProcessingComplete(transaction: AvnTransaction | any): Promise<any> {
+    if (transaction.type === AvnTransactionType.MintSingleNft) {
+      this.client.emit(
+        MessagePatternGenerator('nft', 'handleNftMinted'),
+        { transaction }
+      )
+    }
+
+    console.log('Avn Transaction Complete: ', transaction)
   }
 }

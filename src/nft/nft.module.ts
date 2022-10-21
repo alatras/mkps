@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
-import { NftService } from './nft.service'
-import { NftController } from './nft.controller'
+import { NftService } from './services/nft.service'
+import { NftHttpController } from './controllers/nft.http-controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { Nft, NftSchema } from './schemas/nft.schema'
 import { NftHistory, NftHistorySchema } from './schemas/nft-history.schema'
@@ -23,7 +23,7 @@ import { DbCollections } from '../shared/enum'
       }
     ])
   ],
-  controllers: [NftController],
+  controllers: [NftHttpController],
   providers: [NftService],
   exports: [NftService]
 })

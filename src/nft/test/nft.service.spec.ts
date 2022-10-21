@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
 import * as MUUID from 'uuid-mongodb'
-import { NftService } from '../nft.service'
+import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
 import {
   getEditionListing,

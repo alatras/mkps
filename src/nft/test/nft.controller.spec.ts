@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
-import { NftController } from '../nft.controller'
-import { NftService } from '../nft.service'
+import { NftHttpController } from '../controllers/nft.http-controller'
+import { NftService } from '../services/nft.service'
 import { Nft } from '../schemas/nft.schema'
 import {
   getEditionListing,
@@ -16,11 +16,11 @@ import { EditionListingService } from '../../edition-listing/edition-listing.ser
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 
 describe('NftController', () => {
-  let controller: NftController
+  let controller: NftHttpController
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [NftController],
+      controllers: [NftHttpController],
       providers: [
         NftService,
         EditionService,
@@ -38,7 +38,7 @@ describe('NftController', () => {
       ]
     }).compile()
 
-    controller = module.get<NftController>(NftController)
+    controller = module.get<NftHttpController>(NftHttpController)
   })
 
   it('should be defined', () => {

@@ -2,13 +2,12 @@ import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 // import { from } from 'uuid-mongodb'
-import { CreateNftDto } from './dto/nft.dto'
-import { Nft, NftStatus } from './schemas/nft.schema'
-import { EditionService } from '../edition/edition.service'
-import { NftHistory } from './schemas/nft-history.schema'
-import { HistoryType } from '../shared/enum/historyType'
-import { from as _uuidFrom } from 'uuid-mongodb'
-import { uuidFrom } from '../utils'
+import { CreateNftDto } from '../dto/nft.dto'
+import { Nft, NftStatus } from '../schemas/nft.schema'
+import { EditionService } from '../../edition/edition.service'
+import { NftHistory } from '../schemas/nft-history.schema'
+import { HistoryType } from '../../shared/enum/historyType'
+import { uuidFrom } from '../../utils'
 
 @Injectable()
 export class NftService {
@@ -22,9 +21,9 @@ export class NftService {
     const nftDraft = {
       ...createNftDto,
       isHidden: true,
-      owner: _uuidFrom(userId),
+      owner: uuidFrom(userId),
       status: NftStatus.draft,
-      minterId: _uuidFrom(userId)
+      minterId: uuidFrom(userId)
     }
 
     return await this.nftModel.create(nftDraft)
@@ -35,8 +34,8 @@ export class NftService {
   }
 
   async updateOneById(id: string, updatedValues: Partial<Nft>) {
-    return await this.nftModel.findOneAndUpdate(
-      { _id: id },
+    return this.nftModel.findOneAndUpdate(
+      { _id: uuidFrom(id) },
       {
         $set: {
           ...updatedValues,
@@ -46,7 +45,7 @@ export class NftService {
       {
         returnDocument: 'after'
       }
-    )
+    );
   }
 
   async countNfts(filter: Record<string, any>): Promise<number> {
@@ -55,7 +54,7 @@ export class NftService {
 
   async setStatusToNft(id: string, status: NftStatus): Promise<Nft> {
     const nft = await this.nftModel.findOneAndUpdate(
-      { _id: id },
+      { _id: uuidFrom(id) },
       {
         $set: {
           status,
@@ -90,7 +89,7 @@ export class NftService {
     }
     //
     const history = doc.transactionHash
-      ? await this.nftHistoryModel.findOne<NftHistory>({
+      ? await this.nftHistoryModel.findOne({
           transactionHash: doc.transactionHash
         })
       : null

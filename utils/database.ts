@@ -28,6 +28,7 @@ export const getMongoUri = () => {
 }
 
 export const getMongoString = (): string => {
-  const l = getMongoUri() + '/' + process.env.MONGODB_NAME
+  const l = getMongoUri()
+  console.log('Here1', l)
   return l
 }

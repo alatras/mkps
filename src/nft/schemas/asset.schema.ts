@@ -1,8 +1,8 @@
-import { Prop, Schema } from '@nestjs/mongoose'
 import { AssetType } from './nft.schema'
 import { Type } from 'class-transformer'
+import { Prop, Schema } from "@nestjs/mongoose";
 
-@Schema({ _id: false, typeKey: '$type' })
+@Schema({ _id: false, typeKey: '$type' as 'type' })
 export class Asset {
   @Prop({ $type: String, required: true })
   url: string

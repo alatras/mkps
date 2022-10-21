@@ -5,11 +5,13 @@ import {
   OnModuleInit
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { ChangeStreamOptions, ChangeStream } from 'mongodb'
+import { ChangeStream, ChangeStreamOptions } from 'mongodb'
 import { Model } from 'mongoose'
-import { LogService } from 'src/log/log.service'
-import { AvnTransactionState, AvnTransactionType } from 'src/shared/enum'
-import { AvnTransaction } from './schemas/avn-transaction.schema'
+import { AvnTransactionService } from './avn-transaction.service'
+import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
+import { LogService } from '../../log/log.service'
+import { AvnTransaction } from '../schemas/avn-transaction.schema'
+import { MUUID } from 'uuid-mongodb'
 
 @Injectable()
 export class AvnTransactionChangeStreamService
@@ -17,13 +19,14 @@ export class AvnTransactionChangeStreamService
 {
   private log: LoggerService
   private pipeline: Array<Record<string, unknown>>
-  private options: ChangeStreamOptions
+  private options: ChangeStreamOptions | unknown
   private resumeToken: object
   private changeStream: ChangeStream
 
   constructor(
     @InjectModel(AvnTransaction.name)
     private avnTransactionModel: Model<AvnTransaction>,
+    private avnTransactionService: AvnTransactionService,
     private logService: LogService
   ) {
     this.log = this.logService.getLogger()
@@ -47,22 +50,23 @@ export class AvnTransactionChangeStreamService
   private async listen(): Promise<void> {
     this.changeStream = this.avnTransactionModel.watch(
       this.pipeline,
-      this.options
-    )
+      this.options as any
+    ) as unknown as ChangeStream<AvnTransaction>
 
     try {
       while (await this.changeStream.hasNext()) {
         const data = await this.changeStream.next()
-        this.resumeToken = data?._id
-        this.handleChanges(data.fullDocument as AvnTransaction)
+        this.resumeToken = data._id
+
+        await this.handleChanges(data.fullDocument as AvnTransaction)
       }
     } catch (error) {
-      if (this.changeStream.closed) {
-        this.log.warn(
+      if (this.changeStream.close) {
+        this.log.error(
           'AvnTransactionChangeStreamService - Change Stream' +
             ` is closed with error: ${error.message}. Opening again...`
         )
-        this.listen()
+        await this.listen()
       } else {
         throw error
       }
@@ -78,7 +82,11 @@ export class AvnTransactionChangeStreamService
 
     switch (state) {
       case AvnTransactionState.PROCESSING_COMPLETE:
-        this.log.debug(`${logString} is successfully MINTED in AVN`)
+        await this.avnTransactionService.handleAvnTransactionProcessingComplete(
+          transaction
+        )
+
+        this.log.log(`${logString} is successfully MINTED in AVN`)
         break
       case AvnTransactionState.PROCESSING_FAILED:
         this.log.debug(`${logString} has FAILED in AVN`)
@@ -97,8 +105,8 @@ export class AvnTransactionChangeStreamService
   /**
    * Invokes listener after module initiation
    */
-  onModuleInit() {
-    this.listen()
+  async onModuleInit() {
+    await this.listen()
   }
 
   /**

@@ -1,19 +1,26 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { LogService } from '../log/log.service'
-import { AvnTransactionService } from './avn-transaction.service'
-import { MintAvnTransactionDto } from './dto/auth.dto'
-import { AvnTransactionMintResponse } from './response/anv-transaction-mint-response'
+import { LogService } from '../../log/log.service'
+import { AvnTransactionService } from '../services/avn-transaction.service'
+import { MintAvnTransactionDto } from '../dto/auth.dto'
+import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
 
 @Controller('avn-transaction')
-export class AvnTransactionController {
+export class AvnTransactionHttpController {
   private log: LoggerService
   constructor(
     private avnTransactionService: AvnTransactionService,
     private logService: LogService
   ) {
     this.log = this.logService.getLogger()
+  }
+
+  @Post('test')
+  async test(): Promise<any> {
+    return await this.avnTransactionService.handleAvnTransactionProcessingComplete(
+      { testKey: 'TEst Value' }
+    )
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -27,13 +34,13 @@ export class AvnTransactionController {
         dto.requestId
       )
       this.log.log(
-        'AvnTransactionController - ANV transaction created successfully:',
+        'AvnTransactionHttpController - ANV transaction created successfully:',
         dto
       )
       return create
     } catch (err) {
       this.log.error(
-        'AvnTransactionController - cannot create AVN transaction:',
+        'AvnTransactionHttpController - cannot create AVN transaction:',
         dto
       )
       return err
