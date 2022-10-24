@@ -61,7 +61,7 @@ pipeline {
                     tag = "v$BUILD_NUMBER"
                     latest = "latest"
 
-                    if ("${params.account_name}" == "test") {
+                    if ("${params.account_name}" == "eos") {
                         tag = "v${params.environment}-$BUILD_NUMBER"
                         latest = "${params.environment}-latest"                        
                     } 
