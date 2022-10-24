@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Document } from 'mongoose'
+import { Document, Types } from 'mongoose'
 import {
   AvnTransactionState,
   AvnTransactionType,
@@ -7,6 +7,8 @@ import {
 } from '../../shared/enum'
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
+
+export class AvnTransactionHistory {}
 
 export interface AvnTransactionBase {
   request_id: string
@@ -64,18 +66,15 @@ export type AvnTransactionDocument = AvnTransaction & Document
   collection: DbCollections.AvnTransactions,
   versionKey: false,
   autoCreate: true,
-  timestamps: true
+  timestamps: true,
+  typeKey: '$type'
 })
 export class AvnTransaction {
-  @Transform(({ value }) => MUUID.from(value).toString())
-  @Prop({
-    type: 'object',
-    value: { type: 'Buffer' },
-    default: () => MUUID.v4()
-  })
-  _id: object
+  @Transform(({ value }) => new Types.ObjectId(value).toString())
+  @Prop({ $type: Types.ObjectId })
+  _id: Types.ObjectId
 
-  @Prop({ required: true })
+  @Prop()
   request_id: string
 
   @Prop()

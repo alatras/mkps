@@ -4,21 +4,12 @@ import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { User } from '../../user/schemas/user.schema'
 import { Asset, ImagesSet } from './asset.schema'
-import { DbCollections } from '../../shared/enum'
+import { DbCollections, NftStatus } from '../../shared/enum'
+import { Owner } from '../../shared/sub-schemas/owner.schema'
 
 export enum AssetType {
   image = 'image',
   video = 'video'
-}
-
-export enum NftStatus {
-  draft = 'Draft',
-  minting = 'Minting',
-  minted = 'Minted',
-  saleOpening = 'Sale opening',
-  forSale = 'For sale',
-  saleClosing = 'Sale closing',
-  owned = 'Owned'
 }
 
 @Schema({ _id: false })
@@ -52,7 +43,7 @@ export class Nft {
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop({
     type: 'object',
@@ -104,15 +95,8 @@ export class Nft {
   })
   status: NftStatus
 
-  @Prop({
-    type: 'object',
-    value: { type: 'Buffer' },
-    ref: User.name,
-    required: true
-  })
-  @Transform(({ value }) => MUUID.from(value).toString())
-  @Type(() => User)
-  owner: object
+  @Prop({ type: Owner })
+  owner: Owner
 
   @Prop({ type: 'object', required: true })
   properties: Record<string, any>

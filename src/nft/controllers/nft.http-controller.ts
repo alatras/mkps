@@ -7,19 +7,19 @@ import {
   UseGuards,
   UseInterceptors
 } from '@nestjs/common'
-import { NftService } from './nft.service'
-import { CreateNftDto, NftResponseDto } from './dto/nft.dto'
-import { ErrorValidationPipe } from '../pipes/error-validation.pipe'
-import { User } from '../user/schemas/user.schema'
+import { NftService } from '../services/nft.service'
+import { CreateNftDto, NftResponseDto } from '../dto/nft.dto'
+import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
+import { User } from '../../user/schemas/user.schema'
 import { from, MUUID } from 'uuid-mongodb'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { PermissionsGuard } from '../auth/permissions.guard'
-import { Permissions } from '../auth/decorators/permissions.decorator'
-import MongooseClassSerializerInterceptor from '../interceptors/mongoose-class-serializer.interceptor'
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
+import { PermissionsGuard } from '../../auth/permissions.guard'
+import { Permissions } from '../../auth/decorators/permissions.decorator'
+import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
-export class NftController {
+export class NftHttpController {
   constructor(private readonly nftService: NftService) {}
 
   @UseInterceptors(MongooseClassSerializerInterceptor(NftResponseDto))
