@@ -17,7 +17,7 @@ import * as MUUID from 'uuid-mongodb'
 import { AssetDto, ImagesSetDto } from './asset.dto'
 import { Asset, ImagesSet } from '../schemas/asset.schema'
 import { Document } from 'mongoose'
-import { NftStatus } from "../../shared/enum";
+import { NftStatus } from '../../shared/enum'
 
 export class CreateUnlockableContentDto {
   @IsString()

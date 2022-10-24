@@ -3,7 +3,6 @@ import { AppModule } from './app.module'
 import { HttpExceptionsFilter } from './filters/http-exceptions.filter'
 import { LogService } from './log/log.service'
 import { Transport } from '@nestjs/microservices'
-import { throwError } from 'rxjs'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

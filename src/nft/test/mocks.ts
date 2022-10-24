@@ -1,7 +1,12 @@
 import { AssetType, Nft } from '../schemas/nft.schema'
 import * as MUUID from 'uuid-mongodb'
 import { NftHistory } from '../schemas/nft-history.schema'
-import { AuctionStatus, AuctionType, Currency, NftStatus } from "../../shared/enum";
+import {
+  AuctionStatus,
+  AuctionType,
+  Currency,
+  NftStatus
+} from '../../shared/enum'
 import { HistoryType } from '../../shared/enum/historyType'
 import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'

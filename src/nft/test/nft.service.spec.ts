@@ -18,7 +18,6 @@ import { EditionListing } from '../../edition-listing/schemas/edition-listing.sc
 import { NftStatus } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { HistoryType } from '../../shared/enum/historyType'
-import mock = jest.mock
 
 describe('NftService', () => {
   let service: NftService

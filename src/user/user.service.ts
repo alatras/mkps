@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { Provider, User } from './schemas/user.schema'
 import { CreateUserDto } from './dto/user.dto'
-import { uuidFrom } from '../utils'
 import { MUUID } from 'uuid-mongodb'
 
 @Injectable()
