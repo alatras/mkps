@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "nft-service.fullname" . }}
+  name: {{ include "user-service.fullname" . }}
   labels:
-    {{- include "nft-service.labels" . | nindent 4 }}
+    {{- include "user-service.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -12,13 +12,13 @@ spec:
     matchLabels:
       {{- with .Values.selectors }}
         {{- toYaml . | nindent 6 }}
-      {{- end }}      
-      {{- include "nft-service.selectorLabels" . | nindent 6 }}
+      {{- end }}    
+      {{- include "user-service.selectorLabels" . | nindent 6 }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 25%        
+      maxUnavailable: 25%         
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -28,14 +28,14 @@ spec:
       labels:
         {{- with .Values.selectors }}
           {{- toYaml . | nindent 8 }}
-        {{- end }}         
-        {{- include "nft-service.selectorLabels" . | nindent 8 }}
+        {{- end }}        
+        {{- include "user-service.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "nft-service.serviceAccountName" . }}
+      serviceAccountName: {{ include "user-service.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -54,7 +54,7 @@ spec:
               mountPath: /logs/
             - name: filebeat-config
               mountPath: /usr/share/filebeat/filebeat.yml
-              subPath: filebeat.yml
+              subPath: filebeat.yml      
         - name: metricbeat-sidecar
           image: "docker.elastic.co/beats/metricbeat:8.4.3"
           resources:
@@ -79,7 +79,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: metricbeat
-                  key: password
+                  key: password              
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -325,10 +325,10 @@ spec:
           emptyDir: { }
         - name: filebeat-config
           configMap:
-            name: filebeat-configmap-nft-services
+            name: filebeat-configmap-user-services
             items:
               - key: filebeat.yml
-                path: filebeat.yml            
+                path: filebeat.yml       
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

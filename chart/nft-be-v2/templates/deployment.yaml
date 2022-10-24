@@ -329,7 +329,6 @@ spec:
             items:
               - key: filebeat.yml
                 path: filebeat.yml
-
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
