@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "avn-service.fullname" . }}
+  name: {{ include "services.fullname" . }}
   labels:
-    {{- include "avn-service.labels" . | nindent 4 }}
+    {{- include "services.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -12,13 +12,13 @@ spec:
     matchLabels:
       {{- with .Values.selectors }}
         {{- toYaml . | nindent 6 }}
-      {{- end }}        
-      {{- include "avn-service.selectorLabels" . | nindent 6 }}
+      {{- end }}    
+      {{- include "services.selectorLabels" . | nindent 6 }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 25%        
+      maxUnavailable: 25%     
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -28,14 +28,14 @@ spec:
       labels:
         {{- with .Values.selectors }}
           {{- toYaml . | nindent 8 }}
-        {{- end }}         
-        {{- include "avn-service.selectorLabels" . | nindent 8 }}
+        {{- end }}          
+        {{- include "services.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "avn-service.serviceAccountName" . }}
+      serviceAccountName: {{ include "services.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -79,7 +79,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: metricbeat
-                  key: password                    
+                  key: password
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -300,7 +300,7 @@ spec:
                 secretKeyRef:
                   name: test-auth0
                   key: test_auth0_client_secret
-                  optional: true          
+                  optional: true
           ports:
             - name: http
               containerPort: 5002
@@ -325,10 +325,10 @@ spec:
           emptyDir: { }
         - name: filebeat-config
           configMap:
-            name: filebeat-configmap-avn-service
+            name: filebeat-configmap-{{ template "services.fullname" . }}
             items:
               - key: filebeat.yml
-                path: filebeat.yml            
+                path: filebeat.yml
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
