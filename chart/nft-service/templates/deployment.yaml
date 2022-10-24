@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "nft-be-v2.fullname" . }}
+  name: {{ include "nft-service.fullname" . }}
   labels:
-    {{- include "nft-be-v2.labels" . | nindent 4 }}
+    {{- include "nft-service.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -12,13 +12,13 @@ spec:
     matchLabels:
       {{- with .Values.selectors }}
         {{- toYaml . | nindent 6 }}
-      {{- end }}    
-      {{- include "nft-be-v2.selectorLabels" . | nindent 6 }}
+      {{- end }}      
+      {{- include "nft-service.selectorLabels" . | nindent 6 }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 25%      
+      maxUnavailable: 25%        
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -28,19 +28,19 @@ spec:
       labels:
         {{- with .Values.selectors }}
           {{- toYaml . | nindent 8 }}
-        {{- end }}      
-        {{- include "nft-be-v2.selectorLabels" . | nindent 8 }}
+        {{- end }}         
+        {{- include "nft-service.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "nft-be-v2.serviceAccountName" . }}
+      serviceAccountName: {{ include "nft-service.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: filebeat-sidecar
-          image: "docker.elastic.co/beats/filebeat:7.14.0"
+          image: "docker.elastic.co/beats/filebeat:8.4.3"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             requests:
@@ -56,7 +56,7 @@ spec:
               mountPath: /usr/share/filebeat/filebeat.yml
               subPath: filebeat.yml
         - name: metricbeat-sidecar
-          image: "docker.elastic.co/beats/metricbeat:8.0.0-SNAPSHOT"
+          image: "docker.elastic.co/beats/metricbeat:8.4.3"
           resources:
             requests:
               memory: 64Mi
@@ -300,7 +300,7 @@ spec:
                 secretKeyRef:
                   name: test-auth0
                   key: test_auth0_client_secret
-                  optional: true
+                  optional: true          
           ports:
             - name: http
               containerPort: 5002
@@ -328,8 +328,7 @@ spec:
             name: filebeat-configmap-be-v2
             items:
               - key: filebeat.yml
-                path: filebeat.yml
-
+                path: filebeat.yml            
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

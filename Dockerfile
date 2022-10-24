@@ -1,4 +1,4 @@
-FROM node:16.16.0-alpine3.15 AS build
+FROM node:16.18.0-alpine3.15 AS build
 
 ARG PACKAGE=veremusic
 ENV PACKAGE=${PACKAGE}
