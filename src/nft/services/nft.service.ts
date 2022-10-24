@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-// import { from } from 'uuid-mongodb'
 import { CreateNftDto } from '../dto/nft.dto'
 import { Nft } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'

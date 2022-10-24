@@ -24,7 +24,7 @@ export class AvnTransactionChangeStreamService
   private log: LoggerService
   private pipeline: Array<Record<string, unknown>>
   private options: ChangeStreamOptions
-  private resumeToken: object
+  private resumeToken: unknown
   private changeStream: ChangeStream
   private readonly logger = new Logger(AppService.name)
 
@@ -46,7 +46,7 @@ export class AvnTransactionChangeStreamService
     ]
     this.options = {
       fullDocument: 'updateLookup',
-      resumeAfter: this.resumeToken
+      resumeAfter: this.resumeToken || undefined
     }
   }
 
@@ -125,10 +125,25 @@ export class AvnTransactionChangeStreamService
   }
 
   async sendMintingSuccessfulEvent(transaction: AvnTransaction): Promise<void> {
+    const nftId = transaction.data?.unique_external_ref
+    const eid =
+      transaction.history[transaction.history.length - 1]?.operation_data?.nftId
+
+    if (nftId === undefined || eid === undefined) {
+      this.log.error(
+        '[sendMintingSuccessfulEvent] failed to updated NFT ' +
+          'although AVN transaction state is "PROCESSING_COMPLETE" ' +
+          'because a key is missing. ' +
+          `Request id: ${transaction.request_id}, ` +
+          `nftId: ${nftId}, ` +
+          `eid: ${eid}.`
+      )
+      return
+    }
+
     this.clientProxy.emit(MessagePatternGenerator('nft', 'handleNftMinted'), {
-      nftId: transaction.data.unique_external_ref,
-      eid: transaction.history[transaction.history.length - 1].operation_data
-        .nftId
+      nftId,
+      eid
     })
   }
 }

@@ -66,14 +66,9 @@ export type AvnTransactionDocument = AvnTransaction & Document
   collection: DbCollections.AvnTransactions,
   versionKey: false,
   autoCreate: true,
-  timestamps: true,
-  typeKey: '$type'
+  timestamps: true
 })
 export class AvnTransaction {
-  @Transform(({ value }) => new Types.ObjectId(value).toString())
-  @Prop({ $type: Types.ObjectId })
-  _id: Types.ObjectId
-
   @Prop()
   request_id: string
 

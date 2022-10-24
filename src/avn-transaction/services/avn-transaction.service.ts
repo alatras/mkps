@@ -34,8 +34,7 @@ export class AvnTransactionService {
    * @returns New AvnTransaction
    */
   async createMintAvnTransaction(
-    nftUuid: string,
-    requestId?: string
+    nftUuid: string
   ): Promise<AvnTransactionMintResponse | Error> {
     const nft = await this.nftService.findOneById(nftUuid)
     if (!nft) {
@@ -59,7 +58,7 @@ export class AvnTransactionService {
     }
 
     const newDoc: AvnMintTransaction = {
-      request_id: requestId,
+      request_id: `avnMint:${nftUuid}`,
       type: AvnTransactionType.MintSingleNft,
       data: data,
       state: AvnTransactionState.NEW,
