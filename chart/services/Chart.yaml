@@ -1,6 +1,6 @@
 apiVersion: v2
-name: nft-be-v2
-description: Backend helmchart
+name: services
+description: A Helm chart for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #

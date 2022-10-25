@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "nft-be-v2.fullname" . }}
+  name: {{ include "services.fullname" . }}
   labels:
-    {{- include "nft-be-v2.labels" . | nindent 4 }}
+    {{- include "services.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "nft-be-v2.fullname" . }}
+    name: {{ include "services.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

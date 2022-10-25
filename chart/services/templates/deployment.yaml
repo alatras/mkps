@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "nft-be-v2.fullname" . }}
+  name: {{ include "services.fullname" . }}
   labels:
-    {{- include "nft-be-v2.labels" . | nindent 4 }}
+    {{- include "services.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -13,12 +13,12 @@ spec:
       {{- with .Values.selectors }}
         {{- toYaml . | nindent 6 }}
       {{- end }}    
-      {{- include "nft-be-v2.selectorLabels" . | nindent 6 }}
+      {{- include "services.selectorLabels" . | nindent 6 }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 25%      
+      maxUnavailable: 25%     
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -28,19 +28,19 @@ spec:
       labels:
         {{- with .Values.selectors }}
           {{- toYaml . | nindent 8 }}
-        {{- end }}      
-        {{- include "nft-be-v2.selectorLabels" . | nindent 8 }}
+        {{- end }}          
+        {{- include "services.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "nft-be-v2.serviceAccountName" . }}
+      serviceAccountName: {{ include "services.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: filebeat-sidecar
-          image: "docker.elastic.co/beats/filebeat:7.14.0"
+          image: "docker.elastic.co/beats/filebeat:8.4.3"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             requests:
@@ -56,7 +56,7 @@ spec:
               mountPath: /usr/share/filebeat/filebeat.yml
               subPath: filebeat.yml
         - name: metricbeat-sidecar
-          image: "docker.elastic.co/beats/metricbeat:8.0.0-SNAPSHOT"
+          image: "docker.elastic.co/beats/metricbeat:8.4.3"
           resources:
             requests:
               memory: 64Mi
@@ -96,7 +96,6 @@ spec:
                 secretKeyRef:
                   name: mongo
                   key: name
-
             - name: "AUTH0_DOMAIN"
               valueFrom:
                 secretKeyRef:
@@ -123,7 +122,6 @@ spec:
                   name: auth0
                   key: api_url
                   optional: true
-
             - name: "STRIPE_SECRET_KEY"
               valueFrom:
                 secretKeyRef:
@@ -144,7 +142,6 @@ spec:
                 secretKeyRef:
                   name: aws
                   key: bucket_nft
-
             - name: "AWS_S3_BUCKET_REGION"
               valueFrom:
                 secretKeyRef:
@@ -262,7 +259,6 @@ spec:
               value: "5002"
             - name: "NODE_EXTRA_CA_CERTS"
               value: "/usr/src/app/rds-combined-ca-bundle.pem"
-
             - name: "API_URL"
               valueFrom:
                 secretKeyRef:
@@ -324,17 +320,15 @@ spec:
               mountPath: /usr/src/app/logs/
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-
       volumes:
         - name: app-logs
           emptyDir: { }
         - name: filebeat-config
           configMap:
-            name: filebeat-configmap-be-v2
+            name: filebeat-configmap-{{ template "services.fullname" . }}
             items:
               - key: filebeat.yml
                 path: filebeat.yml
-
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
