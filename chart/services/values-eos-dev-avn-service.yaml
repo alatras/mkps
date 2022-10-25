@@ -90,4 +90,4 @@ affinity:
         topologyKey: topology.kubernetes.io/zone
 
 selectors:
-  node: node
+  node: app
