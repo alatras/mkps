@@ -39,7 +39,7 @@ securityContext:
 serviceAccountName: nft-s3-cdn
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 5002
 
 ingress:
