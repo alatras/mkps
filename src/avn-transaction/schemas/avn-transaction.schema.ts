@@ -1,11 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Document, Types } from 'mongoose'
+import { Document } from 'mongoose'
 import {
   AvnTransactionState,
   AvnTransactionType,
   DbCollections
 } from '../../shared/enum'
-import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 
 export class AvnTransactionHistory {}
