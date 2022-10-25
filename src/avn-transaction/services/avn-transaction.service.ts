@@ -16,13 +16,9 @@ import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { NftService } from '../../nft/services/nft.service'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
-import { ClientProxy } from '@nestjs/microservices'
-import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 
 @Injectable()
 export class AvnTransactionService {
-  private client: ClientProxy
-
   constructor(
     @InjectModel(AvnTransaction.name)
     private avnTransactionModel: Model<AvnTransaction>,
@@ -38,15 +34,14 @@ export class AvnTransactionService {
    * @returns New AvnTransaction
    */
   async createMintAvnTransaction(
-    nftUuid: string,
-    requestId?: string
+    nftUuid: string
   ): Promise<AvnTransactionMintResponse | Error> {
     const nft = await this.nftService.findOneById(nftUuid)
     if (!nft) {
       throw new NotFoundException('NFT not found')
     }
 
-    const user: User = await this.userService.findOneById(nft.owner['_id'])
+    const user: User = await this.userService.findOneById(nft.owner._id)
     if (!user) {
       throw new NotFoundException('NFT user not found')
     }
@@ -63,7 +58,7 @@ export class AvnTransactionService {
     }
 
     const newDoc: AvnMintTransaction = {
-      request_id: requestId,
+      request_id: `avnMint:${nftUuid}`,
       type: AvnTransactionType.MintSingleNft,
       data: data,
       state: AvnTransactionState.NEW,
@@ -107,16 +102,5 @@ export class AvnTransactionService {
         `avn-service - invalid ROYALTIES value specified in config: ${e.toString()}`
       )
     }
-  }
-
-  async handleAvnTransactionProcessingComplete(transaction: AvnTransaction | any): Promise<any> {
-    if (transaction.type === AvnTransactionType.MintSingleNft) {
-      this.client.emit(
-        MessagePatternGenerator('nft', 'handleNftMinted'),
-        { transaction }
-      )
-    }
-
-    console.log('Avn Transaction Complete: ', transaction)
   }
 }

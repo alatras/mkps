@@ -9,6 +9,7 @@ import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-res
 @Controller('avn-transaction')
 export class AvnTransactionHttpController {
   private log: LoggerService
+
   constructor(
     private avnTransactionService: AvnTransactionService,
     private logService: LogService
@@ -16,22 +17,14 @@ export class AvnTransactionHttpController {
     this.log = this.logService.getLogger()
   }
 
-  @Post('test')
-  async test(): Promise<any> {
-    return await this.avnTransactionService.handleAvnTransactionProcessingComplete(
-      { testKey: 'TEst Value' }
-    )
-  }
-
   @UseGuards(AuthGuard('jwt'))
-  @Post()
+  @Post('mint')
   async createMintAvnTransaction(
     @Body() dto: MintAvnTransactionDto
   ): Promise<AvnTransactionMintResponse | Error> {
     try {
       const create = await this.avnTransactionService.createMintAvnTransaction(
-        dto.nftId,
-        dto.requestId
+        dto.nftId
       )
       this.log.log(
         'AvnTransactionHttpController - ANV transaction created successfully:',
@@ -41,9 +34,10 @@ export class AvnTransactionHttpController {
     } catch (err) {
       this.log.error(
         'AvnTransactionHttpController - cannot create AVN transaction:',
-        dto
+        dto,
+        err
       )
-      return err
+      throw err
     }
   }
 }

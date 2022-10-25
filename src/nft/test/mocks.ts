@@ -1,7 +1,12 @@
-import { AssetType, Nft, NftStatus } from '../schemas/nft.schema'
+import { AssetType, Nft } from '../schemas/nft.schema'
 import * as MUUID from 'uuid-mongodb'
 import { NftHistory } from '../schemas/nft-history.schema'
-import { AuctionStatus, AuctionType, Currency } from '../../shared/enum'
+import {
+  AuctionStatus,
+  AuctionType,
+  Currency,
+  NftStatus
+} from '../../shared/enum'
 import { HistoryType } from '../../shared/enum/historyType'
 import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
@@ -25,7 +30,10 @@ export const getMockNft = (): Nft => {
       original: { type: AssetType.image, key: 'string', url: 'string' }
     },
     status: NftStatus.draft,
-    owner: MUUID.from('17ef1ff0-48e3-11ed-b878-0242ac120002'),
+    owner: {
+      _id: MUUID.from('17ef1ff0-48e3-11ed-b878-0242ac120002'),
+      avnPubKey: ''
+    },
     ethAddresses: [],
     createdAt: new Date('2022-05-18T13:23:39.468Z'),
     updatedAt: new Date('2022-05-18T13:23:39.468Z'),
@@ -36,7 +44,7 @@ export const getMockNft = (): Nft => {
 export const getMockNftHistory = (): NftHistory => {
   return {
     _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
-    nftId: MUUID.from('3d94506a-e29b-4cfe-b20c-3f65653245fc'),
+    nftId: '3d94506a-e29b-4cfe-b20c-3f65653245fc',
     auctionId: MUUID.from('3d94506a-e29b-4cfe-b20c-3f65653245fa'),
     userAddress: 'some address',
     fromAddress: 'from',

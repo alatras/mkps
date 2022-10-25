@@ -11,6 +11,14 @@ import { DbCollections } from '../shared/enum'
 import { NftModule } from '../nft/nft.module'
 import { LogModule } from '../log/log.module'
 import { Module } from '@nestjs/common'
+import {
+  ClientProxy,
+  ClientProxyFactory,
+  Closeable,
+  Transport
+} from '@nestjs/microservices'
+import { ConfigService } from '@nestjs/config'
+import appConfig from '../config/app.config'
 
 @Module({
   imports: [
@@ -25,8 +33,25 @@ import { Module } from '@nestjs/common'
     NftModule,
     UserModule
   ],
+  providers: [
+    AvnTransactionService,
+    AvnTransactionChangeStreamService,
+    {
+      provide: 'EVENT_CLIENT',
+      useFactory: (): ClientProxy & Closeable => {
+        const configService = new ConfigService(appConfig)
+
+        return ClientProxyFactory.create({
+          transport: Transport.REDIS,
+          options: {
+            host: configService.get<string>('app.redis.host'),
+            port: configService.get<number>('app.redis.port')
+          }
+        })
+      }
+    }
+  ],
   controllers: [AvnTransactionHttpController],
-  providers: [AvnTransactionService, AvnTransactionChangeStreamService],
   exports: [AvnTransactionService]
 })
 export class AvnTransactionModule {}

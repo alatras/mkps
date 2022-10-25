@@ -57,7 +57,9 @@ describe('AvnTransactionController', () => {
       controllers: [AvnTransactionHttpController]
     }).compile()
 
-    controller = module.get<AvnTransactionHttpController>(AvnTransactionHttpController)
+    controller = module.get<AvnTransactionHttpController>(
+      AvnTransactionHttpController
+    )
   })
 
   it('should be defined', () => {

@@ -6,7 +6,7 @@ import { NftStatus } from '../shared/enum'
 import { EditionListingStatus } from '../shared/enum/editionListingStatus'
 import { NftEdition } from './schemas/edition.schema'
 import { Nft } from '../nft/schemas/nft.schema'
-import { uuidFrom } from "../utils";
+import { uuidFrom } from '../utils'
 
 @Injectable()
 export class EditionService {

@@ -13,13 +13,13 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionsFilter())
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const microservice = app.connectMicroservice({
-    transport: Transport.REDIS
-  })
+  app.connectMicroservice(
+    { transport: Transport.REDIS },
+    { inheritAppConfig: true }
+  )
+  app.startAllMicroservices()
 
-  await app.startAllMicroservices()
   await app.listen(process.env.PORT || 5002)
-  console.log(process.env.PORT || 5002)
 }
 
 bootstrap()
