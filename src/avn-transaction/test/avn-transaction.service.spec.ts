@@ -23,6 +23,11 @@ import { EditionListing } from '../../edition-listing/schemas/edition-listing.sc
 import { LogService } from '../../log/log.service'
 import { ConfigService } from '@nestjs/config'
 
+const ClientProxyMock = () => ({
+  emit: jest.fn(),
+  send: jest.fn()
+})
+
 describe('AvnTransactionService', () => {
   let service: AvnTransactionService
 
@@ -36,6 +41,10 @@ describe('AvnTransactionService', () => {
         NftService,
         EditionService,
         EditionListingService,
+        {
+          provide: 'TRANSPORT_CLIENT',
+          useFactory: () => ClientProxyMock()
+        },
         { provide: getModelToken(User.name), useValue: getMockUser() },
         {
           provide: getModelToken(AvnTransaction.name),

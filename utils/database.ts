@@ -26,9 +26,3 @@ export const getMongoUri = () => {
 
   return `${urlParts[0]}?retryWrites=false&directConnection=true&${query}`
 }
-
-export const getMongoString = (): string => {
-  const l = getMongoUri()
-  console.log('Here1', l)
-  return l
-}

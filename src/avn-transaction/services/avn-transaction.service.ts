@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { ClientProxy } from '@nestjs/microservices'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import * as MUUID from 'uuid-mongodb'
-import { UserService } from '../../user/user.service'
 import { InvalidDataError } from '../../core/errors'
 import {
   AvnMintTransaction,
@@ -16,15 +16,20 @@ import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { NftService } from '../../nft/services/nft.service'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
+import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 
 @Injectable()
 export class AvnTransactionService {
+  private mUUID: any
+
   constructor(
     @InjectModel(AvnTransaction.name)
     private avnTransactionModel: Model<AvnTransaction>,
-    private userService: UserService,
-    private nftService: NftService
-  ) {}
+    private nftService: NftService,
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
+  ) {
+    this.mUUID = MUUID.mode('relaxed')
+  }
 
   /**
    * Create a new doc in AvnTransactions collection to mint NFT.
@@ -41,7 +46,7 @@ export class AvnTransactionService {
       throw new NotFoundException('NFT not found')
     }
 
-    const user: User = await this.userService.findOneById(nft.owner._id)
+    const user: User = await this.getUser(this.mUUID.from(nft.owner._id))
     if (!user) {
       throw new NotFoundException('NFT user not found')
     }
@@ -66,6 +71,16 @@ export class AvnTransactionService {
     }
 
     return await this.avnTransactionModel.create(newDoc)
+  }
+
+  private async getUser(userId: MUUID.MUUID): Promise<User> {
+    return new Promise(resolve => {
+      this.clientProxy
+        .send(MessagePatternGenerator('user', 'getUserById'), {
+          userId: userId.toString()
+        })
+        .subscribe((user: User) => resolve(user))
+    })
   }
 
   private getRoyalties(): Royalties[] {

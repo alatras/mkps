@@ -47,7 +47,7 @@ describe('AvnTransactionChangeStreamService', () => {
         ConfigService,
         EditionListingService,
         {
-          provide: 'EVENT_CLIENT',
+          provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
         },
         { provide: getModelToken(User.name), useValue: getMockUser() },
@@ -71,7 +71,7 @@ describe('AvnTransactionChangeStreamService', () => {
       ]
     }).compile()
 
-    testClientProxy = await module.get('EVENT_CLIENT')
+    testClientProxy = await module.get('TRANSPORT_CLIENT')
 
     service = module.get<AvnTransactionChangeStreamService>(
       AvnTransactionChangeStreamService

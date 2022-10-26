@@ -12,18 +12,18 @@ import {
   BadRequestException
 } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
-import { LogService } from '../log/log.service'
-import { UserService } from './user.service'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { PermissionsGuard } from '../auth/permissions.guard'
-import { Permissions } from '../auth/decorators/permissions.decorator'
+import { LogService } from '../../log/log.service'
+import { UserService } from '../user.service'
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
+import { PermissionsGuard } from '../../auth/permissions.guard'
+import { Permissions } from '../../auth/decorators/permissions.decorator'
 import { Request as ExpressRequest } from 'express'
-import { UpdateAuth0Dto, UpdateUserDto, UserResponseDto } from './dto/user.dto'
-import MongooseClassSerializerInterceptor from '../interceptors/mongoose-class-serializer.interceptor'
-import { Provider, User } from './schemas/user.schema'
+import { UpdateAuth0Dto, UpdateUserDto, UserResponseDto } from '../dto/user.dto'
+import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
+import { Provider, User } from '../schemas/user.schema'
 
 @Controller('users')
-export class UserController {
+export class UserHttpController {
   private log: LoggerService
 
   constructor(

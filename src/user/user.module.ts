@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import { User, UserSchema } from './schemas/user.schema'
 import { UserService } from './user.service'
-import { UserController } from './user.controller'
+import { UserMsController } from './controllers/user.ms-controller'
+import { UserHttpController } from './controllers/user.http-controller'
 import { DbCollections } from '../shared/enum'
 import { ConfigModule } from '@nestjs/config'
 import { LogModule } from 'src/log/log.module'
@@ -20,7 +21,7 @@ import { LogModule } from 'src/log/log.module'
     ])
   ],
   providers: [UserService],
-  controllers: [UserController],
+  controllers: [UserHttpController, UserMsController],
   exports: [UserService]
 })
 export class UserModule {}
