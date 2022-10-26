@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
 import * as MUUID from 'uuid-mongodb'
-import { NftService } from '../nft.service'
+import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
 import {
   getEditionListing,
@@ -15,6 +15,9 @@ import { EditionService } from '../../edition/edition.service'
 import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListingService } from '../../edition-listing/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
+import { NftStatus } from '../../shared/enum'
+import { uuidFrom } from '../../utils'
+import { HistoryType } from '../../shared/enum/historyType'
 
 describe('NftService', () => {
   let service: NftService
@@ -94,6 +97,47 @@ describe('NftService', () => {
       } catch (e) {
         throw e
       }
+    })
+  })
+
+  describe('handleNftMinted', () => {
+    it('should call the correct functions with the correct data', async () => {
+      const mockNft: Nft = getMockNft()
+
+      jest
+        .spyOn(service, 'updateOneById')
+        .mockImplementationOnce(() => Promise.resolve(getMockNft()))
+
+      jest
+        .spyOn(service, 'addHistory')
+        .mockImplementationOnce(() => Promise.resolve())
+
+      await service.handleNftMinted(
+        uuidFrom(mockNft._id).toString(),
+        mockNft.eid
+      )
+
+      expect(service.updateOneById).toBeCalledWith(
+        uuidFrom(mockNft._id).toString(),
+        {
+          eid: mockNft.eid,
+          status: NftStatus.minted
+        }
+      )
+
+      expect(service.updateOneById).toBeCalledWith(
+        uuidFrom(mockNft._id).toString(),
+        {
+          eid: mockNft.eid,
+          status: NftStatus.minted
+        }
+      )
+
+      expect(service.addHistory).toBeCalledWith({
+        nftId: uuidFrom(mockNft._id).toString(),
+        userAddress: mockNft.owner.avnPubKey,
+        type: HistoryType.minted
+      })
     })
   })
 })

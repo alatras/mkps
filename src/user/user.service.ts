@@ -6,6 +6,7 @@ import { Provider, User } from './schemas/user.schema'
 import { CreateUserDto } from './dto/user.dto'
 import { Request as ExpressRequest } from 'express'
 import { ConfigService } from '@nestjs/config'
+import { MUUID } from 'uuid-mongodb'
 
 @Injectable()
 export class UserService {
@@ -14,7 +15,7 @@ export class UserService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    configService: ConfigService,
+    configService: ConfigService
   ) {
     this.configService = configService
   }
@@ -29,8 +30,8 @@ export class UserService {
       .lean()
   }
 
-  async findOneById(id: string): Promise<User> {
-    return this.userModel.findOne({ _id: id }).lean()
+  async findOneById(_id: MUUID): Promise<User> {
+    return this.userModel.findOne({ _id }).lean()
   }
 
   async createUser(createUserDto: CreateUserDto) {
@@ -45,18 +46,18 @@ export class UserService {
     name: Provider,
     body: ExpressRequest['body']
   ): Promise<User> {
-    return this.userModel.findOneAndUpdate(
-      { 'provider.id': id, 'provider.name': name },
-      body,
-      { new: true },
-    ).lean()
+    return this.userModel
+      .findOneAndUpdate({ 'provider.id': id, 'provider.name': name }, body, {
+        new: true
+      })
+      .lean()
   }
 
   async updateAuth0Email(
     id: string,
     name: Provider,
     user: User,
-    email: string,
+    email: string
   ): Promise<User> {
     const auth0Id = this.getAuth0UserId(user)
 
@@ -72,11 +73,13 @@ export class UserService {
 
     await auth0Client.updateUser({ id: auth0Id }, { email })
 
-    return this.userModel.findOneAndUpdate(
-      { 'provider.id': id, 'provider.name': name },
-      { email },
-      { new: true },
-    ).lean()
+    return this.userModel
+      .findOneAndUpdate(
+        { 'provider.id': id, 'provider.name': name },
+        { email },
+        { new: true }
+      )
+      .lean()
   }
 
   private getAuth0UserId = (user: User): string => {
@@ -95,7 +98,9 @@ export class UserService {
 
     if (!this.managementClient) {
       this.managementClient = new ManagementClient({
-        domain, clientId, clientSecret,
+        domain,
+        clientId,
+        clientSecret
       })
     }
 

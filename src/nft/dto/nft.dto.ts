@@ -11,12 +11,13 @@ import {
   ValidateNested
 } from 'class-validator'
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
-import { Nft, NftStatus, UnlockableContent } from '../schemas/nft.schema'
+import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { User } from '../../user/schemas/user.schema'
 import * as MUUID from 'uuid-mongodb'
 import { AssetDto, ImagesSetDto } from './asset.dto'
 import { Asset, ImagesSet } from '../schemas/asset.schema'
 import { Document } from 'mongoose'
+import { NftStatus } from '../../shared/enum'
 
 export class CreateUnlockableContentDto {
   @IsString()

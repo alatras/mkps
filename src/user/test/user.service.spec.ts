@@ -30,7 +30,7 @@ describe('NftService', () => {
   })
 
   describe('create', () => {
-    it('should create a new NFT', async () => {
+    it('should create a new User', async () => {
       try {
         const user = await service.createUser({
           provider: { id: 'string', name: Provider.auth0 }

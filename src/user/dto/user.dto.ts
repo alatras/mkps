@@ -1,5 +1,11 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
-import { IsArray, IsBoolean, IsString, ValidateNested, IsEmail } from 'class-validator'
+import {
+  IsArray,
+  IsBoolean,
+  IsString,
+  ValidateNested,
+  IsEmail
+} from 'class-validator'
 import { AuthProvider, User } from '../schemas/user.schema'
 import * as MUUID from 'uuid-mongodb'
 

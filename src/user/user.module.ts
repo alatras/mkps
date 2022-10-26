@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { User, UserSchema } from './schemas/user.schema'
 import { UserService } from './user.service'
 import { UserController } from './user.controller'
-import { DbCollections } from 'src/shared/enum'
+import { DbCollections } from '../shared/enum'
 import { ConfigModule } from '@nestjs/config'
 import { LogModule } from 'src/log/log.module'
 

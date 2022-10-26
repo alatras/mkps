@@ -9,7 +9,7 @@ import {
   UseInterceptors,
   InternalServerErrorException,
   NotFoundException,
-  BadRequestException,
+  BadRequestException
 } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { LogService } from '../log/log.service'
@@ -28,7 +28,7 @@ export class UserController {
 
   constructor(
     private readonly userService: UserService,
-    private logService: LogService,
+    private logService: LogService
   ) {
     this.log = this.logService.getLogger()
   }
@@ -67,7 +67,7 @@ export class UserController {
     const user = await this.userService.updateUser(
       (req.user as User).provider.id,
       (req.user as User).provider.name,
-      dto,
+      dto
     )
 
     return new UserResponseDto(user)
@@ -92,7 +92,7 @@ export class UserController {
         (req.user as User).provider.id,
         providerName,
         user,
-        dto.email,
+        dto.email
       )
 
       return new UserResponseDto(updated)

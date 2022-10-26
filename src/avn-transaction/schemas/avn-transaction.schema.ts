@@ -5,8 +5,9 @@ import {
   AvnTransactionType,
   DbCollections
 } from '../../shared/enum'
-import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
+
+export class AvnTransactionHistory {}
 
 export interface AvnTransactionBase {
   request_id: string
@@ -67,15 +68,7 @@ export type AvnTransactionDocument = AvnTransaction & Document
   timestamps: true
 })
 export class AvnTransaction {
-  @Transform(({ value }) => MUUID.from(value).toString())
-  @Prop({
-    type: 'object',
-    value: { type: 'Buffer' },
-    default: () => MUUID.v4()
-  })
-  _id: object
-
-  @Prop({ required: true })
+  @Prop()
   request_id: string
 
   @Prop()

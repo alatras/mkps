@@ -6,6 +6,7 @@ import { NftStatus } from '../shared/enum'
 import { EditionListingStatus } from '../shared/enum/editionListingStatus'
 import { NftEdition } from './schemas/edition.schema'
 import { Nft } from '../nft/schemas/nft.schema'
+import { uuidFrom } from '../utils'
 
 @Injectable()
 export class EditionService {
@@ -50,7 +51,7 @@ export class EditionService {
     }
 
     await this.nftEditionModel.updateOne(
-      { _id: editionId },
+      { _id: uuidFrom(editionId) },
       {
         $set: {
           availableCount: Math.max(availableCount, 0),

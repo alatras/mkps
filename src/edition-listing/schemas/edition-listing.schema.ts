@@ -70,9 +70,6 @@ export class EditionListing {
   @Prop()
   pendingBuyers?: object[]
 
-  // @Prop()
-  // highestBidId?: object
-
   @Prop()
   winner: AuctionWinner | null
 

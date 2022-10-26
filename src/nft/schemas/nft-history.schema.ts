@@ -4,15 +4,17 @@ import * as MUUID from 'uuid-mongodb'
 import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose'
 import { AuctionType, Currency, DbCollections } from '../../shared/enum'
 import { HistoryType } from '../../shared/enum/historyType'
+import { uuidFrom } from '../../utils'
 
 export type NftHistoryDocument = NftHistory & Document
 
 @Schema({
   collection: DbCollections.NftHistory,
-  versionKey: false
+  versionKey: false,
+  timestamps: true
 })
 export class NftHistory {
-  @Transform(({ value }) => MUUID.from(value).toString())
+  @Transform(({ value }) => uuidFrom(value).toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
@@ -20,20 +22,19 @@ export class NftHistory {
   })
   _id: object
 
-  @Transform(({ value }) => MUUID.from(value).toString())
+  @Transform(({ value }) => uuidFrom(value).toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    default: () => MUUID.v4()
+    transform: val => uuidFrom(val)
   })
-  nftId: object
+  nftId: string
 
-  @Transform(({ value }) => MUUID.from(value).toString())
+  @Transform(({ value }) => uuidFrom(value).toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    default: () => MUUID.v4(),
-    required: true
+    required: false
   })
   auctionId?: object
 
@@ -52,20 +53,18 @@ export class NftHistory {
   @Prop()
   toAddress?: string
 
-  @Prop({ required: true })
-  transactionHash: string
+  @Prop()
+  transactionHash?: string
 
   @Prop({ type: String, enum: HistoryType })
   currency?: Currency
 
   @Prop({ type: String, required: true, enum: HistoryType })
-  type?: HistoryType
+  type: HistoryType
 
-  @Prop()
-  createdAt?: Date
-
-  @Prop()
-  updatedAt?: Date
+  constructor(partial: Partial<NftHistory>) {
+    Object.assign(this, partial)
+  }
 }
 
 export const NftHistorySchema = SchemaFactory.createForClass(NftHistory)
