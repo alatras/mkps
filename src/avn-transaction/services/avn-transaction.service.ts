@@ -104,8 +104,9 @@ export class AvnTransactionService {
     }
   }
 
-  public getAvnTransactionByRequestId = async (requestId: string)
-    : Promise<AvnTransaction | null> => {
+  public getAvnTransactionByRequestId = async (
+    requestId: string
+  ): Promise<AvnTransaction | null> => {
     return await this.avnTransactionModel.findOne({ request_id: requestId })
   }
 }

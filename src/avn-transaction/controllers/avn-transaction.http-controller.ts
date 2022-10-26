@@ -1,4 +1,14 @@
-import { Body, Controller, Param, Get, Post, UseGuards, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Param,
+  Get,
+  Post,
+  UseGuards,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException
+} from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { LogService } from '../../log/log.service'
@@ -43,11 +53,10 @@ export class AvnTransactionHttpController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('mint/request/:requestId')
-  async getAvnTransaction(
-    @Param('requestId') requestId: string
-  ) {
+  async getAvnTransaction(@Param('requestId') requestId: string) {
     try {
-      const transaction = await this.avnTransactionService.getAvnTransactionByRequestId(requestId)
+      const transaction =
+        await this.avnTransactionService.getAvnTransactionByRequestId(requestId)
       if (transaction) {
         return transaction
       }
