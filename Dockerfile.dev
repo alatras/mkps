@@ -1,0 +1,17 @@
+FROM node:16.17
+
+ARG ENVIRONMENT=dev
+
+ENV ENVIRONMENT=${ENVIRONMENT}
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+COPY ./config ./config
+COPY ./src ./src
+COPY ./.env ./
+
+RUN npm install
+RUN npm run copy
+
+CMD [ "npm", "run", "dev" ]

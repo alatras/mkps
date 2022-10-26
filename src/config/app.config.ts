@@ -29,5 +29,9 @@ export default registerAs('app', () => ({
     s3BucketNameAssets: process.env.AWS_S3_BUCKET_NAME_ASSETS,
     s3BucketNameUserOrig: process.env.AWS_S3_BUCKET_NAME_NFT_ORIG,
     s3BucketRegion: process.env.AWS_S3_BUCKET_REGION
+  },
+  redis: {
+    port: process.env.REDIS_PORT,
+    host: process.env.REDIS_HOST
   }
 }))

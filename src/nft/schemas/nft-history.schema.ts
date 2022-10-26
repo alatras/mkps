@@ -1,34 +1,40 @@
 import { Document } from 'mongoose'
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
-import { Prop, SchemaFactory } from '@nestjs/mongoose'
-import { AuctionType, Currency } from '../../shared/enums'
+import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose'
+import { AuctionType, Currency, DbCollections } from '../../shared/enum'
+import { HistoryType } from '../../shared/enum/historyType'
+import { uuidFrom } from '../../utils'
 
-export enum HistoryType {
-  minted = 'minted',
-  listed = 'listed',
-  bid = 'bid',
-  purchased = 'purchased',
-  cancelled = 'cancelled',
-  transferred = 'transferred',
-  unlockableContentClaimed = 'unlockableContentClaimed'
-}
+export type NftHistoryDocument = NftHistory & Document
 
-export class NftHistory extends Document {
-  @Transform(({ value }) => MUUID.from(value).toString())
+@Schema({
+  collection: DbCollections.NftHistory,
+  versionKey: false,
+  timestamps: true
+})
+export class NftHistory {
+  @Transform(({ value }) => uuidFrom(value).toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  nftId: object
+  _id: object
 
-  @Transform(({ value }) => MUUID.from(value).toString())
+  @Transform(({ value }) => uuidFrom(value).toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    default: () => MUUID.v4(),
-    required: true
+    transform: val => uuidFrom(val)
+  })
+  nftId: string
+
+  @Transform(({ value }) => uuidFrom(value).toString())
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    required: false
   })
   auctionId?: object
 
@@ -36,31 +42,29 @@ export class NftHistory extends Document {
   userAddress: string
 
   @Prop()
-  fromAddress: string
+  fromAddress?: string
 
   @Prop({ type: String, enum: HistoryType })
-  saleType: AuctionType
+  saleType?: AuctionType
 
   @Prop()
-  amount: string
+  amount?: string
 
   @Prop()
-  toAddress: string
+  toAddress?: string
 
-  @Prop({ required: true })
-  createdAt: Date
-
-  @Prop({ required: true })
-  updatedAt: Date
-
-  @Prop({ required: true })
+  @Prop()
   transactionHash?: string
 
   @Prop({ type: String, enum: HistoryType })
-  currency: Currency
+  currency?: Currency
 
   @Prop({ type: String, required: true, enum: HistoryType })
   type: HistoryType
+
+  constructor(partial: Partial<NftHistory>) {
+    Object.assign(this, partial)
+  }
 }
 
 export const NftHistorySchema = SchemaFactory.createForClass(NftHistory)

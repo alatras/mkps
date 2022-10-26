@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { Provider, User } from './schemas/user.schema'
 import { CreateUserDto } from './dto/user.dto'
+import { MUUID } from 'uuid-mongodb'
 
 @Injectable()
 export class UserService {
@@ -16,6 +17,10 @@ export class UserService {
     return this.userModel
       .findOne({ 'provider.id': id, 'provider.name': name })
       .lean()
+  }
+
+  async findOneById(_id: MUUID): Promise<User> {
+    return this.userModel.findOne({ _id }).lean()
   }
 
   async createUser(createUserDto: CreateUserDto) {
