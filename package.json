@@ -50,7 +50,7 @@
     "jwks-rsa": "^2.1.4",
     "mock-jwks": "^1.0.8",
     "mongoose": "^6.3.3",
-    "nest-winston": "^1.6.2",
+    "nest-winston": "^1.8.0",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
     "redis": "^3.1.2",
