@@ -1,20 +1,27 @@
-import { Injectable } from '@nestjs/common'
+import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { Model } from 'mongoose'
+import { FilterQuery, Model } from 'mongoose'
 import { CreateNftDto } from '../dto/nft.dto'
-import { Nft } from '../schemas/nft.schema'
+import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftHistory } from '../schemas/nft-history.schema'
 import { HistoryType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
+import * as MUUID from 'uuid-mongodb'
+import { NftWithEdition } from '../schemas/nft-with-edition'
+import { NftDraftContract } from '../schemas/nft-draft-contract'
+import { User } from '../../user/schemas/user.schema'
+import { NftDraftModel } from '../schemas/nft-draft-model'
+import { getNftProperties } from '../../utils/nftProperties'
 
 @Injectable()
 export class NftService {
   constructor(
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
     @InjectModel(NftHistory.name) private nftHistoryModel: Model<NftHistory>,
+    @Inject(forwardRef(() => EditionService))
     private editionService: EditionService
   ) {}
 
@@ -112,5 +119,92 @@ export class NftService {
       userAddress: nft.owner.avnPubKey,
       type: HistoryType.minted
     })
+  }
+
+  async getNftsOfEdition(
+    id: string,
+    limit = 20,
+    offset = 0,
+    filter?: FilterQuery<Nft>,
+    sort?: string | any
+  ): Promise<NftWithEdition[]> {
+    const nfts = await this.nftModel
+      .find({ ...filter, editionId: id })
+      .sort(sort)
+      .skip(offset)
+      .limit(limit)
+
+    return nfts.map((n: Nft) => n as NftWithEdition)
+  }
+
+  /**
+   * Maps NFT draft coming from request into NFT draft model.
+   * ُEdition mint handler calls this validation.
+   */
+  async mapNftDraftToModel(
+    contract: NftDraftContract,
+    owner: User
+  ): Promise<NftDraftModel> {
+    const { id, ...rest } = contract
+    const image = contract.image
+
+    let unlockableContent: UnlockableContent
+    if (id) {
+      unlockableContent = (await this.findOneById(id))?.unlockableContent
+    } else if (contract.unlockableContent) {
+      unlockableContent = { ...contract.unlockableContent, claimedCount: 0 }
+    }
+
+    const ownerId = MUUID.from(owner._id)
+
+    return {
+      ...rest,
+      _id: id ? uuidFrom(id) : MUUID.v4(),
+      owner: {
+        avnPubKey: owner.avnPubKey ?? null,
+        _id: ownerId
+      },
+      image,
+      isHidden: true, // Default draft NFT to hidden
+      minterId: ownerId.toString(),
+      unlockableContent
+    }
+  }
+
+  /**
+   * Validates that required properties in an NFT
+   * to be created are present.
+   */
+  validateNftProperties(nftDraftModel: NftDraftModel): void {
+    const enabledNftProperties: string[] = getNftProperties().reduce(
+      (values, prop) =>
+        prop.required && prop.key !== 'quantity'
+          ? [...values, prop.key]
+          : values,
+      []
+    )
+
+    const {
+      _id,
+      owner,
+      isHidden,
+      image,
+      assets,
+      minterId,
+      unlockableContent,
+      ...nftDynamicProperties
+    } = nftDraftModel
+
+    if (
+      !enabledNftProperties.every(prop =>
+        Object.keys(nftDynamicProperties).includes(prop)
+      )
+    ) {
+      throw new Error(
+        `Nft Properties must include all of the following: "${enabledNftProperties.join(
+          '", "'
+        )}".`
+      )
+    }
   }
 }

@@ -12,6 +12,7 @@ import { AvnTransactionModule } from './avn-transaction/avn-transaction.module'
 import { EditionModule } from './edition/edition.module'
 import { EditionListingModule } from './edition-listing/edition-listing.module'
 import { LogModule } from './log/log.module'
+import { ListingModule } from './listing/listing.module'
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { LogModule } from './log/log.module'
     AvnTransactionModule,
     EditionModule,
     EditionListingModule,
-    LogModule
+    LogModule,
+    ListingModule
   ],
   controllers: [AppController],
   providers: [AppService, Logger]

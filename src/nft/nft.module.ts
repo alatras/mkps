@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { NftService } from './services/nft.service'
 import { NftHttpController } from './controllers/nft.http-controller'
 import { MongooseModule } from '@nestjs/mongoose'
@@ -10,7 +10,7 @@ import { NftMsController } from './controllers/nft.ms-controller'
 
 @Module({
   imports: [
-    EditionModule,
+    forwardRef(() => EditionModule),
     MongooseModule.forFeature([
       {
         name: Nft.name,

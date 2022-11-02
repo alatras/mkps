@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
-import { AuctionType, DbCollections } from '../../shared/enum'
+import { AuctionType, DbCollections, NftStatus } from '../../shared/enum'
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 
@@ -36,6 +36,9 @@ export class NftEdition {
 
   @Prop()
   availableCount: number
+
+  @Prop()
+  status?: NftStatus
 
   @Prop()
   ownedCount: number

@@ -6,7 +6,7 @@ import { UserMsController } from './controllers/user.ms-controller'
 import { UserHttpController } from './controllers/user.http-controller'
 import { DbCollections } from '../shared/enum'
 import { ConfigModule } from '@nestjs/config'
-import { LogModule } from 'src/log/log.module'
+import { LogModule } from '../log/log.module'
 
 @Module({
   imports: [

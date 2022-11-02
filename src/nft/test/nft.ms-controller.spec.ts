@@ -14,6 +14,12 @@ import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListingService } from '../../edition-listing/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { NftMsController } from '../controllers/nft.ms-controller'
+import { LogService } from '../../log/log.service'
+
+const ClientProxyMock = () => ({
+  emit: jest.fn(),
+  send: jest.fn()
+})
 
 describe('NftMsController', () => {
   let controller: NftMsController
@@ -26,6 +32,11 @@ describe('NftMsController', () => {
         NftService,
         EditionService,
         EditionListingService,
+        LogService,
+        {
+          provide: 'TRANSPORT_CLIENT',
+          useFactory: () => ClientProxyMock()
+        },
         {
           provide: getModelToken(NftHistory.name),
           useValue: getMockNftHistory()

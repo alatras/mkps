@@ -21,7 +21,6 @@ export class AvnTransactionChangeStreamService
   private log: LoggerService
   private pipeline: Array<Record<string, unknown>>
   private options: ChangeStreamOptions
-  private resumeToken: unknown
   private changeStream: ChangeStream
 
   constructor(
@@ -40,8 +39,7 @@ export class AvnTransactionChangeStreamService
       }
     ]
     this.options = {
-      fullDocument: 'updateLookup',
-      resumeAfter: this.resumeToken || undefined
+      fullDocument: 'updateLookup'
     }
   }
 
@@ -71,13 +69,12 @@ export class AvnTransactionChangeStreamService
     try {
       while (await this.changeStream.hasNext()) {
         const data = await this.changeStream.next()
-        this.resumeToken = data?._id
         this.handleChanges(data.fullDocument as AvnTransaction)
       }
     } catch (error) {
       if (this.changeStream.closed) {
         this.log.error(
-          'AvnTransactionChangeStreamService - Change Stream' +
+          '[AvnTransactionChangeStreamService] changeStream' +
             ` is closed with error: ${error.message}. Opening again...`
         )
         this.listen()

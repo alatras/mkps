@@ -1,47 +1,45 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
-import { NftHttpController } from '../controllers/nft.http-controller'
-import { NftService } from '../services/nft.service'
-import { Nft } from '../schemas/nft.schema'
+import { EditionService } from '../edition.service'
+import { NftEdition } from '../schemas/edition.schema'
 import {
-  getEditionListing,
+  getNftEdition,
   getMockNft,
-  getMockNftHistory,
-  getNftEdition
-} from './mocks'
-import { NftHistory } from '../schemas/nft-history.schema'
-import { EditionService } from '../../edition/edition.service'
-import { NftEdition } from '../../edition/schemas/edition.schema'
+  getEditionListing,
+  getMockNftHistory
+} from '../../nft/test/mocks'
+import { Nft } from '../../nft/schemas/nft.schema'
 import { EditionListingService } from '../../edition-listing/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../../log/log.service'
+import { NftService } from '../../nft/services/nft.service'
+import { NftHistory } from '../../nft/schemas/nft-history.schema'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
   send: jest.fn()
 })
 
-describe('NftHttpController', () => {
-  let controller: NftHttpController
+describe('EditionService', () => {
+  let service: EditionService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [NftHttpController],
       providers: [
-        NftService,
-        EditionService,
         EditionListingService,
+        EditionService,
         LogService,
-        {
-          provide: 'TRANSPORT_CLIENT',
-          useFactory: () => ClientProxyMock()
-        },
+        NftService,
         {
           provide: getModelToken(NftHistory.name),
           useValue: getMockNftHistory()
         },
-        { provide: getModelToken(Nft.name), useValue: getMockNft() },
+        {
+          provide: 'TRANSPORT_CLIENT',
+          useFactory: () => ClientProxyMock()
+        },
         { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
+        { provide: getModelToken(Nft.name), useValue: getMockNft() },
         {
           provide: getModelToken(EditionListing.name),
           useValue: getEditionListing()
@@ -49,10 +47,10 @@ describe('NftHttpController', () => {
       ]
     }).compile()
 
-    controller = module.get<NftHttpController>(NftHttpController)
+    service = module.get<EditionService>(EditionService)
   })
 
   it('should be defined', () => {
-    expect(controller).toBeDefined()
+    expect(service).toBeDefined()
   })
 })
