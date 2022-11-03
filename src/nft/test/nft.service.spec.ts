@@ -17,7 +17,7 @@ import { EditionListingService } from '../../edition-listing/edition-listing.ser
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { NftStatus } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
-import { HistoryType } from '../../shared/enum/historyType'
+import { HistoryType } from '../../shared/enum'
 
 describe('NftService', () => {
   let service: NftService

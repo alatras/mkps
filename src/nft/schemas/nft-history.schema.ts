@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose'
 import { AuctionType, Currency, DbCollections } from '../../shared/enum'
-import { HistoryType } from '../../shared/enum/historyType'
+import { HistoryType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 
 export type NftHistoryDocument = NftHistory & Document

@@ -1,7 +1,6 @@
 import {
   Inject,
   Injectable,
-  Logger,
   LoggerService,
   OnModuleDestroy,
   OnModuleInit
@@ -9,12 +8,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose'
 import { ChangeStream, ChangeStreamOptions } from 'mongodb'
 import { Model } from 'mongoose'
-import { AvnTransactionService } from './avn-transaction.service'
 import { AvnTransaction } from '../schemas/avn-transaction.schema'
 import { LogService } from '../../log/log.service'
 import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
-import { AppService } from '../../app.service'
 import { ClientProxy } from '@nestjs/microservices'
 
 @Injectable()
@@ -26,14 +23,12 @@ export class AvnTransactionChangeStreamService
   private options: ChangeStreamOptions
   private resumeToken: unknown
   private changeStream: ChangeStream
-  private readonly logger = new Logger(AppService.name)
 
   constructor(
     @InjectModel(AvnTransaction.name)
     private avnTransactionModel: Model<AvnTransaction>,
-    private avnTransactionService: AvnTransactionService,
     private logService: LogService,
-    @Inject('EVENT_CLIENT') private clientProxy: ClientProxy
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.log = this.logService.getLogger()
     this.pipeline = [

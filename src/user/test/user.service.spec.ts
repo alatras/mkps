@@ -3,6 +3,8 @@ import { getModelToken } from '@nestjs/mongoose'
 import { getMockUser, UserMock } from './mocks'
 import { Provider, User } from '../schemas/user.schema'
 import { UserService } from '../user.service'
+import { LogModule } from '../../log/log.module'
+import { ConfigService } from '@nestjs/config'
 
 describe('NftService', () => {
   let service: UserService
@@ -10,6 +12,8 @@ describe('NftService', () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        LogModule,
+        ConfigService,
         UserService,
         {
           provide: getModelToken(User.name),

@@ -7,7 +7,7 @@ import {
   Currency,
   NftStatus
 } from '../../shared/enum'
-import { HistoryType } from '../../shared/enum/historyType'
+import { HistoryType } from '../../shared/enum'
 import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 

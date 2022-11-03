@@ -43,7 +43,7 @@
     "@nestjs/passport": "^8.2.1",
     "@nestjs/platform-express": "^8.4.5",
     "@types/passport-jwt": "^3.0.6",
-    "auth0": "^2.40.0",
+    "auth0": "^2.43.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "express-jwt": "^7.7.5",
