@@ -1,6 +1,6 @@
 import { Controller, Body } from '@nestjs/common'
 import { NftService } from '../services/nft.service'
-import { EventPattern } from '@nestjs/microservices'
+import { EventPattern, MessagePattern } from '@nestjs/microservices'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 
 @Controller()
@@ -19,5 +19,10 @@ export class NftMsController {
       avnTransaction.nftId,
       avnTransaction.eid
     )
+  }
+
+  @MessagePattern(MessagePatternGenerator('nft', 'findOneById'))
+  async findOneById(@Body() input: { id: string }) {
+    return await this.nftService.findOneById(input.id)
   }
 }

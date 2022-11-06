@@ -17,6 +17,8 @@ import { NftService } from '../../nft/services/nft.service'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { Nft } from '../../nft/schemas/nft.schema'
+import { first, firstValueFrom } from 'rxjs'
 
 @Injectable()
 export class AvnTransactionService {
@@ -25,7 +27,6 @@ export class AvnTransactionService {
   constructor(
     @InjectModel(AvnTransaction.name)
     private avnTransactionModel: Model<AvnTransaction>,
-    private nftService: NftService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.mUUID = MUUID.mode('relaxed')
@@ -41,7 +42,7 @@ export class AvnTransactionService {
   async createMintAvnTransaction(
     nftUuid: string
   ): Promise<AvnTransactionMintResponse | Error> {
-    const nft = await this.nftService.findOneById(nftUuid)
+    const nft = await this.getNft(nftUuid)
     if (!nft) {
       throw new NotFoundException('NFT not found')
     }
@@ -74,13 +75,19 @@ export class AvnTransactionService {
   }
 
   private async getUser(userId: MUUID.MUUID): Promise<User> {
-    return new Promise(resolve => {
-      this.clientProxy
-        .send(MessagePatternGenerator('user', 'getUserById'), {
-          userId: userId.toString()
-        })
-        .subscribe((user: User) => resolve(user))
-    })
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
+        userId: userId.toString()
+      })
+    )
+  }
+
+  private async getNft(nftId: string): Promise<Nft> {
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
+        nftId
+      })
+    )
   }
 
   private getRoyalties(): Royalties[] {
