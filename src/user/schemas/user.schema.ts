@@ -60,7 +60,7 @@ export class User {
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop({ required: false, default: null })
   avnPubKey: string
@@ -78,11 +78,17 @@ export class User {
   @Prop([String])
   ethAddresses: string[]
 
-  @Prop()
-  createdAt: Date
+  @Prop({ required: false, default: null })
+  username?: string
+
+  @Prop({ required: false, default: null })
+  email?: string
 
   @Prop()
-  updatedAt: Date
+  createdAt?: Date
+
+  @Prop()
+  updatedAt?: Date
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

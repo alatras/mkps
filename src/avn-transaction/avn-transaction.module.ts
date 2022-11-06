@@ -1,7 +1,6 @@
 import { AvnTransactionHttpController } from './controllers/avn-transaction.http-controller'
 import { AvnTransactionChangeStreamService } from './services/avn-transaction-change-stream.service'
 import { AvnTransactionService } from './services/avn-transaction.service'
-import { UserModule } from '../user/user.module'
 import { MongooseModule } from '@nestjs/mongoose'
 import {
   AvnTransaction,
@@ -30,14 +29,13 @@ import appConfig from '../config/app.config'
       }
     ]),
     LogModule,
-    NftModule,
-    UserModule
+    NftModule
   ],
   providers: [
     AvnTransactionService,
     AvnTransactionChangeStreamService,
     {
-      provide: 'EVENT_CLIENT',
+      provide: 'TRANSPORT_CLIENT',
       useFactory: (): ClientProxy & Closeable => {
         const configService = new ConfigService(appConfig)
 

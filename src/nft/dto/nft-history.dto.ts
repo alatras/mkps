@@ -1,4 +1,4 @@
-import { HistoryType } from '../../shared/enum/historyType'
+import { HistoryType } from '../../shared/enum'
 import { IsEnum, IsOptional, IsString } from 'class-validator'
 import { Expose } from 'class-transformer'
 
