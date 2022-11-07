@@ -15,7 +15,9 @@ import { LogService } from '../../log/log.service'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { MintAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
-import { ApiTags } from "@nestjs/swagger";
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger'
+import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
+import { AvnTransaction } from "../schemas/avn-transaction.schema";
 
 @ApiTags('AvnTransaction')
 @Controller('avn-transaction')
@@ -30,6 +32,11 @@ export class AvnTransactionHttpController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @ApiCreatedResponse({
+    description:
+      'Mints an NFT on the blockchain. Pass in an NftId from a previously created draft.',
+    type: AvnTransactionMintResponse
+  })
   @Post('mint')
   async createMintAvnTransaction(
     @Body() dto: MintAvnTransactionDto
@@ -54,6 +61,11 @@ export class AvnTransactionHttpController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @ApiOkResponse({
+    description:
+      'Retrieves an AVN Transaction. Used to check the status of Minting an NFT.',
+    type: AvnTransaction
+  })
   @Get('mint/request/:requestId')
   async getAvnTransaction(@Param('requestId') requestId: string) {
     try {

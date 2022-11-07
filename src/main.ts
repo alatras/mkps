@@ -4,7 +4,6 @@ import { HttpExceptionsFilter } from './filters/http-exceptions.filter'
 import { LogService } from './log/log.service'
 import { Transport } from '@nestjs/microservices'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
-import { Microservices } from '../utils/microservices'
 import { getVersion } from 'jest'
 
 async function bootstrap() {

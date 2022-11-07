@@ -8,7 +8,6 @@ import config from './config/app.config'
 import { AuthModule } from './auth/auth.module'
 import { LogModule } from './log/log.module'
 import { getActiveMicroservices } from '../utils/microservices'
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 const GENERAL_IMPORTS = [
   AuthModule,

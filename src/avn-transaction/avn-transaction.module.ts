@@ -7,7 +7,6 @@ import {
   AvnTransactionSchema
 } from './schemas/avn-transaction.schema'
 import { DbCollections } from '../shared/enum'
-import { NftModule } from '../nft/nft.module'
 import { LogModule } from '../log/log.module'
 import { Module } from '@nestjs/common'
 import {

@@ -13,12 +13,11 @@ import {
 } from '../schemas/avn-transaction.schema'
 import { User } from '../../user/schemas/user.schema'
 import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
-import { NftService } from '../../nft/services/nft.service'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { Nft } from '../../nft/schemas/nft.schema'
-import { first, firstValueFrom } from 'rxjs'
+import { firstValueFrom } from 'rxjs'
 
 @Injectable()
 export class AvnTransactionService {
