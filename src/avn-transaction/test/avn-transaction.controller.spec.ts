@@ -6,7 +6,7 @@ import { NftService } from '../../nft/services/nft.service'
 import { UserService } from '../../user/user.service'
 import { AvnTransactionHttpController } from '../controllers/avn-transaction.http-controller'
 import { AvnTransactionService } from '../services/avn-transaction.service'
-import { AvnTransaction } from '../schemas/avn-transaction.schema'
+import { AvnEditionTransaction, AvnNftTransaction } from '../schemas/avn-transaction.schema'
 import { getAvnTransaction } from './mocks'
 import { Nft } from '../../nft/schemas/nft.schema'
 import {
@@ -57,7 +57,11 @@ describe('AvnTransactionController', () => {
           useValue: getMockNftHistory()
         },
         {
-          provide: getModelToken(AvnTransaction.name),
+          provide: getModelToken(AvnNftTransaction.name),
+          useValue: getAvnTransaction()
+        },
+        {
+          provide: getModelToken(AvnEditionTransaction.name),
           useValue: getAvnTransaction()
         },
         {

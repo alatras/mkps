@@ -15,26 +15,28 @@ import { CreateEditionDto, EditionResponseDto } from '../dto/edition.dto'
 import { EditionService } from '../edition.service'
 import { DataWrapper } from '../../common/dataWrapper'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
-import { PermissionsGuard } from '../../auth/permissions.guard'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
-import { Permissions } from '../../auth/decorators/permissions.decorator'
 import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
 
 @Controller('edition')
 export class EditionController {
   constructor(private editionService: EditionService) {}
 
-  @UseInterceptors(MongooseClassSerializerInterceptor(DataWrapper))
+  // TODO: uncomment bellow
+  // @UseGuards(JwtAuthGuard) // -- here
+  // @UseGuards(JwtAuthGuard, PermissionsGuard)
+  // @Permissions('write:nfts')
+  // @UsePipes(new ValidationPipe())
+  @UseInterceptors(MongooseClassSerializerInterceptor(EditionResponseDto))
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ErrorValidationPipe())
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('write:editions')
-  @Post('mint')
+  @Post()
   async create(
-    @Request() req: Express.Request,
-    @Body() createEditionDto: CreateEditionDto
+    @Body() createEditionDto: CreateEditionDto,
+    @Request() req: Express.Request
   ): Promise<DataWrapper<EditionResponseDto>> {
     try {
-      return await this.editionService.createEdition(
+      return await this.editionService.mintEdition(
         createEditionDto,
         (req as any).user
       )

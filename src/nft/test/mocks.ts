@@ -67,7 +67,28 @@ export const getNftEdition = (): NftEdition => {
     quantity: 2,
     ownedCount: 1,
     isHidden: false,
-    nfts: [MUUID.from('3d94506a-e29b-4cfe-b20c-3f65653245fa')]
+    nfts: [MUUID.from('3d94506a-e29b-4cfe-b20c-3f65653245fa')],
+    owner: {
+      _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
+      avnPubKey: ''
+    },
+    image: {
+      small: {
+        type: AssetType.image,
+        url: 'string',
+        key: 'string'
+      },
+      large: {
+        type: AssetType.image,
+        url: 'string',
+        key: 'string'
+      },
+      original: {
+        type: AssetType.image,
+        url: 'string',
+        key: 'string'
+      }
+    }
   }
 }
 

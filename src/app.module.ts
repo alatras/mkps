@@ -3,7 +3,7 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { getMongoUri } from '../utils/database'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import config from './config/app.config'
 import { AuthModule } from './auth/auth.module'
 import { UserModule } from './user/user.module'
@@ -16,7 +16,14 @@ import { LogModule } from './log/log.module'
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [config], isGlobal: true }),
-    MongooseModule.forRoot(getMongoUri()),
+    MongooseModule.forRootAsync({
+      useFactory: () => {
+        return {
+          uri: getMongoUri(),
+          dbName: new ConfigService().get<string>('MONGODB_NAME')
+        }
+      }
+    }),
     AuthModule,
     UserModule,
     NftModule,

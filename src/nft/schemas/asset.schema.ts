@@ -26,7 +26,7 @@ export class ImagesSet {
 
   @Prop({ type: Asset })
   @Type(() => Asset)
-  medium: Asset
+  medium?: Asset
 
   @Prop({ type: Asset })
   @Type(() => Asset)

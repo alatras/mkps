@@ -11,8 +11,15 @@ import { InjectModel } from '@nestjs/mongoose'
 import { ClientProxy } from '@nestjs/microservices'
 import { Model } from 'mongoose'
 import * as MUUID from 'uuid-mongodb'
+import { ethers } from 'ethers'
+import { Binary } from 'mongodb'
 import { EditionListingService } from '../edition-listing/edition-listing.service'
-import { AuctionType, NftStatus } from '../shared/enum'
+import {
+  AuctionType,
+  AvnTransactionState,
+  AvnTransactionType,
+  NftStatus
+} from '../shared/enum'
 import { EditionListingStatus } from '../shared/enum'
 import { NftEdition } from './schemas/edition.schema'
 import { Nft } from '../nft/schemas/nft.schema'
@@ -24,6 +31,11 @@ import { User } from '../user/schemas/user.schema'
 import { DataWrapper } from '../common/dataWrapper'
 import { LogService } from '../log/log.service'
 import { MessagePatternGenerator } from '../utils/message-pattern-generator'
+import { getRoyalties } from '../utils/get-royalties'
+import {
+  AvnCreateBatchTransaction,
+  AvnEditionTransaction
+} from '../avn-transaction/schemas/avn-transaction.schema'
 
 @Injectable()
 export class EditionService {
@@ -32,10 +44,12 @@ export class EditionService {
   constructor(
     @InjectModel(NftEdition.name) private nftEditionModel: Model<NftEdition>,
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
-    private editionListing: EditionListingService,
+    @InjectModel(AvnEditionTransaction.name)
+    private avnTransaction: Model<AvnEditionTransaction>,
     @Inject(forwardRef(() => NftService)) private nftService: NftService,
-    private logService: LogService,
-    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
+    private editionListing: EditionListingService,
+    private logService: LogService
   ) {
     this.log = this.logService.getLogger()
   }
@@ -91,21 +105,39 @@ export class EditionService {
   }
 
   /**
-   * Creates Edition in DB.
+   * Mints an Edition
    */
-  async createEdition(
+  async mintEdition(
     createEditionDto: CreateEditionDto,
     user: User
   ): Promise<DataWrapper<EditionResponseDto>> {
     const foundUser = await this.getUser(MUUID.from(user._id))
     if (!foundUser.avnPubKey) {
-      throw new Error('User without an AVN key cannot mint')
+      throw new BadRequestException('User without an AVN key cannot mint')
     }
 
-    const editionWithSameName = await this.findEditionByName(
-      createEditionDto.name
+    const createdEdition: NftEdition = await this.createEdition(
+      createEditionDto,
+      user
     )
-    if (editionWithSameName.length > 0) {
+
+    const requestId = `${AvnTransactionType.AvnCreateBatch
+      }:${createdEdition._id.toString()}`
+
+    await this.createAvnBatchTransaction(createdEdition, user, requestId)
+
+    return { data: { requestId } }
+  }
+
+  /**
+   * Creates Edition in DB based on Edition input (DTO) and User
+   */
+  private async createEdition(
+    createEditionDto: CreateEditionDto,
+    user: User
+  ): Promise<NftEdition> {
+    const editionOfName = await this.findEditionByName(createEditionDto.name)
+    if (editionOfName.length > 0) {
       throw new ConflictException('Edition name already exists')
     }
 
@@ -133,7 +165,9 @@ export class EditionService {
       isHidden: true,
       status: NftStatus.minted,
       nfts: [],
-      listingType: AuctionType.fixedPrice
+      listingType: AuctionType.fixedPrice,
+      owner: { _id: user._id, avnPubKey: user.avnPubKey },
+      image: createEditionDto.image
     }
 
     const createdEdition: NftEdition = await this.nftEditionModel.create(
@@ -141,37 +175,49 @@ export class EditionService {
     )
     if (!createdEdition) {
       this.log.error(
-        '[createEdition] failed in creating Edition:',
+        '[createEdition] failed to create Edition:',
         createEditionDto.name
       )
       throw new InternalServerErrorException('cannot create Edition')
     }
 
-    return {
-      data: this.mapEditionModelToResponse(
-        createdEdition,
-        NftStatus.minted,
-        user
-      )
-    }
+    return createdEdition
   }
 
   /**
-   * Maps edition model after being created to response object.
+   * Creates AVN transaction in DB based on Edition model and User
    */
-  private mapEditionModelToResponse = (
-    doc: NftEdition,
-    status: NftStatus,
-    user: User
-  ): EditionResponseDto => {
-    const { _id, ...rest } = doc
-    return {
-      ...rest,
-      id: uuidFrom(_id.toString()).toString(),
-      status,
-      nfts: doc.nfts.map(n => uuidFrom(n.toString()).toString()),
-      owner: { _id: user._id, avnPubKey: user.avnPubKey }
+  private async createAvnBatchTransaction(
+    edition: NftEdition,
+    minter: User,
+    requestId: string
+  ): Promise<AvnEditionTransaction> {
+    const avnTransactionDoc: AvnCreateBatchTransaction = {
+      request_id: requestId,
+      type: AvnTransactionType.AvnCreateBatch,
+      data: {
+        totalSupply: edition.quantity,
+        userId: minter._id,
+        royalties: getRoyalties()
+      },
+      state: AvnTransactionState.NEW,
+      history: []
     }
+
+    const createdAvnTransaction = await this.avnTransaction.create(
+      avnTransactionDoc
+    )
+    if (!createdAvnTransaction) {
+      this.log.error(
+        '[createAvnBatchTransaction] failed to create AVN transaction for Edition: ' +
+        edition.name +
+        ', user: ' +
+        avnTransactionDoc.data.userId
+      )
+      throw new InternalServerErrorException('cannot create AVN transaction')
+    }
+
+    return createdAvnTransaction
   }
 
   /**
@@ -195,5 +241,67 @@ export class EditionService {
         })
         .subscribe((user: User) => resolve(user))
     })
+  }
+
+  async updateOneById(
+    id: string,
+    updatedValues: Partial<NftEdition>
+  ): Promise<NftEdition> {
+    return this.nftEditionModel.findOneAndUpdate(
+      { _id: uuidFrom(id) },
+      { $set: updatedValues },
+      { new: true }
+    )
+  }
+
+  /**
+   * Handles updating Edition after AVN minting succeed.
+   */
+  async handleEditionMinted(editionId: string, batchId: string) {
+    const updatedEdition: NftEdition = await this.updateOneById(editionId, {
+      status: NftStatus.minted,
+      avnId: batchId
+    })
+
+    const editionNftIds: MUUID.MUUID[] = []
+
+    await Promise.all(
+      [...Array(updatedEdition!.quantity)].map(async (_, index) => {
+        const _id = this.generateNftId(batchId, index + 1)
+
+        await this.nftService.createNft(
+          {
+            ...updatedEdition,
+            _id,
+            editionNumber: index + 1,
+            image: updatedEdition.image,
+            name: updatedEdition.name,
+            owner: updatedEdition.owner,
+            minterId: updatedEdition.owner._id
+          },
+          NftStatus.minted
+        )
+
+        editionNftIds.push(_id)
+      })
+    )
+
+    this.updateOneById(editionId, { nfts: editionNftIds })
+  }
+
+  private generateNftId(batchId: string, editionNumber: number): MUUID.MUUID {
+    const prefix = 'B'
+    const encodedData = ethers.utils.defaultAbiCoder.encode(
+      ['string', 'uint256', 'uint64'],
+      [prefix, batchId, editionNumber]
+    )
+    // Hash the data. This function returns a string prefixed with 0x
+    const hash: string = ethers.utils.keccak256(encodedData)
+    // Take the first 16 bytes, including 0x
+    const uuidCompatibleHash = hash.substring(0, 34)
+    // The input to this function must start with 0x
+    const hashBuffer = ethers.utils.arrayify(uuidCompatibleHash)
+    // Generate the final UUID
+    return uuidFrom(new Binary(hashBuffer, Binary.SUBTYPE_UUID))
   }
 }

@@ -1,7 +1,9 @@
 import { Controller, Body } from '@nestjs/common'
-import { NftService } from '../services/nft.service'
+import { Payload, MessagePattern } from '@nestjs/microservices'
 import { EventPattern } from '@nestjs/microservices'
+import { NftService } from '../services/nft.service'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { Permissions } from '../../auth/decorators/permissions.decorator'
 
 @Controller()
 export class NftMsController {
@@ -19,5 +21,11 @@ export class NftMsController {
       avnTransaction.nftId,
       avnTransaction.eid
     )
+  }
+
+  @Permissions('read:nfts')
+  @MessagePattern(MessagePatternGenerator('nft', 'getNftById'))
+  async getUserById(@Payload('nftId') nftId: string) {
+    return await this.nftService.findOneById(nftId)
   }
 }

@@ -37,13 +37,13 @@ export class AvnTransactionHttpController {
         dto.nftId
       )
       this.log.log(
-        'AvnTransactionHttpController - ANV transaction created successfully:',
+        '[AvnTransactionHttpController] ANV transaction created successfully:',
         dto
       )
       return create
     } catch (err) {
       this.log.error(
-        'AvnTransactionHttpController - cannot create AVN transaction:',
+        '[AvnTransactionHttpController] cannot create AVN transaction:',
         dto,
         err
       )

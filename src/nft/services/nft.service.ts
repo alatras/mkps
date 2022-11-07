@@ -1,4 +1,9 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common'
+import {
+  BadGatewayException,
+  forwardRef,
+  Inject,
+  Injectable
+} from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model } from 'mongoose'
 import { CreateNftDto } from '../dto/nft.dto'
@@ -15,6 +20,7 @@ import { NftDraftContract } from '../schemas/nft-draft-contract'
 import { User } from '../../user/schemas/user.schema'
 import { NftDraftModel } from '../schemas/nft-draft-model'
 import { getNftProperties } from '../../utils/nftProperties'
+import { ImagesSet } from '../schemas/asset.schema'
 
 @Injectable()
 export class NftService {
@@ -81,7 +87,7 @@ export class NftService {
       nft.editionId &&
       ![NftStatus.draft, NftStatus.minting].includes(status)
     ) {
-      await this.editionService.updateEditionCounts(nft.editionId)
+      await this.editionService.updateEditionCounts(nft.editionId.toString())
     }
 
     return nft
@@ -166,7 +172,7 @@ export class NftService {
       },
       image,
       isHidden: true, // Default draft NFT to hidden
-      minterId: ownerId.toString(),
+      minterId: ownerId,
       unlockableContent
     }
   }
@@ -206,5 +212,43 @@ export class NftService {
         )}".`
       )
     }
+  }
+
+  async createNft(
+    nftDraft: NftDraftModel,
+    nftStatus?: NftStatus
+  ): Promise<Nft> {
+    const { small, large } = nftDraft.image
+    if (!small || !large) {
+      throw new BadGatewayException('noImages: ' + nftDraft.image)
+    }
+
+    const image: ImagesSet = {
+      small: nftDraft.image.small,
+      large: nftDraft.image.large,
+      original: nftDraft.image.original
+    }
+
+    for (const key of Object.keys(nftDraft)) {
+      if (typeof nftDraft[key] === 'string') {
+        nftDraft[key] = `${nftDraft[key]}`.trim()
+      }
+    }
+
+    const finalDoc: Nft = {
+      ...nftDraft,
+      eid: '',
+      status: nftStatus ?? NftStatus.draft,
+      _id: uuidFrom(nftDraft._id.toString()),
+      assets: nftDraft.assets || [],
+      isHidden: nftDraft.isHidden || true,
+      image,
+      minterId: nftDraft.owner._id,
+      unlockableContent: nftDraft.unlockableContent
+        ? { ...nftDraft.unlockableContent, claimedCount: 0 }
+        : undefined
+    }
+
+    return await this.nftModel.create(finalDoc)
   }
 }
