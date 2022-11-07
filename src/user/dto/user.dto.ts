@@ -8,6 +8,7 @@ import {
 } from 'class-validator'
 import { AuthProvider, User } from '../schemas/user.schema'
 import * as MUUID from 'uuid-mongodb'
+import { ApiProperty } from '@nestjs/swagger'
 
 export class AuthProviderDto {
   @IsString()
@@ -25,34 +26,42 @@ export class CreateUserDto {
 
 export class LeaderboardDto {
   @IsBoolean()
+  @ApiProperty()
   optIn: boolean
 }
 
 export class NotificationPreferencesDto {
   @IsBoolean()
+  @ApiProperty()
   unsubscribedEmail: boolean
 
   @IsBoolean()
+  @ApiProperty()
   sellerEmail: boolean
 
   @IsBoolean()
+  @ApiProperty()
   bidderEmail: boolean
 }
 
 export class UpdateUserDto {
   @Expose()
   @IsString()
-  username: string
+  @ApiProperty({ required: false })
+  readonly username?: string
 
   @Expose()
   @IsString()
-  email: string
+  @ApiProperty({ required: false })
+  readonly email?: string
 
   @Expose()
-  leaderboard: LeaderboardDto
+  @ApiProperty({ required: false })
+  readonly leaderboard?: LeaderboardDto
 
   @Expose()
-  notificationPreferences: NotificationPreferencesDto
+  @ApiProperty({ required: false })
+  readonly notificationPreferences?: NotificationPreferencesDto
 }
 
 export class UpdateAuth0Dto {
@@ -65,34 +74,42 @@ export class UserResponseDto {
   @Expose()
   @Transform(({ value }) => MUUID.from(value).toString())
   @IsString()
+  @ApiProperty()
   _id: string
 
   @Expose()
   @IsString()
+  @ApiProperty()
   avnPubKey: string
 
   @Expose()
   @IsString()
+  @ApiProperty()
   stripeCustomerId: string
 
   @Expose()
   @IsString()
+  @ApiProperty()
   stripeAccountId: string
 
   @Expose()
   @IsString()
+  @ApiProperty()
   username: string
 
   @Expose()
   @IsString()
+  @ApiProperty()
   email: string
 
   @Expose()
   @IsArray()
+  @ApiProperty()
   ethAddresses: string[]
 
   @Expose()
   @Type(() => AuthProvider)
+  @ApiProperty()
   provider: AuthProvider
 
   constructor(partial: Partial<User>) {

@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
-import { EditionListingService } from './edition-listing.service'
-import { EditionListing } from '../edition-listing/schemas/edition-listing.schema'
-import { getEditionListing } from '../nft/test/mocks'
+import { EditionListingService } from '../services/edition-listing.service'
+import { EditionListing } from '../schemas/edition-listing.schema'
+import { getEditionListing } from '../../nft/test/mocks'
 
 describe('EditionListingService', () => {
   let service: EditionListingService

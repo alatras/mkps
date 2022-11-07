@@ -11,7 +11,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { ClientProxy } from '@nestjs/microservices'
 import { Model } from 'mongoose'
 import * as MUUID from 'uuid-mongodb'
-import { EditionListingService } from '../edition-listing/edition-listing.service'
+import { EditionListingService } from '../edition-listing/services/edition-listing.service'
 import { AuctionType, NftStatus } from '../shared/enum'
 import { EditionListingStatus } from '../shared/enum'
 import { NftEdition } from './schemas/edition.schema'
@@ -24,6 +24,7 @@ import { User } from '../user/schemas/user.schema'
 import { DataWrapper } from '../common/dataWrapper'
 import { LogService } from '../log/log.service'
 import { MessagePatternGenerator } from '../utils/message-pattern-generator'
+import { firstValueFrom } from 'rxjs'
 
 @Injectable()
 export class EditionService {
@@ -32,7 +33,6 @@ export class EditionService {
   constructor(
     @InjectModel(NftEdition.name) private nftEditionModel: Model<NftEdition>,
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
-    private editionListing: EditionListingService,
     @Inject(forwardRef(() => NftService)) private nftService: NftService,
     private logService: LogService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
@@ -45,11 +45,10 @@ export class EditionService {
    * after an NFT is minted.
    */
   async updateEditionCounts(editionId: string) {
-    const previousEditionListing =
-      await this.editionListing.getPreviousListingForEdition(
-        editionId,
-        EditionListingStatus.open
-      )
+    const previousEditionListing = await this.getPreviousListingForEdition(
+      editionId,
+      EditionListingStatus.open
+    )
 
     const availableStatuses = [NftStatus.forSale]
 
@@ -188,12 +187,31 @@ export class EditionService {
    * Get user from User Service via Redis.
    */
   private async getUser(userId: MUUID.MUUID): Promise<User> {
-    return new Promise(resolve => {
-      this.clientProxy
-        .send(MessagePatternGenerator('user', 'getUserById'), {
-          userId: userId.toString()
-        })
-        .subscribe((user: User) => resolve(user))
-    })
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
+        userId: userId.toString()
+      })
+    )
+  }
+
+  /**
+   * Get previous EditionListing for a given Edition via Redis
+   */
+  private async getPreviousListingForEdition(
+    editionId: string,
+    status?: EditionListingStatus
+  ) {
+    return await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator(
+          'editionListing',
+          'getPreviousListingForEdition'
+        ),
+        {
+          editionId,
+          status
+        }
+      )
+    )
   }
 }

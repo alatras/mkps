@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { EditionListingController } from './edition-listing.controller'
+import { EditionListingController } from '../controllers/edition-listing.controller'
 
 describe('EditionListingController', () => {
   let controller: EditionListingController

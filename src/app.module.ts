@@ -6,25 +6,24 @@ import { getMongoUri } from '../utils/database'
 import { ConfigModule } from '@nestjs/config'
 import config from './config/app.config'
 import { AuthModule } from './auth/auth.module'
-import { UserModule } from './user/user.module'
-import { NftModule } from './nft/nft.module'
-import { AvnTransactionModule } from './avn-transaction/avn-transaction.module'
-import { EditionModule } from './edition/edition.module'
-import { EditionListingModule } from './edition-listing/edition-listing.module'
 import { LogModule } from './log/log.module'
+import { getActiveMicroservices } from '../utils/microservices'
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+
+const GENERAL_IMPORTS = [
+  AuthModule,
+  LogModule,
+  ConfigModule.forRoot({ load: [config], isGlobal: true }),
+  MongooseModule.forRoot(getMongoUri())
+]
+
+const imports = [...GENERAL_IMPORTS, ...getActiveMicroservices()]
+
+
+
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ load: [config], isGlobal: true }),
-    MongooseModule.forRoot(getMongoUri()),
-    AuthModule,
-    UserModule,
-    NftModule,
-    AvnTransactionModule,
-    EditionModule,
-    EditionListingModule,
-    LogModule
-  ],
+  imports,
   controllers: [AppController],
   providers: [AppService, Logger]
 })

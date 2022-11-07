@@ -10,7 +10,6 @@ import { EditionService } from './edition.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { NftEdition, NftEditionSchema } from './schemas/edition.schema'
 import { Nft, NftSchema } from '../nft/schemas/nft.schema'
-import { EditionListingModule } from '../edition-listing/edition-listing.module'
 import { DbCollections } from '../shared/enum'
 import { NftModule } from '../nft/nft.module'
 import { LogModule } from '../log/log.module'
@@ -21,7 +20,6 @@ import appConfig from '../config/app.config'
   imports: [
     forwardRef(() => NftModule),
     LogModule,
-    EditionListingModule,
     MongooseModule.forFeature([
       {
         name: NftEdition.name,

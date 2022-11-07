@@ -16,9 +16,11 @@ import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
+import { ApiTags } from "@nestjs/swagger";
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
+@ApiTags('nft')
 export class NftHttpController {
   constructor(private readonly nftService: NftService) {}
 

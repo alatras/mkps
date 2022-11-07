@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
-import { EditionListingController } from './edition-listing.controller'
-import { EditionListingService } from './edition-listing.service'
+import { EditionListingController } from './controllers/edition-listing.controller'
+import { EditionListingService } from './services/edition-listing.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import {
   EditionListing,

@@ -9,7 +9,7 @@ import {
   getMockNftHistory
 } from '../../nft/test/mocks'
 import { Nft } from '../../nft/schemas/nft.schema'
-import { EditionListingService } from '../../edition-listing/edition-listing.service'
+import { EditionListingService } from '../../edition-listing/services/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../../log/log.service'
 import { NftService } from '../../nft/services/nft.service'

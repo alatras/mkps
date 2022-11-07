@@ -15,7 +15,9 @@ import { LogService } from '../../log/log.service'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { MintAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
+import { ApiTags } from "@nestjs/swagger";
 
+@ApiTags('AvnTransaction')
 @Controller('avn-transaction')
 export class AvnTransactionHttpController {
   private log: LoggerService

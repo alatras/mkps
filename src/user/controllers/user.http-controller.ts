@@ -21,7 +21,9 @@ import { Request as ExpressRequest } from 'express'
 import { UpdateAuth0Dto, UpdateUserDto, UserResponseDto } from '../dto/user.dto'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { Provider, User } from '../schemas/user.schema'
+import { ApiResponse, ApiTags } from '@nestjs/swagger'
 
+@ApiTags('users')
 @Controller('users')
 export class UserHttpController {
   private log: LoggerService
@@ -36,6 +38,7 @@ export class UserHttpController {
   @UseInterceptors(MongooseClassSerializerInterceptor(UserResponseDto))
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('read:nfts')
+  @ApiResponse({ type: [User] })
   @Get()
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.userService.findAll()
@@ -59,6 +62,11 @@ export class UserHttpController {
 
   @UseInterceptors(MongooseClassSerializerInterceptor(UserResponseDto))
   @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    type: UserResponseDto,
+    status: 201,
+    description: 'The record has been successfully updated.'
+  })
   @Patch('me')
   async updateUser(
     @Request() req: ExpressRequest,
