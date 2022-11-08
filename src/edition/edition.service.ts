@@ -121,8 +121,9 @@ export class EditionService {
       user
     )
 
-    const requestId = `${AvnTransactionType.AvnCreateBatch
-      }:${createdEdition._id.toString()}`
+    const requestId = `${
+      AvnTransactionType.AvnCreateBatch
+    }:${createdEdition._id.toString()}`
 
     await this.createAvnBatchTransaction(createdEdition, user, requestId)
 
@@ -210,9 +211,9 @@ export class EditionService {
     if (!createdAvnTransaction) {
       this.log.error(
         '[createAvnBatchTransaction] failed to create AVN transaction for Edition: ' +
-        edition.name +
-        ', user: ' +
-        avnTransactionDoc.data.userId
+          edition.name +
+          ', user: ' +
+          avnTransactionDoc.data.userId
       )
       throw new InternalServerErrorException('cannot create AVN transaction')
     }

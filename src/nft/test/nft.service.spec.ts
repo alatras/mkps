@@ -3,9 +3,7 @@ import { getModelToken } from '@nestjs/mongoose'
 import * as MUUID from 'uuid-mongodb'
 import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
-import {
-  AvnEditionTransaction
-} from '../../avn-transaction/schemas/avn-transaction.schema'
+import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
 import {
   getEditionListing,
   getMockNft,

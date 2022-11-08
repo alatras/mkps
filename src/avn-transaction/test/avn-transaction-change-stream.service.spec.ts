@@ -5,7 +5,10 @@ import { User } from '../../user/schemas/user.schema'
 import { NftService } from '../../nft/services/nft.service'
 import { getMockUser } from '../../user/test/mocks'
 import { UserService } from '../../user/user.service'
-import { AvnEditionTransaction, AvnNftTransaction } from '../schemas/avn-transaction.schema'
+import {
+  AvnEditionTransaction,
+  AvnNftTransaction
+} from '../schemas/avn-transaction.schema'
 import { getAvnTransaction } from './mocks'
 import { Nft } from '../../nft/schemas/nft.schema'
 import {
