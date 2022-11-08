@@ -4,16 +4,16 @@ FROM node:18-alpine As build
 
 WORKDIR /usr/src/app
 
-COPY --chown=node:node package*.json ./
+COPY package*.json ./
 
 # Clean package install with dev dependencies to access Nest Cli
-RUN --chown=node:node  npm ci
+RUN npm ci
 
 # Contents
-COPY --chown=node:node . .
+COPY . .
 
 # Build to create the production bundle with Nest Cli
-RUN --chown=node:node npm run build
+RUN npm run build
 
 # Set NODE_ENV
 ENV NODE_ENV production
@@ -28,8 +28,8 @@ USER node
 FROM node:18-alpine As production
 
 # Copy the bundled code from the build stage to the production image
-COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
-COPY --chown=node:node --from=build /usr/src/app/build ./build
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/build ./build
 
 # Start the server
 CMD [ "node", "build/src/main.js" ]
