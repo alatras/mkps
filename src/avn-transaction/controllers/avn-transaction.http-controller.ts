@@ -17,7 +17,7 @@ import { MintAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger'
 import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
-import { AvnTransaction } from "../schemas/avn-transaction.schema";
+import { AvnNftTransaction } from '../schemas/avn-transaction.schema'
 
 @ApiTags('AvnTransaction')
 @Controller('avn-transaction')
@@ -46,13 +46,13 @@ export class AvnTransactionHttpController {
         dto.nftId
       )
       this.log.log(
-        'AvnTransactionHttpController - ANV transaction created successfully:',
+        '[AvnTransactionHttpController] ANV transaction created successfully:',
         dto
       )
       return create
     } catch (err) {
       this.log.error(
-        'AvnTransactionHttpController - cannot create AVN transaction:',
+        '[AvnTransactionHttpController] cannot create AVN transaction:',
         dto,
         err
       )
@@ -64,16 +64,18 @@ export class AvnTransactionHttpController {
   @ApiOkResponse({
     description:
       'Retrieves an AVN Transaction. Used to check the status of Minting an NFT.',
-    type: AvnTransaction
+    type: AvnNftTransaction
   })
-  @Get('mint/request/:requestId')
+  @Get(':requestId')
   async getAvnTransaction(@Param('requestId') requestId: string) {
     try {
       const transaction =
         await this.avnTransactionService.getAvnTransactionByRequestId(requestId)
+
       if (transaction) {
         return transaction
       }
+
       throw new NotFoundException('AVN transaction not found')
     } catch (err) {
       this.log.error(`[getAvnTransaction] error: `, err)

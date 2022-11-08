@@ -20,7 +20,7 @@ export class UserMsController {
     this.mUUID = MUUID.mode('relaxed')
   }
 
-  @Permissions('read:nfts')
+  @Permissions('read:users')
   @MessagePattern(MessagePatternGenerator('user', 'getUserById'))
   async getUserById(@Payload('userId') userId: string) {
     const user = await this.userService.findOneById(this.mUUID.from(userId))

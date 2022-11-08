@@ -3,6 +3,8 @@ import { Document } from 'mongoose'
 import { AuctionType, DbCollections, NftStatus } from '../../shared/enum'
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
+import { ImagesSet } from '../../nft/schemas/asset.schema'
+import { Owner } from '../../shared/sub-schemas/owner.schema'
 
 export type NftEditionDocument = NftEdition & Document
 
@@ -57,6 +59,12 @@ export class NftEdition {
 
   @Prop()
   listingType?: AuctionType.fixedPrice | AuctionType.freeClaim
+
+  @Prop({ type: ImagesSet })
+  image: ImagesSet
+
+  @Prop({ type: Owner })
+  owner: Owner
 }
 
 export const NftEditionSchema = SchemaFactory.createForClass(NftEdition)

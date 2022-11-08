@@ -19,15 +19,7 @@ export class NftDraftModel {
   owner: Owner
 
   @Prop({ type: ImagesSet })
-  image?: ImagesSet
-
-  @Transform(({ value }) => MUUID.from(value).toString())
-  @Prop({
-    type: 'object',
-    value: { type: 'Buffer' },
-    default: () => MUUID.v4()
-  })
-  editionId?: MUUID.MUUID
+  image: ImagesSet
 
   @Prop()
   @IsBoolean()
@@ -43,8 +35,22 @@ export class NftDraftModel {
   @Expose()
   @Transform(({ value }) => MUUID.from(value).toString())
   @IsString()
-  minterId: string
+  minterId: MUUID.MUUID
 
   @Prop({ type: UnlockableContent })
-  unlockableContent: UnlockableContent
+  unlockableContent?: UnlockableContent
+
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    default: () => MUUID.v4()
+  })
+  editionId?: MUUID.MUUID
+
+  @Prop()
+  name?: string
+
+  @Prop()
+  editionNumber?: number
 }

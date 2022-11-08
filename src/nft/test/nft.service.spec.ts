@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose'
 import * as MUUID from 'uuid-mongodb'
 import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
+import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
 import {
   getEditionListing,
   getMockNft,
@@ -19,6 +20,7 @@ import { NftStatus } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { HistoryType } from '../../shared/enum'
 import { LogService } from '../../log/log.service'
+import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -42,6 +44,10 @@ describe('NftService', () => {
         {
           provide: getModelToken(Nft.name),
           useValue: new NftMock(getMockNft())
+        },
+        {
+          provide: getModelToken(AvnEditionTransaction.name),
+          useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(NftHistory.name),

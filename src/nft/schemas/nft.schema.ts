@@ -6,7 +6,7 @@ import { User } from '../../user/schemas/user.schema'
 import { Asset, ImagesSet } from './asset.schema'
 import { DbCollections, NftStatus } from '../../shared/enum'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger'
 
 export enum AssetType {
   image = 'image',
@@ -82,8 +82,13 @@ export class Nft {
   @Prop()
   avnAddress?: string
 
-  @Prop()
-  editionId?: string
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    default: () => MUUID.v4()
+  })
+  editionId?: MUUID.MUUID
 
   @Prop()
   eid?: string
@@ -104,11 +109,14 @@ export class Nft {
   @Prop({ type: Owner })
   owner: Owner
 
-  @Prop({ type: 'object', required: true })
-  properties: Record<string, any>
+  @Prop({ type: 'object' })
+  properties?: Record<string, any>
 
-  @Prop({ type: [String], required: true })
-  ethAddresses: string[]
+  @Prop({ type: [String] })
+  ethAddresses?: string[]
+
+  @Prop()
+  editionNumber?: number
 }
 
 export const NftSchema = SchemaFactory.createForClass(Nft)

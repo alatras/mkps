@@ -1,7 +1,7 @@
 import { IsEnum, IsString, ValidateNested } from 'class-validator'
 import { AssetType } from '../schemas/nft.schema'
 import { Type } from 'class-transformer'
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger'
 
 export class AssetDto {
   @IsString()

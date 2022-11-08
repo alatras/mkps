@@ -3,7 +3,7 @@ import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { DbCollections } from '../../shared/enum'
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger'
 
 export enum Provider {
   auth0 = 'google-oauth2'

@@ -1,5 +1,4 @@
 import { AvnTransactionModule } from '../src/avn-transaction/avn-transaction.module'
-import { UserModule } from '../src/user/user.module'
 import { EditionModule } from '../src/edition/edition.module'
 import { NftModule } from '../src/nft/nft.module'
 import { EditionListingModule } from '../src/edition-listing/edition-listing.module'
@@ -10,9 +9,9 @@ export enum Microservices {
   LISTING = 'LISTING_SERVICE'
 }
 
-const AVN_SERVICE_IMPORTS = [AvnTransactionModule, UserModule]
-const NFT_SERVICE_IMPORTS = [NftModule, EditionModule, UserModule]
-const LISTING_SERVICE_IMPORTS = [EditionListingModule, UserModule]
+const AVN_SERVICE_IMPORTS = [AvnTransactionModule]
+const NFT_SERVICE_IMPORTS = [NftModule, EditionModule]
+const LISTING_SERVICE_IMPORTS = [EditionListingModule]
 
 const importsPerService = {
   [Microservices.AVN]: AVN_SERVICE_IMPORTS,
@@ -24,11 +23,6 @@ export const getActiveMicroservices = () => {
   if (!process.env.ACTIVE_SERVICES) {
     throw new Error('ACTIVE_SERVICES env var not set!')
   }
-
-  console.log(
-    Object.values(Microservices),
-    Object.values(Microservices).includes('AVN_SERVICE' as Microservices)
-  )
 
   return process.env.ACTIVE_SERVICES.split(',')
     .map(service => {

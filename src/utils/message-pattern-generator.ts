@@ -1,3 +1,5 @@
 export function MessagePatternGenerator(service: string, cmd: string): string {
-  return (process.env.NODE_ENV || 'development') + '.' + service + '.' + cmd
+  const pattern =
+    (process.env.NODE_ENV || 'development') + '.' + service + '.' + cmd
+  return pattern
 }

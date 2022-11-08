@@ -5,7 +5,7 @@ import {
   Closeable,
   Transport
 } from '@nestjs/microservices'
-import { EditionController } from './controllers/edition.controller'
+import { EditionController } from './controllers/edition.http-controller'
 import { EditionService } from './edition.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { NftEdition, NftEditionSchema } from './schemas/edition.schema'
@@ -15,6 +15,12 @@ import { NftModule } from '../nft/nft.module'
 import { LogModule } from '../log/log.module'
 import { ConfigService } from '@nestjs/config'
 import appConfig from '../config/app.config'
+import {
+  AvnNftTransaction,
+  AvnNftTransactionSchema,
+  AvnEditionTransaction
+} from 'src/avn-transaction/schemas/avn-transaction.schema'
+import { EditionMsController } from './controllers/edition.ms-controller'
 
 @Module({
   imports: [
@@ -30,10 +36,20 @@ import appConfig from '../config/app.config'
         name: Nft.name,
         schema: NftSchema,
         collection: DbCollections.NFTs
+      },
+      {
+        name: AvnNftTransaction.name,
+        schema: AvnNftTransactionSchema,
+        collection: DbCollections.AvnTransactions
+      },
+      {
+        name: AvnEditionTransaction.name,
+        schema: AvnNftTransactionSchema,
+        collection: DbCollections.AvnTransactions
       }
     ])
   ],
-  controllers: [EditionController],
+  controllers: [EditionController, EditionMsController],
   providers: [
     EditionService,
     {

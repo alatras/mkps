@@ -3,8 +3,8 @@ import { AvnTransactionChangeStreamService } from './services/avn-transaction-ch
 import { AvnTransactionService } from './services/avn-transaction.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import {
-  AvnTransaction,
-  AvnTransactionSchema
+  AvnNftTransaction,
+  AvnNftTransactionSchema
 } from './schemas/avn-transaction.schema'
 import { DbCollections } from '../shared/enum'
 import { LogModule } from '../log/log.module'
@@ -20,10 +20,11 @@ import appConfig from '../config/app.config'
 
 @Module({
   imports: [
+    LogModule,
     MongooseModule.forFeature([
       {
-        name: AvnTransaction.name,
-        schema: AvnTransactionSchema,
+        name: AvnNftTransaction.name,
+        schema: AvnNftTransactionSchema,
         collection: DbCollections.AvnTransactions
       }
     ]),

@@ -3,23 +3,35 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { getMongoUri } from '../utils/database'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import config from './config/app.config'
 import { AuthModule } from './auth/auth.module'
 import { LogModule } from './log/log.module'
 import { getActiveMicroservices } from '../utils/microservices'
+import { UserModule } from './user/user.module'
+import { EditionListingModule } from './edition-listing/edition-listing.module'
 
 const GENERAL_IMPORTS = [
   AuthModule,
   LogModule,
   ConfigModule.forRoot({ load: [config], isGlobal: true }),
-  MongooseModule.forRoot(getMongoUri())
+  MongooseModule.forRootAsync({
+    useFactory: () => {
+      return {
+        uri: getMongoUri(),
+        dbName: new ConfigService().get<string>('MONGODB_NAME')
+      }
+    }
+  })
 ]
 
-const imports = [...GENERAL_IMPORTS, ...getActiveMicroservices()]
-
-
-
+// TODO: remove UserModule and EditionListingModule when they're ready to be completely separated
+const imports = [
+  ...GENERAL_IMPORTS,
+  UserModule,
+  EditionListingModule,
+  ...getActiveMicroservices()
+]
 
 @Module({
   imports,

@@ -6,7 +6,7 @@ import {
   getMockNftHistory,
   getNftEdition
 } from '../../nft/test/mocks'
-import { EditionController } from '../controllers/edition.controller'
+import { EditionController } from '../controllers/edition.http-controller'
 import { EditionService } from '../edition.service'
 import { NftEdition } from '../schemas/edition.schema'
 import { Nft } from '../../nft/schemas/nft.schema'
@@ -15,6 +15,8 @@ import { EditionListing } from '../../edition-listing/schemas/edition-listing.sc
 import { NftService } from '../../nft/services/nft.service'
 import { LogService } from '../../log/log.service'
 import { NftHistory } from '../../nft/schemas/nft-history.schema'
+import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
+import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -33,6 +35,10 @@ describe('EditionController', () => {
         {
           provide: getModelToken(EditionListing.name),
           useValue: getEditionListing()
+        },
+        {
+          provide: getModelToken(AvnEditionTransaction.name),
+          useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(NftHistory.name),

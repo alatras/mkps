@@ -40,6 +40,7 @@ export class CreateUnlockableContentDto {
 
   @Prop({ default: 0 })
   @IsNumber()
+  @IsOptional()
   @ApiProperty()
   claimedCount: number
 }
