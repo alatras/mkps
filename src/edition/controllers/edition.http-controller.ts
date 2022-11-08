@@ -17,18 +17,16 @@ import { DataWrapper } from '../../common/dataWrapper'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
+import { PermissionsGuard } from 'src/auth/permissions.guard'
+import { Permissions } from 'src/auth/decorators/permissions.decorator'
 
 @Controller('edition')
 export class EditionController {
   constructor(private editionService: EditionService) {}
 
-  // TODO: uncomment bellow
-  // @UseGuards(JwtAuthGuard) // -- here
-  // @UseGuards(JwtAuthGuard, PermissionsGuard)
-  // @Permissions('write:nfts')
-  // @UsePipes(new ValidationPipe())
   @UseInterceptors(MongooseClassSerializerInterceptor(EditionResponseDto))
-  @UseGuards(JwtAuthGuard)
+  @Permissions('write:nfts')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @UsePipes(new ErrorValidationPipe())
   @Post()
   async create(
