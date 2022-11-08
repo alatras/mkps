@@ -17,8 +17,8 @@ import { DataWrapper } from '../../common/dataWrapper'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
-import { PermissionsGuard } from 'src/auth/permissions.guard'
-import { Permissions } from 'src/auth/decorators/permissions.decorator'
+import { PermissionsGuard } from '../../auth/permissions.guard'
+import { Permissions } from '../../auth/decorators/permissions.decorator'
 
 @Controller('edition')
 export class EditionController {
