@@ -18,11 +18,15 @@ export const getMongoUri = () => {
   const urlParts = mongoUri.split('?')
   let query = urlParts[1]
 
-  query = query.replace('ssl_ca_certs', 'tlsCAFile')
-  query = query.replace('tls=true', 'ssl=true')
-  if (!query.includes('tlsCAFile')) {
-    query = `${query}&tlsCAFile=rds-combined-ca-bundle.pem`
+  if (query) {
+    query = query.replace('ssl_ca_certs', 'tlsCAFile')
+    query = query.replace('tls=true', 'ssl=true')
+    if (!query.includes('tlsCAFile')) {
+      query = `${query}&tlsCAFile=rds-combined-ca-bundle.pem`
+    }
   }
 
-  return `${urlParts[0]}?retryWrites=false&directConnection=true&${query}`
+  return `${urlParts[0]}?retryWrites=false&directConnection=true${
+    query ? '&' + query : ''
+  }`
 }
