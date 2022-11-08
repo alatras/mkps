@@ -52,7 +52,7 @@ export class AvnTransactionHttpController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('mint/request/:requestId')
+  @Get(':requestId')
   async getAvnTransaction(@Param('requestId') requestId: string) {
     try {
       const transaction =
