@@ -3,6 +3,7 @@ import { AppModule } from './app.module'
 import { HttpExceptionsFilter } from './filters/http-exceptions.filter'
 import { LogService } from './log/log.service'
 import { Transport } from '@nestjs/microservices'
+import { getRedisOptions } from './utils/get-redis-options'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -14,7 +15,10 @@ async function bootstrap() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.connectMicroservice(
-    { transport: Transport.REDIS },
+    {
+      transport: Transport.REDIS,
+      options: getRedisOptions()
+    },
     { inheritAppConfig: true }
   )
   app.startAllMicroservices()

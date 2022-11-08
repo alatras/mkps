@@ -15,8 +15,7 @@ import {
   Closeable,
   Transport
 } from '@nestjs/microservices'
-import { ConfigService } from '@nestjs/config'
-import appConfig from '../config/app.config'
+import { getRedisOptions } from '../utils/get-redis-options'
 
 @Module({
   imports: [
@@ -35,14 +34,9 @@ import appConfig from '../config/app.config'
     {
       provide: 'TRANSPORT_CLIENT',
       useFactory: (): ClientProxy & Closeable => {
-        const configService = new ConfigService(appConfig)
-
         return ClientProxyFactory.create({
           transport: Transport.REDIS,
-          options: {
-            host: configService.get<string>('app.redis.host'),
-            port: configService.get<number>('app.redis.port')
-          }
+          options: getRedisOptions()
         })
       }
     }
