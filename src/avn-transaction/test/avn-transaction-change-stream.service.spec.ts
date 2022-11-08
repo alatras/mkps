@@ -21,8 +21,6 @@ import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListingService } from '../../edition-listing/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { AvnTransactionChangeStreamService } from '../services/avn-transaction-change-stream.service'
-import { AvnTransactionType } from '../../shared/enum'
-import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { LogService } from '../../log/log.service'
 
@@ -85,24 +83,4 @@ describe('AvnTransactionChangeStreamService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined()
   })
-
-  // describe('sendMintingSuccessfulEvent', () => {
-  //   it('should call clientProxy.emit with the correct avnTransaction data', async () => {
-  //     const testAvnTransaction = getAvnTransaction(
-  //       avn => avn.type === AvnTransactionType.MintSingleNft
-  //     )
-
-  //     await service.sendMintingSuccessfulEvent(testAvnTransaction)
-  //     await service.
-
-  //     expect(testClientProxy.emit).toBeCalledWith(
-  //       MessagePatternGenerator('nft', 'handleNftMinted'),
-  //       {
-  //         nftId: testAvnTransaction.data.unique_external_ref,
-  //         eid: testAvnTransaction.history[testAvnTransaction.history.length - 1]
-  //           .operation_data.nftId
-  //       }
-  //     )
-  //   })
-  // })
 })
