@@ -31,6 +31,7 @@ const ClientProxyMock = () => ({
 
 describe('AvnTransactionChangeStreamService', () => {
   let service: AvnTransactionChangeStreamService
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   let testClientProxy
 
   beforeEach(async () => {
