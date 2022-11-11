@@ -27,7 +27,8 @@ import appConfig from '../config/app.config'
         schema: AvnNftTransactionSchema,
         collection: DbCollections.AvnTransactions
       }
-    ])
+    ]),
+    LogModule
   ],
   providers: [
     AvnTransactionService,

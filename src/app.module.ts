@@ -6,32 +6,35 @@ import { getMongoUri } from '../utils/database'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import config from './config/app.config'
 import { AuthModule } from './auth/auth.module'
-import { UserModule } from './user/user.module'
-import { NftModule } from './nft/nft.module'
-import { AvnTransactionModule } from './avn-transaction/avn-transaction.module'
-import { EditionModule } from './edition/edition.module'
-import { EditionListingModule } from './edition-listing/edition-listing.module'
 import { LogModule } from './log/log.module'
+import { getActiveMicroservices } from '../utils/microservices'
+import { UserModule } from './user/user.module'
+import { EditionListingModule } from './edition-listing/edition-listing.module'
+
+const GENERAL_IMPORTS = [
+  AuthModule,
+  LogModule,
+  ConfigModule.forRoot({ load: [config], isGlobal: true }),
+  MongooseModule.forRootAsync({
+    useFactory: () => {
+      return {
+        uri: getMongoUri(),
+        dbName: new ConfigService().get<string>('MONGODB_NAME')
+      }
+    }
+  })
+]
+
+// TODO: remove UserModule and EditionListingModule when they're ready to be completely separated
+const imports = [
+  ...GENERAL_IMPORTS,
+  UserModule,
+  EditionListingModule,
+  ...getActiveMicroservices()
+]
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ load: [config], isGlobal: true }),
-    MongooseModule.forRootAsync({
-      useFactory: () => {
-        return {
-          uri: getMongoUri(),
-          dbName: new ConfigService().get<string>('MONGODB_NAME')
-        }
-      }
-    }),
-    AuthModule,
-    UserModule,
-    NftModule,
-    AvnTransactionModule,
-    EditionModule,
-    EditionListingModule,
-    LogModule
-  ],
+  imports,
   controllers: [AppController],
   providers: [AppService, Logger]
 })

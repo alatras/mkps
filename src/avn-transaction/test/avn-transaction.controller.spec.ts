@@ -23,7 +23,7 @@ import { ConfigService } from '@nestjs/config'
 import { NftHistory } from '../../nft/schemas/nft-history.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftEdition } from '../../edition/schemas/edition.schema'
-import { EditionListingService } from '../../edition-listing/edition-listing.service'
+import { EditionListingService } from '../../edition-listing/services/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../../log/log.service'
 

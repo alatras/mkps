@@ -1,3 +1,4 @@
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
 </p>
@@ -24,7 +25,7 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+VereNFT Marketplace API. To see the OpenAPI docs please go to '/docs'.
 
 ## Installation
 
@@ -32,6 +33,17 @@
 $ npm install
 ```
 
+## Configuring Microservices
+This is a mono-repo that contains all our microservices. You can run all of them at once (for local development), or run
+specific ones only, all by modifying the ACTIVE_SERVICES env variable e.g to run only the Nft microservice:
+```
+ACTIVE_SERVICES=NFT_SERVICE  
+```
+To run multiple:
+```
+ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,...
+```
+To see which microservices are available, please check the Microservices enum in "src/utils/microservices.ts" 
 ## Running the app
 
 ```bash
@@ -39,7 +51,7 @@ $ npm install
 $ npm run start
 
 # watch mode
-$ npm run start:dev
+$ npm run dev
 
 # production mode
 $ npm run start:prod
@@ -57,17 +69,3 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).

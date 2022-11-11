@@ -13,7 +13,6 @@ import { Model } from 'mongoose'
 import * as MUUID from 'uuid-mongodb'
 import { ethers } from 'ethers'
 import { Binary } from 'mongodb'
-import { EditionListingService } from '../edition-listing/edition-listing.service'
 import {
   AuctionType,
   AvnTransactionState,
@@ -36,6 +35,7 @@ import {
   AvnCreateBatchTransaction,
   AvnEditionTransaction
 } from '../avn-transaction/schemas/avn-transaction.schema'
+import { firstValueFrom } from 'rxjs'
 
 @Injectable()
 export class EditionService {
@@ -48,7 +48,6 @@ export class EditionService {
     private avnTransaction: Model<AvnEditionTransaction>,
     @Inject(forwardRef(() => NftService)) private nftService: NftService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
-    private editionListing: EditionListingService,
     private logService: LogService
   ) {
     this.log = this.logService.getLogger()
@@ -59,11 +58,10 @@ export class EditionService {
    * after an NFT is minted.
    */
   async updateEditionCounts(editionId: string) {
-    const previousEditionListing =
-      await this.editionListing.getPreviousListingForEdition(
-        editionId,
-        EditionListingStatus.open
-      )
+    const previousEditionListing = await this.getPreviousListingForEdition(
+      editionId,
+      EditionListingStatus.open
+    )
 
     const availableStatuses = [NftStatus.forSale]
 
@@ -235,13 +233,32 @@ export class EditionService {
    * Get user from User Service via Redis.
    */
   private async getUser(userId: MUUID.MUUID): Promise<User> {
-    return new Promise(resolve => {
-      this.clientProxy
-        .send(MessagePatternGenerator('user', 'getUserById'), {
-          userId: userId.toString()
-        })
-        .subscribe((user: User) => resolve(user))
-    })
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
+        userId: userId.toString()
+      })
+    )
+  }
+
+  /**
+   * Get previous EditionListing for a given Edition via Redis
+   */
+  private async getPreviousListingForEdition(
+    editionId: string,
+    status?: EditionListingStatus
+  ) {
+    return await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator(
+          'editionListing',
+          'getPreviousListingForEdition'
+        ),
+        {
+          editionId,
+          status
+        }
+      )
+    )
   }
 
   async updateOneById(
