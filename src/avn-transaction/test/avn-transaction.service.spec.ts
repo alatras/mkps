@@ -1,11 +1,15 @@
 import { getModelToken } from '@nestjs/mongoose'
 import { Test, TestingModule } from '@nestjs/testing'
+import { ConfigService } from '@nestjs/config'
 import { User } from '../../user/schemas/user.schema'
 import { NftService } from '../../nft/services/nft.service'
 import { getMockUser } from '../../user/test/mocks'
 import { UserService } from '../../user/user.service'
 import { AvnTransactionService } from '../services/avn-transaction.service'
-import { AvnTransaction } from '../schemas/avn-transaction.schema'
+import {
+  AvnEditionTransaction,
+  AvnNftTransaction
+} from '../schemas/avn-transaction.schema'
 import { getAvnTransaction } from './mocks'
 import { Nft } from '../../nft/schemas/nft.schema'
 import {
@@ -21,7 +25,6 @@ import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListingService } from '../../edition-listing/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../../log/log.service'
-import { ConfigService } from '@nestjs/config'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -47,12 +50,16 @@ describe('AvnTransactionService', () => {
         },
         { provide: getModelToken(User.name), useValue: getMockUser() },
         {
-          provide: getModelToken(AvnTransaction.name),
+          provide: getModelToken(AvnNftTransaction.name),
           useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(Nft.name),
           useValue: new NftMock(getMockNft())
+        },
+        {
+          provide: getModelToken(AvnEditionTransaction.name),
+          useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(NftHistory.name),

@@ -1,5 +1,6 @@
 import * as NftProperties from './tenant.json'
 import * as NftPropertiesCommon from './common.json'
+import { NftPropertyTypes } from '../../shared/enum'
 
 // TODO: Refactor and move to relevant folder
 
@@ -22,19 +23,6 @@ export interface NftProperty {
     value: any
   }[]
   content?: NftProperty[]
-}
-
-export enum NftPropertyTypes {
-  singleLineText = 'singleLineText',
-  multiLineText = 'multiLineText',
-  markdownText = 'markdownText',
-  radioButton = 'radioButton',
-  number = 'number',
-  select = 'select',
-  switch = 'switch',
-  box = 'box',
-  datePicker = 'datePicker',
-  dateTimePicker = 'dateTimePicker'
 }
 
 // replace me once implemented

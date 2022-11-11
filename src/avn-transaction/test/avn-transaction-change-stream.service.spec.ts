@@ -1,10 +1,14 @@
 import { getModelToken } from '@nestjs/mongoose'
 import { Test, TestingModule } from '@nestjs/testing'
+import { ConfigService } from '@nestjs/config'
 import { User } from '../../user/schemas/user.schema'
 import { NftService } from '../../nft/services/nft.service'
 import { getMockUser } from '../../user/test/mocks'
 import { UserService } from '../../user/user.service'
-import { AvnTransaction } from '../schemas/avn-transaction.schema'
+import {
+  AvnEditionTransaction,
+  AvnNftTransaction
+} from '../schemas/avn-transaction.schema'
 import { getAvnTransaction } from './mocks'
 import { Nft } from '../../nft/schemas/nft.schema'
 import {
@@ -20,11 +24,8 @@ import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListingService } from '../../edition-listing/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { AvnTransactionChangeStreamService } from '../services/avn-transaction-change-stream.service'
-import { AvnTransactionType } from '../../shared/enum'
-import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { LogService } from '../../log/log.service'
-import { ConfigService } from '@nestjs/config'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -33,6 +34,7 @@ const ClientProxyMock = () => ({
 
 describe('AvnTransactionChangeStreamService', () => {
   let service: AvnTransactionChangeStreamService
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   let testClientProxy
 
   beforeEach(async () => {
@@ -52,7 +54,11 @@ describe('AvnTransactionChangeStreamService', () => {
         },
         { provide: getModelToken(User.name), useValue: getMockUser() },
         {
-          provide: getModelToken(AvnTransaction.name),
+          provide: getModelToken(AvnNftTransaction.name),
+          useValue: getAvnTransaction()
+        },
+        {
+          provide: getModelToken(AvnEditionTransaction.name),
           useValue: getAvnTransaction()
         },
         {
@@ -80,24 +86,5 @@ describe('AvnTransactionChangeStreamService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined()
-  })
-
-  describe('sendMintingSuccessfulEvent', () => {
-    it('should call clientProxy.emit with the correct avnTransaction data', async () => {
-      const testAvnTransaction = getAvnTransaction(
-        avn => avn.type === AvnTransactionType.MintSingleNft
-      )
-
-      await service.sendMintingSuccessfulEvent(testAvnTransaction)
-
-      expect(testClientProxy.emit).toBeCalledWith(
-        MessagePatternGenerator('nft', 'handleNftMinted'),
-        {
-          nftId: testAvnTransaction.data.unique_external_ref,
-          eid: testAvnTransaction.history[testAvnTransaction.history.length - 1]
-            .operation_data.nftId
-        }
-      )
-    })
   })
 })

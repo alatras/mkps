@@ -60,7 +60,7 @@ export class User {
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop({ required: false, default: null })
   avnPubKey: string

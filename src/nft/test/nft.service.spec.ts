@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose'
 import * as MUUID from 'uuid-mongodb'
 import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
+import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
 import {
   getEditionListing,
   getMockNft,
@@ -18,6 +19,13 @@ import { EditionListing } from '../../edition-listing/schemas/edition-listing.sc
 import { NftStatus } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { HistoryType } from '../../shared/enum'
+import { LogService } from '../../log/log.service'
+import { getAvnTransaction } from '../../avn-transaction/test/mocks'
+
+const ClientProxyMock = () => ({
+  emit: jest.fn(),
+  send: jest.fn()
+})
 
 describe('NftService', () => {
   let service: NftService
@@ -28,9 +36,18 @@ describe('NftService', () => {
         NftService,
         EditionService,
         EditionListingService,
+        LogService,
+        {
+          provide: 'TRANSPORT_CLIENT',
+          useFactory: () => ClientProxyMock()
+        },
         {
           provide: getModelToken(Nft.name),
           useValue: new NftMock(getMockNft())
+        },
+        {
+          provide: getModelToken(AvnEditionTransaction.name),
+          useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(NftHistory.name),
@@ -89,7 +106,8 @@ describe('NftService', () => {
           unlockableContent: {
             preview: 'string',
             quantity: 1,
-            details: 'string'
+            details: 'string',
+            claimedCount: 0
           }
         })
 

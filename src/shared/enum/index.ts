@@ -99,3 +99,22 @@ export enum PaymentStatus {
   failed = 'failed',
   successful = 'successful'
 }
+
+export enum PaymentProviders {
+  stripe = 'stripe',
+  ethereum = 'ethereum',
+  cardano = 'cardano'
+}
+
+export enum NftPropertyTypes {
+  singleLineText = 'singleLineText',
+  multiLineText = 'multiLineText',
+  markdownText = 'markdownText',
+  radioButton = 'radioButton',
+  number = 'number',
+  select = 'select',
+  switch = 'switch',
+  box = 'box',
+  datePicker = 'datePicker',
+  dateTimePicker = 'dateTimePicker'
+}

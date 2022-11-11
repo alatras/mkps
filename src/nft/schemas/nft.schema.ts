@@ -76,8 +76,13 @@ export class Nft {
   @Prop()
   avnAddress?: string
 
-  @Prop()
-  editionId?: string
+  @Transform(({ value }) => MUUID.from(value).toString())
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    default: () => MUUID.v4()
+  })
+  editionId?: MUUID.MUUID
 
   @Prop()
   eid?: string
@@ -98,11 +103,14 @@ export class Nft {
   @Prop({ type: Owner })
   owner: Owner
 
-  @Prop({ type: 'object', required: true })
-  properties: Record<string, any>
+  @Prop({ type: 'object' })
+  properties?: Record<string, any>
 
-  @Prop({ type: [String], required: true })
-  ethAddresses: string[]
+  @Prop({ type: [String] })
+  ethAddresses?: string[]
+
+  @Prop()
+  editionNumber?: number
 }
 
 export const NftSchema = SchemaFactory.createForClass(Nft)

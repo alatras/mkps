@@ -8,6 +8,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Min,
   ValidateNested
 } from 'class-validator'
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
@@ -18,16 +19,26 @@ import { AssetDto, ImagesSetDto } from './asset.dto'
 import { Asset, ImagesSet } from '../schemas/asset.schema'
 import { Document } from 'mongoose'
 import { NftStatus } from '../../shared/enum'
+import { Prop } from '@nestjs/mongoose'
 
 export class CreateUnlockableContentDto {
+  @Prop()
   @IsString()
   preview: string
 
+  @Prop()
   @IsNumber()
+  @Min(0, { message: 'negative unlockable content quantity' })
   quantity: number
 
+  @Prop()
   @IsString()
   details: string
+
+  @Prop({ default: 0 })
+  @IsNumber()
+  @IsOptional()
+  claimedCount: number
 }
 
 export class CreateNftDto {
@@ -41,7 +52,7 @@ export class CreateNftDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => ImagesSetDto)
-  image: ImagesSetDto
+  image?: ImagesSetDto
 
   @IsArray()
   @ValidateNested({ each: true })

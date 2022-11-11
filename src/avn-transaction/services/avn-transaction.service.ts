@@ -6,27 +6,26 @@ import * as MUUID from 'uuid-mongodb'
 import { InvalidDataError } from '../../core/errors'
 import {
   AvnMintTransaction,
-  AvnMintTransactionData,
-  AvnTransaction,
-  Royalties,
-  RoyaltyRate
+  AvnMintNFTTransactionData,
+  AvnNftTransaction,
+  Royalties
 } from '../schemas/avn-transaction.schema'
 import { User } from '../../user/schemas/user.schema'
 import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
-import { NftService } from '../../nft/services/nft.service'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { getRoyalties } from '../../utils/get-royalties'
+import { Nft } from '../../nft/schemas/nft.schema'
 
 @Injectable()
 export class AvnTransactionService {
   private mUUID: any
 
   constructor(
-    @InjectModel(AvnTransaction.name)
-    private avnTransactionModel: Model<AvnTransaction>,
-    private nftService: NftService,
-    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
+    @InjectModel(AvnNftTransaction.name)
+    private avnTransactionModel: Model<AvnNftTransaction>,
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy // private nftService: NftService,
   ) {
     this.mUUID = MUUID.mode('relaxed')
   }
@@ -40,8 +39,8 @@ export class AvnTransactionService {
    */
   async createMintAvnTransaction(
     nftUuid: string
-  ): Promise<AvnTransactionMintResponse | Error> {
-    const nft = await this.nftService.findOneById(nftUuid)
+  ): Promise<AvnTransactionMintResponse> {
+    const nft = await this.getNft(nftUuid)
     if (!nft) {
       throw new NotFoundException('NFT not found')
     }
@@ -54,9 +53,9 @@ export class AvnTransactionService {
       throw new InvalidDataError('ANV public key is not set for user')
     }
 
-    const royalties: Royalties[] = this.getRoyalties()
+    const royalties: Royalties[] = getRoyalties()
 
-    const data: AvnMintTransactionData = {
+    const data: AvnMintNFTTransactionData = {
       unique_external_ref: nftUuid,
       userId: uuidFrom(user._id as MUUID.MUUID),
       royalties
@@ -70,7 +69,22 @@ export class AvnTransactionService {
       history: []
     }
 
-    return await this.avnTransactionModel.create(newDoc)
+    return (await this.avnTransactionModel.create(
+      newDoc
+    )) as AvnTransactionMintResponse
+  }
+
+  /**
+   * Get NFT from NFT Service via Redis.
+   */
+  private async getNft(nftId: string): Promise<Nft> {
+    return new Promise(resolve => {
+      this.clientProxy
+        .send(MessagePatternGenerator('nft', 'getNftById'), {
+          nftId: nftId
+        })
+        .subscribe((nft: Nft) => resolve(nft))
+    })
   }
 
   private async getUser(userId: MUUID.MUUID): Promise<User> {
@@ -83,45 +97,9 @@ export class AvnTransactionService {
     })
   }
 
-  private getRoyalties(): Royalties[] {
-    try {
-      const decodedRoyalties = Buffer.from(
-        process.env.ROYALTIES ?? '',
-        'base64'
-      ).toString('ascii')
-
-      const royalties = JSON.parse(decodedRoyalties)
-
-      if (Array.isArray(royalties)) {
-        return royalties.map(
-          r =>
-            <Royalties>{
-              recipient_t1_address: r.recipient_t1_address,
-              rate: <RoyaltyRate>{
-                parts_per_million: r.rate.parts_per_million
-              }
-            }
-        )
-      }
-
-      return [
-        <Royalties>{
-          recipient_t1_address: royalties.recipient_t1_address,
-          rate: <RoyaltyRate>{
-            parts_per_million: royalties.rate.parts_per_million
-          }
-        }
-      ]
-    } catch (e) {
-      throw new Error(
-        `avn-service - invalid ROYALTIES value specified in config: ${e.toString()}`
-      )
-    }
-  }
-
   getAvnTransactionByRequestId = async (
     requestId: string
-  ): Promise<AvnTransaction | null> => {
+  ): Promise<AvnNftTransaction | null> => {
     return await this.avnTransactionModel.findOne({ request_id: requestId })
   }
 }

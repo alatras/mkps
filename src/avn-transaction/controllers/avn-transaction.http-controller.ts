@@ -37,13 +37,13 @@ export class AvnTransactionHttpController {
         dto.nftId
       )
       this.log.log(
-        'AvnTransactionHttpController - ANV transaction created successfully:',
+        '[AvnTransactionHttpController] ANV transaction created successfully:',
         dto
       )
       return create
     } catch (err) {
       this.log.error(
-        'AvnTransactionHttpController - cannot create AVN transaction:',
+        '[AvnTransactionHttpController] cannot create AVN transaction:',
         dto,
         err
       )
@@ -52,7 +52,7 @@ export class AvnTransactionHttpController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('mint/request/:requestId')
+  @Get(':requestId')
   async getAvnTransaction(@Param('requestId') requestId: string) {
     try {
       const transaction =

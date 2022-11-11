@@ -53,7 +53,8 @@
       {
         "args": "after-used",
         "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_"
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
       }
     ],
     "@typescript-eslint/no-non-null-assertion": 0,

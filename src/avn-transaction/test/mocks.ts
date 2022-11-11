@@ -1,11 +1,11 @@
 import * as MUUID from 'uuid-mongodb'
 import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
-import { AvnTransaction } from '../schemas/avn-transaction.schema'
+import { AvnNftTransaction } from '../schemas/avn-transaction.schema'
 import { Types } from 'mongoose'
 
 export const getAvnTransaction = (
-  filter?: (value: AvnTransaction) => unknown
-): AvnTransaction => {
+  filter?: (value: AvnNftTransaction) => unknown
+): AvnNftTransaction => {
   if (!filter) {
     return MOCK_AVN_TRANSACTIONS[0]
   }

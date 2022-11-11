@@ -1,21 +1,63 @@
-import { Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  LoggerService
+} from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
+import { ClientProxy } from '@nestjs/microservices'
 import { Model } from 'mongoose'
+import * as MUUID from 'uuid-mongodb'
+import { ethers } from 'ethers'
+import { Binary } from 'mongodb'
 import { EditionListingService } from '../edition-listing/edition-listing.service'
-import { NftStatus } from '../shared/enum'
+import {
+  AuctionType,
+  AvnTransactionState,
+  AvnTransactionType,
+  NftStatus
+} from '../shared/enum'
 import { EditionListingStatus } from '../shared/enum'
 import { NftEdition } from './schemas/edition.schema'
 import { Nft } from '../nft/schemas/nft.schema'
 import { uuidFrom } from '../utils'
+import { CreateEditionDto, EditionResponseDto } from './dto/edition.dto'
+import { NftService } from '../nft/services/nft.service'
+import { v4 } from 'uuid-mongodb'
+import { User } from '../user/schemas/user.schema'
+import { DataWrapper } from '../common/dataWrapper'
+import { LogService } from '../log/log.service'
+import { MessagePatternGenerator } from '../utils/message-pattern-generator'
+import { getRoyalties } from '../utils/get-royalties'
+import {
+  AvnCreateBatchTransaction,
+  AvnEditionTransaction
+} from '../avn-transaction/schemas/avn-transaction.schema'
 
 @Injectable()
 export class EditionService {
+  private log: LoggerService
+
   constructor(
     @InjectModel(NftEdition.name) private nftEditionModel: Model<NftEdition>,
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
-    private editionListing: EditionListingService
-  ) {}
+    @InjectModel(AvnEditionTransaction.name)
+    private avnTransaction: Model<AvnEditionTransaction>,
+    @Inject(forwardRef(() => NftService)) private nftService: NftService,
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
+    private editionListing: EditionListingService,
+    private logService: LogService
+  ) {
+    this.log = this.logService.getLogger()
+  }
 
+  /**
+   * Update Edition's available count and owned count
+   * after an NFT is minted.
+   */
   async updateEditionCounts(editionId: string) {
     const previousEditionListing =
       await this.editionListing.getPreviousListingForEdition(
@@ -60,5 +102,207 @@ export class EditionService {
         }
       }
     )
+  }
+
+  /**
+   * Mints an Edition
+   */
+  async mintEdition(
+    createEditionDto: CreateEditionDto,
+    user: User
+  ): Promise<DataWrapper<EditionResponseDto>> {
+    const foundUser = await this.getUser(MUUID.from(user._id))
+    if (!foundUser.avnPubKey) {
+      throw new BadRequestException('User without an AVN key cannot mint')
+    }
+
+    const createdEdition: NftEdition = await this.createEdition(
+      createEditionDto,
+      user
+    )
+
+    const requestId = `${
+      AvnTransactionType.AvnCreateBatch
+    }:${createdEdition._id.toString()}`
+
+    await this.createAvnBatchTransaction(createdEdition, user, requestId)
+
+    return { data: { requestId } }
+  }
+
+  /**
+   * Creates Edition in DB based on Edition input (DTO) and User
+   */
+  private async createEdition(
+    createEditionDto: CreateEditionDto,
+    user: User
+  ): Promise<NftEdition> {
+    const editionOfName = await this.findEditionByName(createEditionDto.name)
+    if (editionOfName.length > 0) {
+      throw new ConflictException('Edition name already exists')
+    }
+
+    const { quantity: _, ...nftDraftContract } = createEditionDto
+
+    const nftDoc = await this.nftService.mapNftDraftToModel(
+      nftDraftContract,
+      user
+    )
+
+    try {
+      this.nftService.validateNftProperties(nftDoc)
+    } catch (e) {
+      this.log.error(e)
+      throw new BadRequestException('Missing properties: ' + e.message)
+    }
+
+    const editionDoc: NftEdition = {
+      _id: v4(),
+      name: createEditionDto.name,
+      quantity: createEditionDto.quantity,
+      availableCount: 0,
+      listingIndex: 0,
+      ownedCount: 0,
+      isHidden: true,
+      status: NftStatus.minted,
+      nfts: [],
+      listingType: AuctionType.fixedPrice,
+      owner: { _id: user._id, avnPubKey: user.avnPubKey },
+      image: createEditionDto.image
+    }
+
+    const createdEdition: NftEdition = await this.nftEditionModel.create(
+      editionDoc
+    )
+    if (!createdEdition) {
+      this.log.error(
+        '[createEdition] failed to create Edition:',
+        createEditionDto.name
+      )
+      throw new InternalServerErrorException('cannot create Edition')
+    }
+
+    return createdEdition
+  }
+
+  /**
+   * Creates AVN transaction in DB based on Edition model and User
+   */
+  private async createAvnBatchTransaction(
+    edition: NftEdition,
+    minter: User,
+    requestId: string
+  ): Promise<AvnEditionTransaction> {
+    const avnTransactionDoc: AvnCreateBatchTransaction = {
+      request_id: requestId,
+      type: AvnTransactionType.AvnCreateBatch,
+      data: {
+        totalSupply: edition.quantity,
+        userId: minter._id,
+        royalties: getRoyalties()
+      },
+      state: AvnTransactionState.NEW,
+      history: []
+    }
+
+    const createdAvnTransaction = await this.avnTransaction.create(
+      avnTransactionDoc
+    )
+    if (!createdAvnTransaction) {
+      this.log.error(
+        '[createAvnBatchTransaction] failed to create AVN transaction for Edition: ' +
+          edition.name +
+          ', user: ' +
+          avnTransactionDoc.data.userId
+      )
+      throw new InternalServerErrorException('cannot create AVN transaction')
+    }
+
+    return createdAvnTransaction
+  }
+
+  /**
+   * Find Edition by name for verification.
+   */
+  private async findEditionByName(name: string): Promise<NftEdition[]> {
+    return this.nftEditionModel
+      .find({ name: { $regex: new RegExp(name, 'i') } })
+      .limit(20)
+      .lean()
+  }
+
+  /**
+   * Get user from User Service via Redis.
+   */
+  private async getUser(userId: MUUID.MUUID): Promise<User> {
+    return new Promise(resolve => {
+      this.clientProxy
+        .send(MessagePatternGenerator('user', 'getUserById'), {
+          userId: userId.toString()
+        })
+        .subscribe((user: User) => resolve(user))
+    })
+  }
+
+  async updateOneById(
+    id: string,
+    updatedValues: Partial<NftEdition>
+  ): Promise<NftEdition> {
+    return this.nftEditionModel.findOneAndUpdate(
+      { _id: uuidFrom(id) },
+      { $set: updatedValues },
+      { new: true }
+    )
+  }
+
+  /**
+   * Handles updating Edition after AVN minting succeed.
+   */
+  async handleEditionMinted(editionId: string, batchId: string) {
+    const updatedEdition: NftEdition = await this.updateOneById(editionId, {
+      status: NftStatus.minted,
+      avnId: batchId
+    })
+
+    const editionNftIds: MUUID.MUUID[] = []
+
+    await Promise.all(
+      [...Array(updatedEdition!.quantity)].map(async (_, index) => {
+        const _id = this.generateNftId(batchId, index + 1)
+
+        await this.nftService.createNft(
+          {
+            ...updatedEdition,
+            _id,
+            editionNumber: index + 1,
+            image: updatedEdition.image,
+            name: updatedEdition.name,
+            owner: updatedEdition.owner,
+            minterId: updatedEdition.owner._id
+          },
+          NftStatus.minted
+        )
+
+        editionNftIds.push(_id)
+      })
+    )
+
+    this.updateOneById(editionId, { nfts: editionNftIds })
+  }
+
+  private generateNftId(batchId: string, editionNumber: number): MUUID.MUUID {
+    const prefix = 'B'
+    const encodedData = ethers.utils.defaultAbiCoder.encode(
+      ['string', 'uint256', 'uint64'],
+      [prefix, batchId, editionNumber]
+    )
+    // Hash the data. This function returns a string prefixed with 0x
+    const hash: string = ethers.utils.keccak256(encodedData)
+    // Take the first 16 bytes, including 0x
+    const uuidCompatibleHash = hash.substring(0, 34)
+    // The input to this function must start with 0x
+    const hashBuffer = ethers.utils.arrayify(uuidCompatibleHash)
+    // Generate the final UUID
+    return uuidFrom(new Binary(hashBuffer, Binary.SUBTYPE_UUID))
   }
 }

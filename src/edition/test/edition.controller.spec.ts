@@ -1,20 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
-import { NftHttpController } from '../controllers/nft.http-controller'
-import { NftService } from '../services/nft.service'
-import { Nft } from '../schemas/nft.schema'
+import { Test, TestingModule } from '@nestjs/testing'
 import {
   getEditionListing,
   getMockNft,
   getMockNftHistory,
   getNftEdition
-} from './mocks'
-import { NftHistory } from '../schemas/nft-history.schema'
-import { EditionService } from '../../edition/edition.service'
-import { NftEdition } from '../../edition/schemas/edition.schema'
+} from '../../nft/test/mocks'
+import { EditionController } from '../controllers/edition.http-controller'
+import { EditionService } from '../edition.service'
+import { NftEdition } from '../schemas/edition.schema'
+import { Nft } from '../../nft/schemas/nft.schema'
 import { EditionListingService } from '../../edition-listing/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
+import { NftService } from '../../nft/services/nft.service'
 import { LogService } from '../../log/log.service'
+import { NftHistory } from '../../nft/schemas/nft-history.schema'
 import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 
@@ -23,20 +23,18 @@ const ClientProxyMock = () => ({
   send: jest.fn()
 })
 
-describe('NftHttpController', () => {
-  let controller: NftHttpController
+describe('EditionController', () => {
+  let controller: EditionController
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [NftHttpController],
+      controllers: [EditionController],
       providers: [
-        NftService,
-        EditionService,
-        EditionListingService,
-        LogService,
+        { provide: getModelToken(Nft.name), useValue: getMockNft() },
+        { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
         {
-          provide: 'TRANSPORT_CLIENT',
-          useFactory: () => ClientProxyMock()
+          provide: getModelToken(EditionListing.name),
+          useValue: getEditionListing()
         },
         {
           provide: getModelToken(AvnEditionTransaction.name),
@@ -46,16 +44,18 @@ describe('NftHttpController', () => {
           provide: getModelToken(NftHistory.name),
           useValue: getMockNftHistory()
         },
-        { provide: getModelToken(Nft.name), useValue: getMockNft() },
-        { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
+        EditionService,
+        EditionListingService,
+        NftService,
+        LogService,
         {
-          provide: getModelToken(EditionListing.name),
-          useValue: getEditionListing()
+          provide: 'TRANSPORT_CLIENT',
+          useFactory: () => ClientProxyMock()
         }
       ]
     }).compile()
 
-    controller = module.get<NftHttpController>(NftHttpController)
+    controller = module.get<EditionController>(EditionController)
   })
 
   it('should be defined', () => {
