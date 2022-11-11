@@ -15,9 +15,9 @@ import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
-import { Nft } from '../../nft/schemas/nft.schema'
 import { firstValueFrom } from 'rxjs'
 import { getRoyalties } from '../../utils/get-royalties'
+import { Nft } from '../../nft/schemas/nft.schema'
 
 @Injectable()
 export class AvnTransactionService {
@@ -83,6 +83,9 @@ export class AvnTransactionService {
     )
   }
 
+  /**
+   * Get NFT from NFT Service via Redis.
+   */
   private async getNft(nftId: string): Promise<Nft> {
     return await firstValueFrom(
       this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
