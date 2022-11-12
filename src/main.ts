@@ -3,6 +3,8 @@ import { AppModule } from './app.module'
 import { HttpExceptionsFilter } from './filters/http-exceptions.filter'
 import { LogService } from './log/log.service'
 import { Transport } from '@nestjs/microservices'
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { getVersion } from 'jest'
 import { getRedisOptions } from './utils/get-redis-options'
 
 async function bootstrap() {
@@ -13,7 +15,6 @@ async function bootstrap() {
   app.enableCors()
   app.useGlobalFilters(new HttpExceptionsFilter())
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.connectMicroservice(
     {
       transport: Transport.REDIS,
@@ -21,7 +22,17 @@ async function bootstrap() {
     },
     { inheritAppConfig: true }
   )
-  app.startAllMicroservices()
+
+  await app.startAllMicroservices()
+
+  const config = new DocumentBuilder()
+    .setTitle('VereNFT')
+    .setDescription(`Various APIs in the VereNFT ecosystem`)
+    .setVersion(getVersion())
+    .build()
+
+  const document = SwaggerModule.createDocument(app, config)
+  SwaggerModule.setup('docs', app, document)
 
   await app.listen(process.env.PORT || 5002)
 }

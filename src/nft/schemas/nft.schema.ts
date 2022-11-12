@@ -6,6 +6,7 @@ import { User } from '../../user/schemas/user.schema'
 import { Asset, ImagesSet } from './asset.schema'
 import { DbCollections, NftStatus } from '../../shared/enum'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
+import { ApiProperty } from '@nestjs/swagger'
 
 export enum AssetType {
   image = 'image',
@@ -15,18 +16,23 @@ export enum AssetType {
 @Schema({ _id: false })
 export class UnlockableContent {
   @Prop({ required: true })
+  @ApiProperty()
   preview: string
 
   @Prop({ required: true })
+  @ApiProperty()
   quantity: number
 
   @Prop({ required: true, default: 0 })
+  @ApiProperty()
   claimedCount: number
 
   @Prop()
+  @ApiProperty()
   isClaimable?: boolean
 
   @Prop()
+  @ApiProperty()
   details: string
 }
 

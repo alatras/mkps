@@ -3,6 +3,7 @@ import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { DbCollections } from '../../shared/enum'
+import { ApiProperty } from '@nestjs/swagger'
 
 export enum Provider {
   auth0 = 'google-oauth2'
@@ -21,6 +22,7 @@ export const Auth0UserMetadata = {
 @Schema({ _id: false, timestamps: true })
 export class AuthProvider {
   @Prop()
+  @ApiProperty()
   id: string
 
   @Prop({
@@ -29,15 +31,19 @@ export class AuthProvider {
     enum: Provider,
     default: Provider.auth0
   })
+  @ApiProperty()
   name: Provider
 
   @Prop()
+  @ApiProperty()
   updatedAt: Date
 
   @Prop()
+  @ApiProperty()
   createdAt: Date
 
   @Prop(raw(Auth0UserMetadata))
+  @ApiProperty()
   metadata?: Record<string, any>
 
   constructor(partial: Partial<AuthProvider>) {

@@ -15,6 +15,7 @@ import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { firstValueFrom } from 'rxjs'
 import { getRoyalties } from '../../utils/get-royalties'
 import { Nft } from '../../nft/schemas/nft.schema'
 
@@ -74,27 +75,23 @@ export class AvnTransactionService {
     )) as AvnTransactionMintResponse
   }
 
+  private async getUser(userId: MUUID.MUUID): Promise<User> {
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
+        userId: userId.toString()
+      })
+    )
+  }
+
   /**
    * Get NFT from NFT Service via Redis.
    */
   private async getNft(nftId: string): Promise<Nft> {
-    return new Promise(resolve => {
-      this.clientProxy
-        .send(MessagePatternGenerator('nft', 'getNftById'), {
-          nftId: nftId
-        })
-        .subscribe((nft: Nft) => resolve(nft))
-    })
-  }
-
-  private async getUser(userId: MUUID.MUUID): Promise<User> {
-    return new Promise(resolve => {
-      this.clientProxy
-        .send(MessagePatternGenerator('user', 'getUserById'), {
-          userId: userId.toString()
-        })
-        .subscribe((user: User) => resolve(user))
-    })
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
+        nftId
+      })
+    )
   }
 
   getAvnTransactionByRequestId = async (

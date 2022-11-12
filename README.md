@@ -8,6 +8,19 @@ Backend application made with [Nest](https://github.com/nestjs/nest).
 $ npm install
 ```
 
+## Configuring Microservices
+
+This is a mono-repo that contains all our microservices. You can run all of them at once (for local development), or run
+specific ones only, all by modifying the ACTIVE_SERVICES env variable e.g to run only the Nft microservice:
+```
+ACTIVE_SERVICES=NFT_SERVICE  
+```
+To run multiple:
+```
+ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,...
+```
+To see which microservices are available, please check the Microservices enum in "src/utils/microservices.ts" 
+
 ## Running the app
 
 ```bash
@@ -15,7 +28,7 @@ $ npm install
 $ npm run start
 
 # watch mode
-$ npm run start:dev
+$ npm run dev
 
 # production mode
 $ npm run start:prod
