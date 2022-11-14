@@ -40,12 +40,14 @@ export class LogService {
           ? info['stack']
           : [info['stack']]
 
-        message = stacks.reduce((vs, stack) => {
-          if (stack.constructor === Object) {
-            return `${vs}\n${JSON.stringify(stack)}`
-          }
-          return `${vs}\n${stack}`
-        }, message)
+        if (stacks[0] !== undefined) {
+          message = stacks.reduce((vs, stack) => {
+            if (stack.constructor === Object) {
+              return `${vs}\n${JSON.stringify(stack)}`
+            }
+            return `${vs}\n${stack}`
+          }, message)
+        }
       }
 
       const context = info['context'] ? ` [${info['context']}] ` : ' '

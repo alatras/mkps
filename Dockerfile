@@ -1,43 +1,35 @@
-FROM node:16.18.0-alpine3.15 AS build
+### BUILD FOR PRODUCTION
 
-ARG PACKAGE=veremusic
-ENV PACKAGE=${PACKAGE}
-
-ARG ENVIRONMENT=dev
-ENV ENVIRONMENT=${ENVIRONMENT}
-
-RUN ["adduser", "-s", "/bin/nologin", "-u", "9992", "-D", "nft-be"]
-RUN ["mkdir", "-p",  "/home/nft-be", "&&", "mkdir", "-p", "/usr/src/app/logs/"]
+FROM node:18-alpine As build
 
 WORKDIR /usr/src/app
 
-# Install app dependencies
-COPY ./docker-entrypoint.sh /usr/src/app/docker-entrypoint.sh
-COPY ./src /usr/src/app/src/
-#COPY ./locales /usr/src/app/locales/
-#COPY ./content /usr/src/app/content/
-COPY ./package.json /usr/src/app/package.json
-COPY ./package-lock.json /usr/src/app/package-lock.json
-COPY ./tsconfig.json /usr/src/app/tsconfig.json
-#COPY ./tsconfig.build.json /usr/src/app/tsconfig.json
-COPY ./tsconfig.build.json /usr/src/app/tsconfig.build.json
-COPY ./utils /usr/src/app/utils/
-COPY ./config /usr/src/app/config
-COPY ./rds-combined-ca-bundle.pem /usr/src/app/rds-combined-ca-bundle.pem
-COPY ./config/nftProperties/$PACKAGE/nftProperties.json /usr/src/app/src/utils/nftProperties/nftProperties.json
+COPY package*.json ./
 
-RUN npm install
+# Clean package install with dev dependencies to access Nest Cli
+RUN npm ci
 
-# Bundle app source
+# Contents
+COPY . .
+
+# Build to create the production bundle with Nest Cli
 RUN npm run build
-RUN chmod +x /usr/src/app/docker-entrypoint.sh
-RUN chown -R 9992:9992 "/home/nft-be"
-RUN chown -R 9992:9992 "/usr/src/app"
-RUN chown -R 9992:9992 "/tmp"
 
-WORKDIR /usr/src/app
+# Set NODE_ENV
+ENV NODE_ENV production
 
-USER nft-be
+# Clean production package install with `npm ci` which removes the existing node_modules directory.
+RUN npm ci --only=production && npm cache clean --force
 
-CMD [ "/bin/sh", "/usr/src/app/docker-entrypoint.sh" ]
+USER node
 
+### PRODUCTION
+
+FROM node:18-alpine As production
+
+# Copy the bundled code from the build stage to the production image
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/build ./build
+
+# Start the server
+CMD [ "node", "build/src/main.js" ]

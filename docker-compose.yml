@@ -1,58 +1,89 @@
+version: '3.8'
+
 services:
-  app:
-    container_name: marketPlace
+  api:
     build:
       dockerfile: Dockerfile.dev
       context: .
-    ports:
-      - "5002:5002"
+      target: development
     volumes:
-      - ./src:/app/src
+      - .:/usr/src/app
     env_file:
       - .env
-    restart: always
-    links:
-      - mongo1
-      - mongo2
-      - mongo3
-      - redis
+    environment:
+      - MONGODB_URI=mongodb://mongo1:27017
+      - MONGODB_NAME=development-marketplace-be
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: npm run dev
+    ports:
+      - 5002:5002
     depends_on:
-      - mongo1
-      - mongo2
-      - mongo3
       - redis
-    
+      - mongo1
+    links:
+      - redis
+      - mongo1
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/data
+
   mongo1:
     container_name: mongo1
-    image: 'mongo:6'
-    command: bash -c "mongod --replSet marketPlaceReplicaSet --bind_ip_all"
+    image: mongo:4.4
     volumes:
-      - ./data/mongo-1:/data/db
+      - ~/mongors/data1:/data/db
+      - ./rs-init.sh:/scripts/rs-init.sh
     ports:
       - 27017:27017
+    links:
+      - mongo2
+      - mongo3
+    restart: always
+    entrypoint:
+      [
+        "/usr/bin/mongod",
+        "--bind_ip_all",
+        "--replSet",
+        "dbrs"
+      ]
 
   mongo2:
     container_name: mongo2
-    image: 'mongo:6'
-    command: bash -c "mongod --replSet marketPlaceReplicaSet --bind_ip_all"
+    image: mongo:4.4
     volumes:
-      - ./data/mongo-2:/data/db
+      - ~/mongors/data2:/data/db
     ports:
       - 27018:27017
+    restart: always
+    entrypoint:
+      [
+        "/usr/bin/mongod",
+        "--bind_ip_all",
+        "--replSet",
+        "dbrs"
+      ]
 
   mongo3:
     container_name: mongo3
-    image: 'mongo:6'
-    command: bash -c "mongod --replSet marketPlaceReplicaSet --bind_ip_all"
+    image: mongo:4.4
     volumes:
-      - ./data/mongo-3:/data/db
+      - ~/mongors/data3:/data/db
     ports:
       - 27019:27017
+    restart: always
+    entrypoint:
+      [
+        "/usr/bin/mongod",
+        "--bind_ip_all",
+        "--replSet",
+        "dbrs"
+      ]
 
+volumes:
   redis:
-    image: 'redis:latest'
-    container_name: redis
-    volumes:
-      - ./data/redis:/data
-    ports:
-      - 6379:6379
+    driver: local

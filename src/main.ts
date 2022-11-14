@@ -5,6 +5,7 @@ import { LogService } from './log/log.service'
 import { Transport } from '@nestjs/microservices'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { getVersion } from 'jest'
+import { getRedisOptions } from './utils/get-redis-options'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -15,7 +16,10 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionsFilter())
 
   app.connectMicroservice(
-    { transport: Transport.REDIS },
+    {
+      transport: Transport.REDIS,
+      options: getRedisOptions()
+    },
     { inheritAppConfig: true }
   )
 
