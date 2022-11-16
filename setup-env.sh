@@ -1,12 +1,10 @@
 #!/bin/bash
 
-AWS_SECRET_ID_AWS=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/aws-4Fcto5
-AWS_SECRET_ID_MONGO=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/mongo-Phyaef
-AWS_SECRET_ID_AUTH0=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/auth0-3vMlMB
-AWS_SECRET_ID_STRIPE=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/stripe-kNZrUe
-AWS_SECRET_ID_BACKEND=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/backend-k69qUy
-
-AWS_NFTUS_SECRET_ID_BACKEND=arn:aws:secretsmanager:us-east-2:610677954218:secret:/uat/service/backend-T4Vqqa
+AWS_SECRET_ID_AWS=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/aws
+AWS_SECRET_ID_MONGO=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/mongo
+AWS_SECRET_ID_AUTH0=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/auth0
+AWS_SECRET_ID_STRIPE=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/stripe
+AWS_SECRET_ID_BACKEND=arn:aws:secretsmanager:us-east-2:696165561482:secret:/dev/service/backend
 
 KEY_MAP=(
   'bucket_assets::AWS_S3_BUCKET_NAME_ASSETS'
@@ -98,15 +96,6 @@ getJsonSecrets $AWS_SECRET_ID_BACKEND
 
 echo "# Auto-Generated" > .env
 decodeKeys
-
-if [ .$1 == ".nftus" ]
-then
-  echo "" > .env.tmp
-  # NFTUS UAT
-  assumeRole arn:aws:iam::610677954218:role/developer
-  getJsonSecrets $AWS_NFTUS_SECRET_ID_BACKEND
-  decodeExtras
-fi
 
 # CLEANUP and EXTRA
 echo "PORT=5002" >> .env
