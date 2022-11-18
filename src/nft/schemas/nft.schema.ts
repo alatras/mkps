@@ -1,7 +1,7 @@
 import { Document } from 'mongoose'
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Transform, Type } from 'class-transformer'
-import * as MUUID from 'uuid-mongodb'
+import { Transform } from 'class-transformer'
+import { MUUID, from, v4 } from 'uuid-mongodb'
 import { User } from '../../user/schemas/user.schema'
 import { Asset, ImagesSet } from './asset.schema'
 import { DbCollections, NftStatus } from '../../shared/enum'
@@ -43,23 +43,22 @@ export type NftDocument = Nft & Document
   versionKey: false
 })
 export class Nft {
-  @Transform(({ value }) => MUUID.from(value).toString())
+  @Transform(({ value }) => from(value).toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    default: () => MUUID.v4()
+    default: () => v4()
   })
-  _id: MUUID.MUUID
+  _id?: MUUID
 
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    ref: User.name,
-    required: true
+    ref: User.name
+    // required: true
   })
-  @Transform(({ value }) => MUUID.from(value).toString())
-  @Type(() => User)
-  minterId: object
+  @Transform(({ value }) => from(value).toString())
+  minterId?: MUUID
 
   @Prop([Asset])
   assets: Asset[]
@@ -74,7 +73,7 @@ export class Nft {
   isHidden: boolean
 
   @Prop({ type: UnlockableContent })
-  unlockableContent: UnlockableContent
+  unlockableContent?: UnlockableContent
 
   @Prop()
   isMinted?: boolean
@@ -82,13 +81,13 @@ export class Nft {
   @Prop()
   avnAddress?: string
 
-  @Transform(({ value }) => MUUID.from(value).toString())
+  @Transform(({ value }) => from(value).toString())
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    default: () => MUUID.v4()
+    default: () => v4()
   })
-  editionId?: MUUID.MUUID
+  editionId?: MUUID
 
   @Prop()
   eid?: string

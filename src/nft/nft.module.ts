@@ -7,9 +7,11 @@ import { NftHistory, NftHistorySchema } from './schemas/nft-history.schema'
 import { EditionModule } from '../edition/edition.module'
 import { DbCollections } from '../shared/enum'
 import { NftMsController } from './controllers/nft.ms-controller'
+import { AvnTransactionModule } from '../avn-transaction/avn-transaction.module'
 
 @Module({
   imports: [
+    AvnTransactionModule,
     forwardRef(() => EditionModule),
     MongooseModule.forFeature([
       {

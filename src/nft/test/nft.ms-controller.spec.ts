@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing'
-// import { getModelToken, getModelToken } from '@nestjs/mongoose'
 import { NftService } from '../services/nft.service'
 import { Nft } from '../schemas/nft.schema'
 import {
@@ -15,9 +14,13 @@ import { EditionListingService } from '../../edition-listing/services/edition-li
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { NftMsController } from '../controllers/nft.ms-controller'
 import { LogService } from '../../log/log.service'
-import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
+import {
+  AvnEditionTransaction,
+  AvnNftTransaction
+} from '../../avn-transaction/schemas/avn-transaction.schema'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { getModelToken } from '@nestjs/mongoose'
+import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -35,10 +38,15 @@ describe('NftMsController', () => {
         NftService,
         EditionService,
         EditionListingService,
+        AvnTransactionService,
         LogService,
         {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
+        },
+        {
+          provide: getModelToken(AvnNftTransaction.name),
+          useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(NftHistory.name),

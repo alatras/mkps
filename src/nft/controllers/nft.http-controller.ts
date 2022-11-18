@@ -8,7 +8,11 @@ import {
   UseInterceptors
 } from '@nestjs/common'
 import { NftService } from '../services/nft.service'
-import { CreateNftDto, NftResponseDto } from '../dto/nft.dto'
+import {
+  CreateNftDto,
+  CreateNftResponseDto,
+  NftResponseDto
+} from '../dto/nft.dto'
 import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
 import { User } from '../../user/schemas/user.schema'
 import { from, MUUID } from 'uuid-mongodb'
@@ -30,19 +34,17 @@ export class NftHttpController {
       'Creates an NFT Draft, to be used to create an Avn Transaction',
     type: NftResponseDto
   })
-  @UseInterceptors(MongooseClassSerializerInterceptor(NftResponseDto))
+  @UseInterceptors(MongooseClassSerializerInterceptor(CreateNftResponseDto))
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('write:nfts')
   @Post()
   async create(
     @Request() req: Express.Request,
     @Body() createNftDto: CreateNftDto
-  ): Promise<NftResponseDto> {
-    const nft = await this.nftService.create(
+  ): Promise<CreateNftResponseDto> {
+    return await this.nftService.create(
       from((req.user as User)._id as MUUID).toString(),
       createNftDto
     )
-
-    return new NftResponseDto(nft)
   }
 }

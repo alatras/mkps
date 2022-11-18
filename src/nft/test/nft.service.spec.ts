@@ -3,7 +3,10 @@ import { getModelToken } from '@nestjs/mongoose'
 import * as MUUID from 'uuid-mongodb'
 import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
-import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
+import {
+  AvnEditionTransaction,
+  AvnNftTransaction
+} from '../../avn-transaction/schemas/avn-transaction.schema'
 import {
   getEditionListing,
   getMockNft,
@@ -21,6 +24,8 @@ import { uuidFrom } from '../../utils'
 import { HistoryType } from '../../shared/enum'
 import { LogService } from '../../log/log.service'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
+import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
+import { CreateNftDto } from '../dto/nft.dto'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -36,6 +41,7 @@ describe('NftService', () => {
         NftService,
         EditionService,
         EditionListingService,
+        AvnTransactionService,
         LogService,
         {
           provide: 'TRANSPORT_CLIENT',
@@ -47,6 +53,10 @@ describe('NftService', () => {
         },
         {
           provide: getModelToken(AvnEditionTransaction.name),
+          useValue: getAvnTransaction()
+        },
+        {
+          provide: getModelToken(AvnNftTransaction.name),
           useValue: getAvnTransaction()
         },
         {
@@ -70,48 +80,59 @@ describe('NftService', () => {
 
   describe('create', () => {
     it('should create a new NFT', async () => {
-      try {
-        const nft = await service.create(MUUID.v4().toString(), {
-          name: 'string',
-          properties: {},
-          image: {
-            small: {
-              url: 'string',
-              key: 'string',
-              type: AssetType.image
-            },
-            medium: {
-              url: 'string',
-              key: 'string',
-              type: AssetType.image
-            },
-            large: {
-              url: 'string',
-              key: 'string',
-              type: AssetType.image
-            },
-            original: {
-              url: 'string',
-              key: 'string',
-              type: AssetType.image
-            }
+      const nftDto: CreateNftDto = {
+        name: 'string',
+        properties: {},
+        image: {
+          small: {
+            url: 'string',
+            key: 'string',
+            type: AssetType.image
           },
-          assets: [
-            {
-              url: 'string',
-              key: 'string',
-              type: AssetType.video
-            }
-          ],
-          unlockableContent: {
-            preview: 'string',
-            quantity: 1,
-            details: 'string',
-            claimedCount: 0
+          medium: {
+            url: 'string',
+            key: 'string',
+            type: AssetType.image
+          },
+          large: {
+            url: 'string',
+            key: 'string',
+            type: AssetType.image
+          },
+          original: {
+            url: 'string',
+            key: 'string',
+            type: AssetType.image
           }
-        })
+        },
+        assets: [
+          {
+            url: 'string',
+            key: 'string',
+            type: AssetType.video
+          }
+        ],
+        unlockableContent: {
+          preview: 'string',
+          quantity: 1,
+          details: 'string',
+          claimedCount: 0
+        }
+      }
 
-        expect(JSON.stringify(nft)).toBe(JSON.stringify(getMockNft()))
+      try {
+        const createMintAvnTransaction = jest
+          .spyOn(
+            AvnTransactionService.prototype as any,
+            'createMintAvnTransaction'
+          )
+          .mockImplementationOnce(() => Promise.resolve({ request_id: '555' }))
+
+        const res = await service.create(MUUID.v4().toString(), nftDto)
+
+        expect(createMintAvnTransaction).toHaveBeenCalled()
+
+        expect(JSON.stringify(res)).toBe(JSON.stringify({ requestId: '555' }))
       } catch (e) {
         throw e
       }
