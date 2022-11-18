@@ -15,8 +15,12 @@ import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListingService } from '../../edition-listing/services/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../../log/log.service'
-import { AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
+import {
+  AvnEditionTransaction,
+  AvnNftTransaction
+} from '../../avn-transaction/schemas/avn-transaction.schema'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
+import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -30,10 +34,15 @@ describe('NftHttpController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [NftHttpController],
       providers: [
+        AvnTransactionService,
         NftService,
         EditionService,
         EditionListingService,
         LogService,
+        {
+          provide: getModelToken(AvnNftTransaction.name),
+          useValue: getAvnTransaction()
+        },
         {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()

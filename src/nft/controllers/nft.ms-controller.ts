@@ -19,7 +19,7 @@ export class NftMsController {
   }
 
   @MessagePattern(MessagePatternGenerator('nft', 'findOneById'))
-  async findOneById(@Payload() payload: { id: string }) {
-    return await this.nftService.findOneById(payload.id)
+  async findOneById(@Payload() payload: { nftId: string }) {
+    return await this.nftService.findOneById(payload.nftId)
   }
 }

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model } from 'mongoose'
-import { CreateNftDto } from '../dto/nft.dto'
+import { CreateNftDto, CreateNftResponseDto } from '../dto/nft.dto'
 import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftHistory } from '../schemas/nft-history.schema'
@@ -14,33 +14,50 @@ import { HistoryType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
-import * as MUUID from 'uuid-mongodb'
+import { v4 } from 'uuid-mongodb'
 import { NftWithEdition } from '../schemas/nft-with-edition'
 import { NftDraftContract } from '../schemas/nft-draft-contract'
 import { User } from '../../user/schemas/user.schema'
 import { NftDraftModel } from '../schemas/nft-draft-model'
 import { getNftProperties } from '../../utils/nftProperties'
 import { ImagesSet } from '../schemas/asset.schema'
+import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 
 @Injectable()
 export class NftService {
   constructor(
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
     @InjectModel(NftHistory.name) private nftHistoryModel: Model<NftHistory>,
+    private readonly avnTransactionService: AvnTransactionService,
     @Inject(forwardRef(() => EditionService))
     private editionService: EditionService
   ) {}
 
-  async create(userId: string, createNftDto: CreateNftDto): Promise<Nft> {
-    const nftDraft = {
+  async create(
+    userId: string,
+    createNftDto: CreateNftDto
+  ): Promise<CreateNftResponseDto> {
+    const newNft: Nft = {
       ...createNftDto,
       isHidden: true,
-      owner: uuidFrom(userId),
+      ...(createNftDto.owner && {
+        owner: {
+          _id: uuidFrom(userId),
+          avnPubKey: createNftDto.owner.avnPubKey,
+          userName: createNftDto.owner.userName
+        }
+      }),
       status: NftStatus.draft,
       minterId: uuidFrom(userId)
     }
 
-    return await this.nftModel.create(nftDraft)
+    const ceratedNft = await this.nftModel.create(newNft)
+
+    const mint = await this.avnTransactionService.createMintAvnTransaction(
+      ceratedNft._id.toString()
+    )
+
+    return { requestId: mint.request_id }
   }
 
   async findOneById(id: string): Promise<Nft> {
@@ -161,11 +178,11 @@ export class NftService {
       unlockableContent = { ...contract.unlockableContent, claimedCount: 0 }
     }
 
-    const ownerId = MUUID.from(owner._id)
+    const ownerId = uuidFrom(owner._id)
 
     return {
       ...rest,
-      _id: id ? uuidFrom(id) : MUUID.v4(),
+      _id: id ? uuidFrom(id) : v4(),
       owner: {
         avnPubKey: owner.avnPubKey ?? null,
         _id: ownerId

@@ -20,6 +20,7 @@ import { Document } from 'mongoose'
 import { NftStatus } from '../../shared/enum'
 import { Prop } from '@nestjs/mongoose'
 import { ApiProperty } from '@nestjs/swagger'
+import { Owner } from '../../shared/sub-schemas/owner.schema'
 
 export class CreateUnlockableContentDto {
   @Prop()
@@ -47,10 +48,6 @@ export class CreateUnlockableContentDto {
 
 export class CreateNftDto {
   @IsString()
-  @IsOptional()
-  id?: string
-
-  @IsString()
   @ApiProperty()
   name: string
 
@@ -65,7 +62,7 @@ export class CreateNftDto {
   @IsOptional()
   @Type(() => AssetDto)
   @ApiProperty({ type: [AssetDto] })
-  assets?: AssetDto[]
+  assets: AssetDto[]
 
   @ValidateNested()
   @Type(() => CreateUnlockableContentDto)
@@ -74,11 +71,54 @@ export class CreateNftDto {
 
   @IsObject()
   @ApiProperty()
-  properties: Record<string, any>
+  @IsOptional()
+  properties?: Record<string, any>
+
+  @ApiProperty()
+  @Type(() => Owner)
+  @ValidateNested({ each: true })
+  owner?: Owner
+
+  @ApiProperty()
+  @IsNumber()
+  royalties?: number
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  sport?: string
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  collection?: string
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  athlete?: string
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  artist?: string
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  description?: string
 
   constructor(partial: Partial<Nft>) {
     Object.assign(this, partial)
   }
+}
+
+@Exclude()
+export class CreateNftResponseDto {
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  requestId: string
 }
 
 @Exclude()
@@ -142,6 +182,11 @@ export class NftResponseDto {
   @ApiProperty()
   @IsObject()
   properties: Record<string, any>
+
+  @Expose()
+  @ApiProperty()
+  @IsNumber()
+  royalties?: number
 
   constructor(partial: Partial<Nft>) {
     if (partial instanceof Document) {

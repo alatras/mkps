@@ -1,10 +1,11 @@
 import { Prop } from '@nestjs/mongoose'
-import { Expose, Transform } from 'class-transformer'
+import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { Asset, ImagesSet } from './asset.schema'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
 import { UnlockableContent } from './nft.schema'
-import { IsBoolean, IsString } from 'class-validator'
+import { IsBoolean } from 'class-validator'
+import { NftStatus } from 'src/shared/enum'
 
 export class NftDraftModel {
   @Transform(({ value }) => value.toString())
@@ -13,7 +14,7 @@ export class NftDraftModel {
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  _id: object
+  _id?: MUUID.MUUID
 
   @Prop({ type: Owner })
   owner: Owner
@@ -25,6 +26,9 @@ export class NftDraftModel {
   @IsBoolean()
   isMinted?: boolean
 
+  @Prop({ type: NftStatus })
+  status?: NftStatus
+
   @Prop([Asset])
   assets?: Asset[]
 
@@ -32,9 +36,8 @@ export class NftDraftModel {
   @IsBoolean()
   isHidden: boolean
 
-  @Expose()
   @Transform(({ value }) => MUUID.from(value).toString())
-  @IsString()
+  @Prop()
   minterId: MUUID.MUUID
 
   @Prop({ type: UnlockableContent })

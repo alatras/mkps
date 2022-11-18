@@ -39,14 +39,14 @@ export class AvnTransactionService {
    * @returns New AvnTransaction
    */
   async createMintAvnTransaction(
-    nftUuid: string
+    nftId: string
   ): Promise<AvnTransactionMintResponse> {
-    const nft = await this.getNft(nftUuid)
+    const nft = await this.getNft(nftId)
     if (!nft) {
       throw new NotFoundException('NFT not found')
     }
 
-    const user: User = await this.getUser(this.mUUID.from(nft.owner._id))
+    const user: User = await this.getUser(nft.owner._id)
     if (!user) {
       throw new NotFoundException('NFT user not found')
     }
@@ -57,13 +57,13 @@ export class AvnTransactionService {
     const royalties: Royalties[] = getRoyalties()
 
     const data: AvnMintNFTTransactionData = {
-      unique_external_ref: nftUuid,
+      unique_external_ref: nftId,
       userId: uuidFrom(user._id as MUUID.MUUID),
       royalties
     }
 
     const newDoc: AvnMintTransaction = {
-      request_id: `avnMint:${nftUuid}`,
+      request_id: `avnMint:${nftId}`,
       type: AvnTransactionType.MintSingleNft,
       data: data,
       state: AvnTransactionState.NEW,
