@@ -49,7 +49,7 @@ export class Nft {
     value: { type: 'Buffer' },
     default: () => v4()
   })
-  _id?: MUUID
+  _id: MUUID
 
   @Prop({
     type: 'object',

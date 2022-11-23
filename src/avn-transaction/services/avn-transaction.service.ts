@@ -39,9 +39,9 @@ export class AvnTransactionService {
    * @returns New AvnTransaction
    */
   async createMintAvnTransaction(
-    nftId: string
+    nftUuid: string
   ): Promise<AvnTransactionMintResponse> {
-    const nft = await this.getNft(nftId)
+    const nft = await this.getNft(nftUuid)
     if (!nft) {
       throw new NotFoundException('NFT not found')
     }
@@ -57,13 +57,13 @@ export class AvnTransactionService {
     const royalties: Royalties[] = getRoyalties()
 
     const data: AvnMintNFTTransactionData = {
-      unique_external_ref: nftId,
+      unique_external_ref: nftUuid,
       userId: uuidFrom(user._id as MUUID.MUUID),
       royalties
     }
 
     const newDoc: AvnMintTransaction = {
-      request_id: `avnMint:${nftId}`,
+      request_id: `avnMint:${nftUuid}`,
       type: AvnTransactionType.MintSingleNft,
       data: data,
       state: AvnTransactionState.NEW,

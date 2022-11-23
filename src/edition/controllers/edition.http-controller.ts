@@ -21,7 +21,7 @@ import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 
 @Controller('edition')
-export class EditionController {
+export class EditionHttpController {
   constructor(private editionService: EditionService) {}
 
   @UseInterceptors(MongooseClassSerializerInterceptor(EditionResponseDto))

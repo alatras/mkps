@@ -37,7 +37,7 @@ export class NftService {
     userId: string,
     createNftDto: CreateNftDto
   ): Promise<CreateNftResponseDto> {
-    const newNft: Nft = {
+    const newNft: NftDraftModel = {
       ...createNftDto,
       isHidden: true,
       ...(createNftDto.owner && {
@@ -51,10 +51,10 @@ export class NftService {
       minterId: uuidFrom(userId)
     }
 
-    const ceratedNft = await this.nftModel.create(newNft)
+    const nft = await this.nftModel.create(newNft)
 
     const mint = await this.avnTransactionService.createMintAvnTransaction(
-      ceratedNft._id.toString()
+      nft._id.toString()
     )
 
     return { requestId: mint.request_id }
