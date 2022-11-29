@@ -5,7 +5,7 @@ import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { ImagesSet } from '../../nft/schemas/asset.schema'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
-import { UnlockableContent } from "../../nft/schemas/nft.schema";
+import { UnlockableContent } from '../../nft/schemas/nft.schema'
 
 export type NftEditionDocument = NftEdition & Document
 
