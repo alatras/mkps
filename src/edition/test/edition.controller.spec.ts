@@ -20,7 +20,7 @@ import {
 } from '../../avn-transaction/schemas/avn-transaction.schema'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
-import { EditionHttpController } from "../controllers/edition.http-controller";
+import { EditionHttpController } from '../controllers/edition.http-controller'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),

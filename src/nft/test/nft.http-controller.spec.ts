@@ -15,7 +15,10 @@ import { NftEdition } from '../../edition/schemas/edition.schema'
 import { EditionListingService } from '../../edition-listing/services/edition-listing.service'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../../log/log.service'
-import { AvnNftTransaction, AvnEditionTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
+import {
+  AvnNftTransaction,
+  AvnEditionTransaction
+} from '../../avn-transaction/schemas/avn-transaction.schema'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 

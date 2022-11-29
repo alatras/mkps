@@ -13,6 +13,7 @@ import { EditionListing } from '../../edition-listing/schemas/edition-listing.sc
 
 export const getMockNft = (): Nft => {
   return {
+    name: 'NFT name',
     _id: MUUID.from('15e3da3c-542b-4375-9b9d-2115413b8f4c'),
     minterId: MUUID.from('0bfdc700-48e3-11ed-b878-0242ac120002'),
     assets: [{ type: AssetType.video, url: 'string', key: 'string' }],
