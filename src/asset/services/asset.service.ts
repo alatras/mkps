@@ -2,11 +2,9 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { nanoid } from 'nanoid'
 import { ConfigService } from '@nestjs/config'
 import { S3 } from 'aws-sdk'
-import slugify from 'slugify'
 import { DataWrapper } from '../../common/dataWrapper'
 import { PresignedUrlPostRequestDto } from '../dto/presigned-post-request.dto'
 import { PresignedUrlResponse } from '../dto/presigned-url-response.dto'
-import { removeSpecialCharacters } from '../../utils/remove-special-characters'
 
 @Injectable()
 export class AssetService {
@@ -24,13 +22,11 @@ export class AssetService {
    */
   async getPresignedUrlForSmallImage(
     contentType: string,
-    nftName: string
+    nftId: string
   ): Promise<DataWrapper<PresignedUrlResponse>> {
     const maxBytes = 1000000 // 1 MB
     const fileName = 'previewImage' + nanoid(11)
-    const key = `nft/thumb/${nanoid(7)}-${slugify(
-      removeSpecialCharacters(nftName)
-    )}`
+    const key = `nft/thumb/${nanoid(7)}-${nftId}`
     const bucketName = this.configService.get<string>(
       'app.aws.s3BucketNameAssets'
     )
@@ -63,11 +59,11 @@ export class AssetService {
    */
   async getPresignedUrlForOriginal(
     contentType: string,
-    nftName: string
+    nftId: string
   ): Promise<DataWrapper<PresignedUrlResponse>> {
     const maxBytes = 500000000 // 500 MB
     const fileName = 'originalImage' + nanoid(11)
-    const key = `nft/${nanoid(7)}-${slugify(removeSpecialCharacters(nftName))}`
+    const key = `nft/${nanoid(7)}-${nftId}`
     const bucketName = this.configService.get<string>(
       'app.aws.s3BucketNameUserOrig'
     )

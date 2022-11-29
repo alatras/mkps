@@ -47,7 +47,7 @@ export class AssetController {
     try {
       return await this.assetService.getPresignedUrlForSmallImage(
         query.contentType,
-        query.nftName
+        query.nftId
       )
     } catch (err) {
       this.log.error(
@@ -74,7 +74,7 @@ export class AssetController {
     try {
       return await this.assetService.getPresignedUrlForOriginal(
         query.contentType,
-        query.nftName
+        query.nftId
       )
     } catch (err) {
       this.log.error(

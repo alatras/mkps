@@ -10,5 +10,5 @@ export class PresignedUrlQueryDto {
   @Transform(({ value }) => value.trim())
   @IsString()
   @IsNotEmpty()
-  nftName: string
+  nftId: string
 }
