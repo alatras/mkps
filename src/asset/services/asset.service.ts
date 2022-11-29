@@ -6,6 +6,7 @@ import slugify from 'slugify'
 import { DataWrapper } from '../../common/dataWrapper'
 import { PresignedUrlPostRequestDto } from '../dto/presigned-post-request.dto'
 import { PresignedUrlResponse } from '../dto/presigned-url-response.dto'
+import { removeSpecialCharacters } from '../../utils/remove-special-characters'
 
 @Injectable()
 export class AssetService {
@@ -19,15 +20,17 @@ export class AssetService {
 
   /**
    * Gets presigned URL for small image to upload in 3S
-   * @param fileName name of the asset file
    * @param contentType type of asset file contents
    */
   async getPresignedUrlForSmallImage(
-    fileName: string,
-    contentType: string
+    contentType: string,
+    nftName: string
   ): Promise<DataWrapper<PresignedUrlResponse>> {
     const maxBytes = 1000000 // 1 MB
-    const key = `nft/thumb/${nanoid(7)}-${slugify(fileName)}`
+    const fileName = 'previewImage' + nanoid(11)
+    const key = `nft/thumb/${nanoid(7)}-${slugify(
+      removeSpecialCharacters(nftName)
+    )}`
     const bucketName = this.configService.get<string>(
       'app.aws.s3BucketNameAssets'
     )
@@ -48,22 +51,23 @@ export class AssetService {
     return {
       data: {
         ...presignedReq,
-        presignedGetUrl
+        presignedGetUrl,
+        fileName
       }
     }
   }
 
   /**
    * Get presigned URL for original image to upload in 3S
-   * @param fileName name of the asset file
    * @param contentType type of asset file contents
    */
   async getPresignedUrlForOriginal(
-    fileName: string,
-    contentType: string
+    contentType: string,
+    nftName: string
   ): Promise<DataWrapper<PresignedUrlResponse>> {
     const maxBytes = 500000000 // 500 MB
-    const key = `nft/${nanoid(7)}-${slugify(fileName)}`
+    const fileName = 'originalImage' + nanoid(11)
+    const key = `nft/${nanoid(7)}-${slugify(removeSpecialCharacters(nftName))}`
     const bucketName = this.configService.get<string>(
       'app.aws.s3BucketNameUserOrig'
     )
@@ -84,7 +88,8 @@ export class AssetService {
     return {
       data: {
         ...presignedReq,
-        presignedGetUrl
+        presignedGetUrl,
+        fileName
       }
     }
   }

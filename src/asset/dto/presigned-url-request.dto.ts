@@ -5,10 +5,10 @@ export class PresignedUrlQueryDto {
   @Transform(({ value }) => value.trim())
   @IsString()
   @IsNotEmpty()
-  fileName: string
+  contentType: string
 
   @Transform(({ value }) => value.trim())
   @IsString()
   @IsNotEmpty()
-  contentType: string
+  nftName: string
 }

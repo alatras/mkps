@@ -39,15 +39,21 @@ describe('AssetService', () => {
       .mockImplementation(() => 'ave-nft-assets-dev')
 
     const res1 = await service.getPresignedUrlForSmallImage(
-      'dummyName',
-      'dummyContentType'
+      'dummyContentType',
+      'dummyNftName'
     )
+    const fileName1 = res1.data['fileName']
+    delete res1.data['fileName']
     expect(res1).toEqual(presignedGetUrlResponseMock)
+    expect(typeof fileName1).toBe('string')
 
     const res2 = await service.getPresignedUrlForOriginal(
-      'dummyName',
-      'dummyContentType'
+      'dummyContentType',
+      'dummyNftName'
     )
+    const fileName2 = res2.data['fileName']
+    delete res2.data['fileName']
     expect(res2).toEqual(presignedGetUrlResponseMock)
+    expect(typeof fileName2).toBe('string')
   })
 })

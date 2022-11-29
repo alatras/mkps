@@ -47,6 +47,11 @@ class Data {
   @ApiProperty()
   @IsString()
   presignedGetUrl: string
+
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  fileName: string
 }
 
 @Exclude()

@@ -3,7 +3,6 @@ import {
   Get,
   InternalServerErrorException,
   Query,
-  Request,
   UseGuards,
   UseInterceptors,
   UsePipes
@@ -33,7 +32,8 @@ export class AssetController {
   }
 
   @ApiCreatedResponse({
-    description: 'Get a presigned URL for uploading a thumbnail on S3 bucket.',
+    description:
+      'Get a presigned URL for uploading a small/large review on S3 bucket.',
     type: PresignedUrlResponse
   })
   @UseInterceptors(MongooseClassSerializerInterceptor(PresignedUrlResponse))
@@ -42,13 +42,12 @@ export class AssetController {
   @Get('s3-url-for-preview')
   @UsePipes(new ErrorValidationPipe())
   async getPresignedUrlForSmallPreview(
-    @Request() req: Express.Request,
     @Query() query: PresignedUrlQueryDto
   ): Promise<DataWrapper<PresignedUrlResponse>> {
     try {
       return await this.assetService.getPresignedUrlForSmallImage(
-        query.fileName,
-        query.contentType
+        query.contentType,
+        query.nftName
       )
     } catch (err) {
       this.log.error(
@@ -70,13 +69,12 @@ export class AssetController {
   @Get('s3-url-for-original')
   @UsePipes(new ErrorValidationPipe())
   async getPresignedUrlForOriginalAsset(
-    @Request() req: Express.Request,
     @Query() query: PresignedUrlQueryDto
   ): Promise<DataWrapper<PresignedUrlResponse>> {
     try {
       return await this.assetService.getPresignedUrlForOriginal(
-        query.fileName,
-        query.contentType
+        query.contentType,
+        query.nftName
       )
     } catch (err) {
       this.log.error(
