@@ -1,11 +1,8 @@
-import { Exclude, Expose, Transform } from 'class-transformer'
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { PresignedUrlUploadType } from 'src/shared/enum'
-import { toNumber } from 'utils/toNumber';
+import { IsNotEmpty, IsString } from 'class-validator'
 
 class Fields {
   @IsString()
-  policy?: string
+  policy?: string;
 
   /** The fields that must be included as hidden inputs on the form. */
   [key: string]: string

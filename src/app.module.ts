@@ -10,7 +10,7 @@ import { LogModule } from './log/log.module'
 import { getActiveMicroservices } from '../utils/microservices'
 import { UserModule } from './user/user.module'
 import { EditionListingModule } from './edition-listing/edition-listing.module'
-import { AssetModule } from './asset/asset.module';
+import { AssetModule } from './asset/asset.module'
 
 const GENERAL_IMPORTS = [
   AuthModule,

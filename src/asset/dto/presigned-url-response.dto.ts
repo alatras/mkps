@@ -1,10 +1,6 @@
-import {
-  IsString,
-  ValidateNested
-} from 'class-validator'
+import { IsString, ValidateNested } from 'class-validator'
 import { Exclude, Expose } from 'class-transformer'
 import { ApiProperty } from '@nestjs/swagger'
-
 
 @Exclude()
 class Fields {
@@ -52,7 +48,6 @@ class Data {
   @IsString()
   presignedGetUrl: string
 }
-
 
 @Exclude()
 export class PresignedUrlResponse {

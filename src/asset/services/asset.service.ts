@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { nanoid } from 'nanoid'
 import { ConfigService } from '@nestjs/config'
 import { S3 } from 'aws-sdk'
 import slugify from 'slugify'
 import { DataWrapper } from '../../common/dataWrapper'
-import { PresignedUrlUploadType } from '../../shared/enum'
 import { PresignedUrlPostRequestDto } from '../dto/presigned-post-request.dto'
 import { PresignedUrlResponse } from '../dto/presigned-url-response.dto'
 
@@ -13,50 +12,75 @@ export class AssetService {
   private s3: S3
   private configService: ConfigService
 
-  constructor(
-    configService: ConfigService,
-  ) {
+  constructor(configService: ConfigService) {
     this.s3 = new S3({ apiVersion: '2006-03-01' })
     this.configService = configService
   }
 
   /**
    * Gets presigned URL for small image to upload in 3S
+   * @param fileName name of the asset file
+   * @param contentType type of asset file contents
    */
   async getPresignedUrlForSmallImage(
     fileName: string,
     contentType: string
   ): Promise<DataWrapper<PresignedUrlResponse>> {
     const maxBytes = 1000000 // 1 MB
-
-    const thumbBucket = this.configService.get<string>('app.aws.s3BucketNameAssets')
-    const origBucket = this.configService.get<string>('app.aws.s3BucketNameUserOrig')
-
-    const BucketDestinations: Record<PresignedUrlUploadType, string> = {
-      [PresignedUrlUploadType.nftThumbnail]: thumbBucket,
-      [PresignedUrlUploadType.nftOriginal]: origBucket
+    const key = `nft/thumb/${nanoid(7)}-${slugify(fileName)}`
+    const bucketName = this.configService.get<string>(
+      'app.aws.s3BucketNameAssets'
+    )
+    if (!bucketName) {
+      throw new InternalServerErrorException(
+        'missing config of s3BucketNameAssets'
+      )
     }
 
-    const filePaths: Record<PresignedUrlUploadType, string> = {
-      [PresignedUrlUploadType.nftThumbnail]: 'nft/thumb',
-      [PresignedUrlUploadType.nftOriginal]: 'nft'
-    }
-
-    const key = `${filePaths[PresignedUrlUploadType.nftThumbnail]}/${nanoid (7)}-${slugify(fileName)}`
-    const bucketName = BucketDestinations[PresignedUrlUploadType.nftThumbnail]
-
-    const s3Params: S3.PresignedPost.Params = {
-      Bucket: bucketName,
-      Fields: { key },
-      Conditions: [
-        ['content-length-range', 0, maxBytes],
-        ['starts-with', '$Content-Type', contentType]
-      ],
-      // ContentType: contentType
-    }
-
-    const presignedReq = await this.getPresignedPostRequest(s3Params)
+    const presignedReq = await this.getPresignedPostRequest(
+      key,
+      bucketName,
+      maxBytes,
+      contentType
+    )
     const presignedGetUrl = await this.getPresignedGetUrl(key, bucketName, 900)
+
+    return {
+      data: {
+        ...presignedReq,
+        presignedGetUrl
+      }
+    }
+  }
+
+  /**
+   * Get presigned URL for original image to upload in 3S
+   * @param fileName name of the asset file
+   * @param contentType type of asset file contents
+   */
+  async getPresignedUrlForOriginal(
+    fileName: string,
+    contentType: string
+  ): Promise<DataWrapper<PresignedUrlResponse>> {
+    const maxBytes = 500000000 // 500 MB
+    const key = `nft/${nanoid(7)}-${slugify(fileName)}`
+    const bucketName = this.configService.get<string>(
+      'app.aws.s3BucketNameUserOrig'
+    )
+    if (!bucketName) {
+      throw new InternalServerErrorException(
+        'missing config of s3BucketNameUserOrig'
+      )
+    }
+
+    const presignedReq = await this.getPresignedPostRequest(
+      key,
+      bucketName,
+      maxBytes,
+      contentType
+    )
+    const presignedGetUrl = await this.getPresignedGetUrl(key, bucketName, 900)
+
     return {
       data: {
         ...presignedReq,
@@ -70,8 +94,12 @@ export class AssetService {
    * @param key key to the file
    * @param bucket bucket where the file exists
    * @param secondsToExpire time in seconds after which url expires, defaults to 1 hour
- */
-  private getPresignedGetUrl(key: string, bucket: string, secondsToExpire = 3600): Promise<string> {
+   */
+  private getPresignedGetUrl(
+    key: string,
+    bucket: string,
+    secondsToExpire = 3600
+  ): Promise<string> {
     return this.s3.getSignedUrlPromise('getObject', {
       Bucket: bucket,
       Key: key,
@@ -81,12 +109,27 @@ export class AssetService {
 
   /**
    * Get the form fields and target URL for direct POST uploading.
-   * @param s3Params 
-   * @returns 
+   * @param key key to the file
+   * @param bucketName name of bucket where the file exists
+   * @param maxBytes maximum asset file size in bytes
+   * @param contentType type of asset file contents
    */
-  private async getPresignedPostRequest(s3Params: S3.PresignedPost.Params)
-    : Promise<PresignedUrlPostRequestDto> {
+  private async getPresignedPostRequest(
+    key: string,
+    bucketName: string,
+    maxBytes: number,
+    contentType: string
+  ): Promise<PresignedUrlPostRequestDto> {
     return new Promise((resolve, reject) => {
+      const s3Params: S3.PresignedPost.Params = {
+        Bucket: bucketName,
+        Fields: { key },
+        Conditions: [
+          ['content-length-range', 0, maxBytes],
+          ['starts-with', '$Content-Type', contentType]
+        ]
+      }
+
       this.s3.createPresignedPost(s3Params, (error, url) => {
         if (error) {
           reject(error)

@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getModelToken } from '@nestjs/mongoose'
+import { ConfigService } from '@nestjs/config'
 import { getMockUser, UserMock } from './mocks'
 import { Provider, User } from '../schemas/user.schema'
 import { UserService } from '../user.service'
 import { LogModule } from '../../log/log.module'
-import { ConfigService } from '@nestjs/config'
 
 describe('NftService', () => {
   let service: UserService
