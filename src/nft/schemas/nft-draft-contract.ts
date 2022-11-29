@@ -57,4 +57,7 @@ export class NftDraftContract {
 
   @Prop({ type: Owner })
   owner: Owner
+
+  @Prop()
+  properties: Record<string, any>
 }

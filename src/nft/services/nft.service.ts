@@ -219,7 +219,7 @@ export class NftService {
       image,
       isHidden: true, // Default draft NFT to hidden
       minterId: ownerId,
-      unlockableContent
+      unlockableContent,
     }
   }
 

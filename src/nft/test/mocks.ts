@@ -38,7 +38,13 @@ export const getMockNft = (): Nft => {
     ethAddresses: [],
     createdAt: new Date('2022-05-18T13:23:39.468Z'),
     updatedAt: new Date('2022-05-18T13:23:39.468Z'),
-    properties: {}
+    properties: {
+      sport: 'Test NFT 10023',
+      collection: 'Test NFT 10023',
+      athlete: 'Test NFT 10023',
+      artist: 'Test NFT 10023',
+      description: 'Test NFT 100233'
+    }
   }
 }
 
@@ -89,6 +95,13 @@ export const getNftEdition = (): NftEdition => {
         url: 'string',
         key: 'string'
       }
+    },
+    properties: {
+      sport: 'Test NFT 10023',
+      collection: 'Test NFT 10023',
+      athlete: 'Test NFT 10023',
+      artist: 'Test NFT 10023',
+      description: 'Test NFT 100233'
     }
   }
 }

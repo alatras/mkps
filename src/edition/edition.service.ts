@@ -166,7 +166,9 @@ export class EditionService {
       nfts: [],
       listingType: AuctionType.fixedPrice,
       owner: { _id: user._id, avnPubKey: user.avnPubKey },
-      image: createEditionDto.image
+      image: createEditionDto.image,
+      properties: nftDoc.properties,
+      unlockableContent: nftDoc.unlockableContent
     }
 
     const createdEdition: NftEdition = await this.nftEditionModel.create(
@@ -295,7 +297,8 @@ export class EditionService {
             image: updatedEdition.image,
             name: updatedEdition.name,
             owner: updatedEdition.owner,
-            minterId: updatedEdition.owner._id
+            minterId: updatedEdition.owner._id,
+            editionId: uuidFrom(editionId)
           },
           NftStatus.minted
         )
@@ -304,7 +307,7 @@ export class EditionService {
       })
     )
 
-    this.updateOneById(editionId, { nfts: editionNftIds })
+    await this.updateOneById(editionId, { nfts: editionNftIds })
   }
 
   private generateNftId(batchId: string, editionNumber: number): MUUID.MUUID {

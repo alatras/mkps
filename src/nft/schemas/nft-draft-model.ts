@@ -55,7 +55,7 @@ export class NftDraftModel {
   name: string
 
   @Prop({ type: 'object' })
-  properties?: Record<string, any>
+  properties: Record<string, any>
 
   @Prop()
   editionNumber?: number
