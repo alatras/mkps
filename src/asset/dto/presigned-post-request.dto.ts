@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator'
+import { Type } from 'class-transformer'
+import { IsNotEmpty, IsString, ValidateNested } from 'class-validator'
 
 class Fields {
   @IsString()
@@ -16,5 +17,7 @@ export class PresignedUrlPostRequestDto {
 
   /** The fields that must be included as hidden inputs on the form. */
   @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => Fields)
   fields: Fields
 }

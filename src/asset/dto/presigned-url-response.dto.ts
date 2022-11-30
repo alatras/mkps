@@ -1,5 +1,5 @@
 import { IsString, ValidateNested } from 'class-validator'
-import { Exclude, Expose } from 'class-transformer'
+import { Exclude, Expose, Type } from 'class-transformer'
 import { ApiProperty } from '@nestjs/swagger'
 
 @Exclude()
@@ -39,8 +39,8 @@ class Data {
 
   @Expose()
   @ApiProperty()
-  @IsString()
   @ValidateNested()
+  @Type(() => Fields)
   fields: Fields
 
   @Expose()
@@ -59,6 +59,7 @@ export class PresignedUrlResponse {
   @Expose()
   @ApiProperty()
   @ValidateNested()
+  @Type(() => Data)
   data: Data
 
   @Expose()
