@@ -39,6 +39,7 @@ pipeline {
                         _SERVICE = "LISTING_SERVICE"
                     }    
                     
+                    account_id = sh (script: "aws sts get-caller-identity --query 'Account' --output text", returnStdout: true).trim()
                     namespace = "app-${params.environment}"
                     helm_chart = "values-${params.account_name}-${params.environment}-${_SERVICE.toLowerCase()}.yaml"
                     tag = "v$BUILD_NUMBER"
