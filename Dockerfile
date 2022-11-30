@@ -28,9 +28,8 @@ USER node
 FROM node:18-alpine As production
 
 # Copy the bundled code from the build stage to the production image
-COPY --from=build /usr/src/app/node_modules /usr/local/lib/node_modules
-COPY --from=build /usr/src/app/build /usr/src/app/build
-COPY --from=build /usr/src/app/rds-combined-ca-bundle.pem /usr/src/app/rds-combined-ca-bundle.pem
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/build ./build
 
 # Start the server
 CMD [ "node", "build/src/main.js" ]
