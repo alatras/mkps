@@ -15,12 +15,6 @@ COPY . .
 # Build to create the production bundle with Nest Cli
 RUN npm run build
 
-# Set NODE_ENV
-ENV NODE_ENV production
-
-# Clean production package install with `npm ci` which removes the existing node_modules directory.
-RUN npm ci --only=production && npm cache clean --force
-
 USER node
 
 ### PRODUCTION
