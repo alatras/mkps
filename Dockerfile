@@ -16,16 +16,17 @@ COPY . .
 
 # Build to create the production bundle with Nest Cli
 RUN npm run build
+RUN chown -R node:node "/usr/src/app"
 
-USER node
 
 ### PRODUCTION
 
 FROM node:18-alpine As production
 
-
 # Copy the bundled code from the build stage to the production image
 COPY --from=build /usr/src/app /usr/src/app
+
+USER node
 
 # Start the server
 CMD [ "node", "/usr/src/app/build/src/main.js" ]
