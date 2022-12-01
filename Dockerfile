@@ -2,6 +2,8 @@
 
 FROM node:18-alpine As build
 
+RUN ["mkdir", "-p", "/usr/src/app/logs/"]
+
 WORKDIR /usr/src/app
 
 COPY package*.json ./
