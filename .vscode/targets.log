@@ -7,7 +7,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 
 # This program built for i386-apple-darwin11.3.0
 
-# Make data base, printed on Wed Nov 23 09:13:15 2022
+# Make data base, printed on Thu Dec  1 09:32:44 2022
 
 # Variables
 
@@ -38,13 +38,11 @@ VSCODE_CWD = /
 # environment
 PATH = /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin/:/Users/leonardobaiao/bin/
 # environment
-LaunchInstanceID = FD3949D8-B182-4572-AE75-A5141E127286
-# environment
 ELECTRON_RUN_AS_NODE = 1
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.zJ8IHqJMcO/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.6ZfEANsq9Y/Listeners
 # automatic
 %F = $(notdir $%)
 # environment
@@ -58,7 +56,7 @@ HOME = /Users/leonardobaiao
 # default
 MAKEFILEPATH = $(shell /usr/bin/xcode-select -print-path 2>/dev/null || echo /Developer)/Makefiles
 # environment
-VSCODE_CODE_CACHE_PATH = /Users/leonardobaiao/Library/Application Support/Code/CachedData/3b889b090b5ad5793f524b5d1d39fda662b96a2a
+VSCODE_CODE_CACHE_PATH = /Users/leonardobaiao/Library/Application Support/Code/CachedData/6261075646f055b99068d3688932416f2346dd3b
 # environment
 LOGNAME = leonardobaiao
 # environment
@@ -92,7 +90,7 @@ TMPDIR = /var/folders/0j/4v97kz593p55nzwhpvnjs55h0000gn/T/
 # automatic
 *F = $(notdir $*)
 # environment
-VSCODE_IPC_HOOK = /Users/leonardobaiao/Library/Application Support/Code/1.69.2-main.sock
+VSCODE_IPC_HOOK = /Users/leonardobaiao/Library/Application Support/Code/1.73.1-main.sock
 # environment
 MallocNanoZone = 0
 # makefile
@@ -102,7 +100,7 @@ MFLAGS = -Rrqp
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
-XPC_SERVICE_NAME = application.com.microsoft.VSCode.31643555.31643565
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.44447184.44447190
 # automatic
 +D = $(patsubst %/,%,$(dir $+))
 # automatic
@@ -117,8 +115,6 @@ MAKEFILES :=
 <F = $(notdir $<)
 # environment
 LC_ALL = C
-# environment
-SECURITYSESSIONID = 186a4
 # automatic
 ^F = $(notdir $^)
 # default
@@ -130,9 +126,9 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 421
+VSCODE_PID = 2295
 # variable set hash-table stats:
-# Load=60/1024=6%, Rehash=0, Collisions=1/84=1%
+# Load=58/1024=6%, Rehash=0, Collisions=1/82=1%
 
 # Pattern-specific Variable Values
 
@@ -140,7 +136,7 @@ VSCODE_PID = 421
 
 # Directories
 
-# . (device 16777231, inode 24647100): 39 files, no impossibilities.
+# . (device 16777234, inode 24647100): 39 files, no impossibilities.
 
 # 39 files, no impossibilities in 1 directories.
 
@@ -222,7 +218,7 @@ down:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Wed Nov 23 09:13:15 2022
+# Finished Make data base on Thu Dec  1 09:32:44 2022
 
  
 make: *** No rule to make target `all'.  Stop.

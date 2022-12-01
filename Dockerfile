@@ -25,11 +25,11 @@ USER node
 
 ### PRODUCTION
 
-FROM node:18-alpine As production
+FROM build As production
 
-# Copy the bundled code from the build stage to the production image
-COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/build ./build
+WORKDIR /usr/src/app
+
+USER node
 
 # Start the server
-CMD [ "node", "build/src/main.js" ]
+CMD [ "node", "/usr/src/app/build/src/main.js" ]
