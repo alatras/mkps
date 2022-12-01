@@ -1,5 +1,6 @@
-### BUILD FOR PRODUCTION
+ARG ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,LISTING_SERVICE
 
+### BUILD FOR PRODUCTION
 FROM node:18-alpine As build
 
 WORKDIR /usr/src/app
@@ -20,6 +21,8 @@ RUN chown -R node:node "/usr/src/app/build"
 ### PRODUCTION
 
 FROM node:18-alpine As production
+
+ENV ACTIVE_SERVICES=${ACTIVE_SERVICES}
 
 RUN ["mkdir", "-p", "/usr/src/app/logs/"]
 RUN chown -R node:node "/usr/src/app"
