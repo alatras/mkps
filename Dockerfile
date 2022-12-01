@@ -2,8 +2,6 @@
 
 FROM node:18-alpine As build
 
-RUN ["mkdir", "-p", "/usr/src/app/logs/"]
-
 WORKDIR /usr/src/app
 
 COPY package*.json ./
@@ -27,11 +25,11 @@ WORKDIR /usr/src/app
 # Copy the bundled code from the build stage to the production image
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/build ./build
-COPY --from=build /usr/src/app/logs ./logs
-
 COPY --from=build /usr/src/app/rds-combined-ca-bundle.pem ./rds-combined-ca-bundle.pem
 
 USER node
+
+RUN ["mkdir", "-p", "/usr/src/app/logs/"]
 
 # Start the server
 CMD [ "node", "build/src/main.js" ]
