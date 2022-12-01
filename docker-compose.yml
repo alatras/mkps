@@ -3,7 +3,7 @@ version: '3.8'
 services:
   api:
     build:
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       context: .
       target: development
     volumes:
@@ -13,7 +13,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongo1:27017
       - MONGODB_NAME=development-marketplace-be
-      - REDIS_HOST=redis
+      - REDIS_URL=redis
       - REDIS_PORT=6379
       - ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,LISTING_SERVICE
       - PORT=5001
