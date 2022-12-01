@@ -10,6 +10,7 @@ import { LogModule } from './log/log.module'
 import { getActiveMicroservices } from '../utils/microservices'
 import { UserModule } from './user/user.module'
 import { EditionListingModule } from './edition-listing/edition-listing.module'
+import { AssetModule } from './asset/asset.module'
 
 const GENERAL_IMPORTS = [
   AuthModule,
@@ -25,11 +26,12 @@ const GENERAL_IMPORTS = [
   })
 ]
 
-// TODO: remove UserModule and EditionListingModule when they're ready to be completely separated
+// TODO: remove UserModule, EditionListingModule and AssetModule when they're ready to be completely separated
 const imports = [
   ...GENERAL_IMPORTS,
   UserModule,
   EditionListingModule,
+  AssetModule,
   ...getActiveMicroservices()
 ]
 

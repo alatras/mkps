@@ -118,3 +118,8 @@ export enum NftPropertyTypes {
   datePicker = 'datePicker',
   dateTimePicker = 'dateTimePicker'
 }
+
+export enum PresignedUrlUploadType {
+  nftOriginal = 'nftOriginal',
+  nftThumbnail = 'nftThumbnail'
+}

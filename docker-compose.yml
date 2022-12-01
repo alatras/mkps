@@ -15,7 +15,7 @@ services:
       - MONGODB_NAME=development-marketplace-be
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,LISTING_SERVICE
+      - ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,LISTING_SERVICE,ASSET_SERVICE
       - PORT=5001
     command: npm run dev
     ports:
