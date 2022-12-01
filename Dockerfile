@@ -18,13 +18,18 @@ COPY . .
 RUN npm run build
 RUN chown -R node:node "/usr/src/app"
 
-
 ### PRODUCTION
 
 FROM node:18-alpine As production
 
+WORKDIR /usr/src/app
+
 # Copy the bundled code from the build stage to the production image
-COPY --from=build /usr/src/app /usr/src/app
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/build ./build
+COPY --from=build /usr/src/app/logs ./logs
+
+COPY --from=build /usr/src/app/rds-combined-ca-bundle.pem ./rds-combined-ca-bundle.pem
 
 USER node
 
