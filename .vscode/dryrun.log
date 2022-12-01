@@ -1,9 +1,0 @@
-make --dry-run --always-make --keep-going --print-directory
-make: Entering directory `/Users/leonardobaiao/AveNFT/2.Projects/marketplace-nest-be'
-[ -d node_modules ] || npm i
-docker-compose up -d
-docker logs --follow marketplace-nest-be-api-1
-sleep 10
-docker exec mongo1 /scripts/rs-init.sh
-make: Leaving directory `/Users/leonardobaiao/AveNFT/2.Projects/marketplace-nest-be'
- 
