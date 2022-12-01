@@ -2,8 +2,6 @@
 
 FROM node:18-alpine As build
 
-RUN ["mkdir", "-p", "/usr/src/app/logs/"]
-
 WORKDIR /usr/src/app
 
 COPY package*.json ./
@@ -16,18 +14,21 @@ COPY . .
 
 # Build to create the production bundle with Nest Cli
 RUN npm run build
-RUN chown -R node:node "/usr/src/app"
+RUN chown -R node:node "/usr/src/app/node_modules"
+RUN chown -R node:node "/usr/src/app/build"
 
 ### PRODUCTION
 
 FROM node:18-alpine As production
+
+RUN ["mkdir", "-p", "/usr/src/app/logs/"]
+RUN chown -R node:node "/usr/src/app"
 
 WORKDIR /usr/src/app
 
 # Copy the bundled code from the build stage to the production image
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/build ./build
-COPY --from=build /usr/src/app/logs ./logs
 COPY --from=build /usr/src/app/rds-combined-ca-bundle.pem ./rds-combined-ca-bundle.pem
 
 USER node
