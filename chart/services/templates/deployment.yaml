@@ -56,7 +56,7 @@ spec:
               mountPath: /usr/share/filebeat/filebeat.yml
               subPath: filebeat.yml
         - name: metricbeat-sidecar
-          image: "docker.elastic.co/beats/metricbeat:8.0.0"
+          image: "docker.elastic.co/beats/metricbeat:8.0.1"
           resources:
             requests:
               memory: 64Mi
@@ -85,7 +85,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
+          env:                 
             - name: "MONGODB_URI"
               valueFrom:
                 secretKeyRef:
@@ -255,6 +255,11 @@ spec:
                   name: market-place-be
                   key: cybavo_api_secret
                   optional: true
+            - name: "ACTIVE_SERVICES"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be                
+                  key:  active_services                   
             - name: "PORT"
               value: "5002"
             - name: "NODE_EXTRA_CA_CERTS"

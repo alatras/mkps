@@ -30,34 +30,18 @@ pipeline {
             steps {
                 script {
                     if (env.JOB_NAME.contains('nft')) {
-                        _SERVICE = "nft"
-                    }    
-                    else if (env.JOB_NAME.contains('user')) {
-                        _SERVICE = "user"
+                        _SERVICE = "NFT_SERVICE"
                     }    
                     else if (env.JOB_NAME.contains('avn')) {
-                        _SERVICE = "avn"
+                        _SERVICE = "AVN_SERVICE"
                     }    
-                    else if (env.JOB_NAME.contains('payment')) {
-                        _SERVICE = "payment"
+                    else if (env.JOB_NAME.contains('listing')) {
+                        _SERVICE = "LISTING_SERVICE"
                     }    
-                    else if (env.JOB_NAME.contains('minting')) {
-                        _SERVICE = "minting"
-                    }    
-                    else if (env.JOB_NAME.contains('asset')) {
-                        _SERVICE = "asset"
-                    }    
-
-
-                    account_id = sh (script: "aws sts get-caller-identity --query 'Account' --output text", returnStdout: true).trim()
-                    account_id_base = "696165561482"
-                    aws_region_base = "us-east-2"
                     
-                    tenant_secret_id = "arn:aws:secretsmanager:${params.aws_region}:$account_id:secret:/${params.environment}/service/tenant"
-                    package_name = sh (script: "aws secretsmanager get-secret-value --region ${params.aws_region} --secret-id $tenant_secret_id | jq -r .SecretString | jq -r .package", returnStdout: true).trim()                    
-
+                    account_id = sh (script: "aws sts get-caller-identity --query 'Account' --output text", returnStdout: true).trim()
                     namespace = "app-${params.environment}"
-                    helm_chart = "values-${params.account_name}-${params.environment}-${_SERVICE}-service.yaml"
+                    helm_chart = "values-${params.account_name}-${params.environment}-${_SERVICE.toLowerCase()}.yaml"
                     tag = "v$BUILD_NUMBER"
                     latest = "latest"
 
@@ -66,7 +50,7 @@ pipeline {
                         latest = "${params.environment}-latest"                        
                     } 
                     if ("${params.account_name}" == "demo") {
-                        namespace = "app-pentest-${_SERVICE}-service.yaml"
+                        namespace = "app-pentest"
                     }
                 }
             }
@@ -75,28 +59,26 @@ pipeline {
         stage('Build') {
             steps {
                 sh "aws ecr get-login-password --region ${params.aws_region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com"
-                sh "aws ecr get-login-password --region ${aws_region_base} | docker login --username AWS --password-stdin ${account_id_base}.dkr.ecr.${aws_region_base}.amazonaws.com"
-
-                sh "docker build -t ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE}-service:${tag}  --build-arg PACKAGE=${package_name} --build-arg ENVIRONMENT=${params.environment} ."
+                sh "docker build  --no-cache -t ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE.toLowerCase()}:${tag} ."
             }
         }
 
         stage('Publish') {
             steps {
-                sh "docker push ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE}-service:${tag}"
+                sh "docker push ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE.toLowerCase()}:${tag}"
             }
         }
 
         stage('Clean') {
             steps {
-                sh "docker image rm ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE}-service:${tag}"
+                sh "docker image rm ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE.toLowerCase()}:${tag}"
             }
         }
 
         stage('Deploy') {
             steps {
                 dir('chart/services') {
-                    sh "helm upgrade --install --set image.tag=${tag} ${_SERVICE} -f ${helm_chart} . -n ${namespace}"
+                    sh "helm upgrade --install --set image.tag=${tag} --set ACTIVE_SERVICES=${_SERVICE} ${_SERVICE.substring(0, _SERVICE.indexOf('_')).toLowerCase()} -f ${helm_chart} . -n ${namespace}"
                 }
             }
         }

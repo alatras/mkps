@@ -5,7 +5,7 @@ import appConfig from '../config/app.config'
 export function getRedisOptions(): RedisOptions['options'] {
   const configService = new ConfigService(appConfig)
   return {
-    host: configService.get<string>('REDIS_HOST'),
+    host: configService.get<string>('REDIS_URL'),
     port: configService.get<number>('REDIS_PORT')
   }
 }
