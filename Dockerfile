@@ -15,21 +15,25 @@ COPY . .
 # Build to create the production bundle with Nest Cli
 RUN npm run build
 
-# Set NODE_ENV
-ENV NODE_ENV production
-
-# Clean production package install with `npm ci` which removes the existing node_modules directory.
-RUN npm ci --only=production && npm cache clean --force
-
 USER node
 
 ### PRODUCTION
 
-FROM build As production
+FROM node:18-alpine As production
 
-WORKDIR /usr/src/app
+# Install AWS
+RUN apk add --no-cache \
+        python3 \
+        py3-pip \
+    && pip3 install --upgrade pip \
+    && pip3 install --no-cache-dir \
+        awscli \
+    && rm -rf /var/cache/apk/*
+RUN aws --version
 
-USER node
+# Copy the bundled code from the build stage to the production image
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/build ./build
 
 # Start the server
-CMD [ "node", "/usr/src/app/build/src/main.js" ]
+CMD [ "node", "build/src/main.js" ]
