@@ -22,6 +22,7 @@ RUN chown -R node:node "/usr/src/app/build"
 
 FROM node:18-alpine As production
 
+ARG ACTIVE_SERVICES
 ENV ACTIVE_SERVICES=${ACTIVE_SERVICES}
 
 RUN ["mkdir", "-p", "/usr/src/app/logs/"]
