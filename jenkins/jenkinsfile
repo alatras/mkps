@@ -59,7 +59,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh "aws ecr get-login-password --region ${params.aws_region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com"
-                sh "docker build  --no-cache -t ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE.toLowerCase()}:${tag} ."
+                sh "docker build  --no-cache -t ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE.toLowerCase()}:${tag} --build-arg ACTIVE_SERVICES=${_SERVICE} ."
             }
         }
 
@@ -78,7 +78,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 dir('chart/services') {
-                    sh "helm upgrade --install --set image.tag=${tag} --set ACTIVE_SERVICES=${_SERVICE} ${_SERVICE.substring(0, _SERVICE.indexOf('_')).toLowerCase()} -f ${helm_chart} . -n ${namespace}"
+                    sh "helm upgrade --install --set image.tag=${tag} ${_SERVICE.substring(0, _SERVICE.indexOf('_')).toLowerCase()} -f ${helm_chart} . -n ${namespace}"
                 }
             }
         }
