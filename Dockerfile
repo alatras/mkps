@@ -34,4 +34,4 @@ COPY --from=build /usr/src/app/rds-combined-ca-bundle.pem ./rds-combined-ca-bund
 USER node
 
 # Start the server
-CMD [ "node", "/usr/src/app/build/src/main.js" ]
+CMD [ "node", "build/src/main.js" ]
