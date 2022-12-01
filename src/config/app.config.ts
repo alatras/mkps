@@ -32,6 +32,6 @@ export default registerAs('app', () => ({
   },
   redis: {
     port: process.env.REDIS_PORT,
-    host: process.env.REDIS_HOST
+    host: process.env.REDIS_URL
   }
 }))
