@@ -12,7 +12,7 @@ COPY package*.json ./
 RUN npm ci
 
 # Contents
-COPY . .
+COPY . . 
 
 # Build to create the production bundle with Nest Cli
 RUN npm run build
@@ -23,19 +23,9 @@ USER node
 
 FROM node:18-alpine As production
 
-# Install AWS
-RUN apk add --no-cache \
-        python3 \
-        py3-pip \
-    && pip3 install --upgrade pip \
-    && pip3 install --no-cache-dir \
-        awscli \
-    && rm -rf /var/cache/apk/*
-RUN aws --version
 
 # Copy the bundled code from the build stage to the production image
-COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/build ./build
+COPY --from=build /usr/src/app /usr/src/app
 
 # Start the server
-CMD [ "node", "build/src/main.js" ]
+CMD [ "node", "/usr/src/app/build/src/main.js" ]
