@@ -78,7 +78,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 dir('chart/services') {
-                    sh "helm upgrade --install --set image.tag=${tag} --set ACTIVE_SERVICES=${_SERVICE.toLowerCase()} ${_SERVICE.substring(0, _SERVICE.indexOf('_')).toLowerCase()} -f ${helm_chart} . -n ${namespace}"
+                    sh "helm upgrade --install --set image.tag=${tag} --set ACTIVE_SERVICES=${_SERVICE} ${_SERVICE.substring(0, _SERVICE.indexOf('_')).toLowerCase()} -f ${helm_chart} . -n ${namespace}"
                 }
             }
         }
