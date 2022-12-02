@@ -17,8 +17,6 @@ COPY . .
 
 # Build to create the production bundle with Nest Cli
 RUN npm run build
-#RUN chown -R 9992:9992 "/usr/src/app/node_modules"
-#RUN chown -R 9992:9992 "/usr/src/app/build"
 
 ### PRODUCTION
 
@@ -27,7 +25,7 @@ FROM node:18-alpine As production
 ARG ACTIVE_SERVICES
 ENV ACTIVE_SERVICES=${ACTIVE_SERVICES}
 
-RUN ["mkdir", "-p", "/usr/src/app/logs/"]
+RUN ["mkdir", "-p", "/usr/src/app/logs"]
 RUN chown -R 9992:9992 "/usr/src/app/logs"
 
 WORKDIR /usr/src/app
