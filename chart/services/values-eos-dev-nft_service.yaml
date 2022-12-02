@@ -26,7 +26,7 @@ serviceAccount:
 podAnnotations: {}
 
 podSecurityContext:
-  fsGroup: 9992
+  fsGroup: node
 
 securityContext:
   capabilities:
@@ -34,7 +34,7 @@ securityContext:
     - ALL
   runAsNonRoot: true
   allowPrivilegeEscalation: false
-  runAsUser: 9992
+  runAsUser: node
 
 serviceAccountName: nft-s3-cdn
 
