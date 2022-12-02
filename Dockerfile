@@ -32,7 +32,7 @@ WORKDIR /usr/src/app
 COPY --chown=9992:9992 --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=9992:9992 --from=build /usr/src/app/build ./build
 COPY --chown=9992:9992 --from=build /usr/src/app/rds-combined-ca-bundle.pem ./rds-combined-ca-bundle.pem
-#COPY --chown=9992:9992 --from=build /usr/src/app/logs ./logs
+COPY --chown=9992:9992 --from=build /usr/src/app/logs ./logs
 
 USER nft-be
 
