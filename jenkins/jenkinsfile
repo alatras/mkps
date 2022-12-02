@@ -56,6 +56,18 @@ pipeline {
             }
         }
 
+        stage('Initialize') {
+            steps {
+                script {
+                    if ("${params.environment}" == "dev" || "${params.environment}" == "qa") {
+                        properties([pipelineTriggers([pollSCM('H/10 * * * *')])])
+                    }
+                    else if ("${params.environment}" == "uat" && "${params.account_name}" != "test") {
+                        properties([pipelineTriggers([pollSCM('H/10 * * * *')])])                    
+                    }                    
+                }
+            }
+        }
         stage('Build') {
             steps {
                 sh "aws ecr get-login-password --region ${params.aws_region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com"
