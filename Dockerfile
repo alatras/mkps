@@ -4,6 +4,7 @@ ARG ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,LISTING_SERVICE
 FROM node:18-alpine As build
 
 RUN ["adduser", "-s", "/bin/nologin", "-u", "9992", "-D", "nft-be"]
+RUN ["mkdir", "-p",  "/home/nft-be", "&&", "mkdir", "-p", "/usr/src/app/logs/"]
 
 WORKDIR /usr/src/app
 
@@ -25,15 +26,13 @@ FROM node:18-alpine As production
 ARG ACTIVE_SERVICES
 ENV ACTIVE_SERVICES=${ACTIVE_SERVICES}
 
-RUN ["mkdir", "-p", "/usr/src/app/logs"]
-RUN chown -R 9992:9992 "/usr/src/app/logs"
-
 WORKDIR /usr/src/app
 
 # Copy the bundled code from the build stage to the production image
 COPY --chown=9992:9992 --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=9992:9992 --from=build /usr/src/app/build ./build
 COPY --chown=9992:9992 --from=build /usr/src/app/rds-combined-ca-bundle.pem ./rds-combined-ca-bundle.pem
+#COPY --chown=9992:9992 --from=build /usr/src/app/logs ./logs
 
 USER nft-be
 
