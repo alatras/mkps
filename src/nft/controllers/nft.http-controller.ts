@@ -7,6 +7,10 @@ import {
   UseGuards,
   UseInterceptors
 } from '@nestjs/common'
+import { LoggerService } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
+import { LogService } from '../../log/log.service'
 import { NftService } from '../services/nft.service'
 import {
   CreateNftDto,
@@ -20,14 +24,19 @@ import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
-import { ApiTags } from '@nestjs/swagger'
-import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
+import { errorResponseGenerator } from '../../core/errors/error-response-generator'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
 @ApiTags('nft')
 export class NftHttpController {
-  constructor(private readonly nftService: NftService) {}
+  private log: LoggerService
+  constructor(
+    private readonly nftService: NftService,
+    private logService: LogService
+  ) {
+    this.log = this.logService.getLogger()
+  }
 
   @ApiCreatedResponse({
     description:
@@ -42,9 +51,14 @@ export class NftHttpController {
     @Request() req: Express.Request,
     @Body() createNftDto: CreateNftDto
   ): Promise<CreateNftResponseDto> {
-    return await this.nftService.create(
-      from((req.user as User)._id as MUUID).toString(),
-      createNftDto
-    )
+    try {
+      return await this.nftService.create(
+        from((req.user as User)._id as MUUID).toString(),
+        createNftDto
+      )
+    } catch (err) {
+      this.log.error('[NftHttpController] cannot create NFT:', err)
+      errorResponseGenerator(err)
+    }
   }
 }

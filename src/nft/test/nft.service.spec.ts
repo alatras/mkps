@@ -83,6 +83,11 @@ describe('NftService', () => {
       const nftDto: CreateNftDto = {
         name: 'string',
         properties: {},
+        sport: 'basket',
+        collection: 'basketters',
+        athlete: 'Jake All',
+        artist: 'Jake Half',
+        description: 'super test collection',
         image: {
           small: {
             url: 'string',

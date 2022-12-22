@@ -5,9 +5,7 @@ import {
   Get,
   Post,
   UseGuards,
-  NotFoundException,
-  BadRequestException,
-  InternalServerErrorException
+  NotFoundException
 } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
@@ -18,6 +16,7 @@ import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-res
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger'
 import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
 import { AvnNftTransaction } from '../schemas/avn-transaction.schema'
+import { errorResponseGenerator } from '../../core/errors/error-response-generator'
 
 @ApiTags('AvnTransaction')
 @Controller('avn-transaction')
@@ -56,7 +55,7 @@ export class AvnTransactionHttpController {
         dto,
         err
       )
-      throw err
+      errorResponseGenerator(err)
     }
   }
 
@@ -78,15 +77,8 @@ export class AvnTransactionHttpController {
 
       throw new NotFoundException('AVN transaction not found')
     } catch (err) {
-      this.log.error(`[getAvnTransaction] error: `, err)
-      switch (err.status) {
-        case 404:
-          throw new NotFoundException(err.message)
-        case 400:
-          throw new BadRequestException(err.message)
-        default:
-          throw new InternalServerErrorException(err.message)
-      }
+      this.log.error(`[getAvnTransaction] cannot get AVN transaction: `, err)
+      errorResponseGenerator(err)
     }
   }
 }

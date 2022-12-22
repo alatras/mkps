@@ -8,9 +8,11 @@ import { EditionModule } from '../edition/edition.module'
 import { DbCollections } from '../shared/enum'
 import { NftMsController } from './controllers/nft.ms-controller'
 import { AvnTransactionModule } from '../avn-transaction/avn-transaction.module'
+import { LogModule } from 'src/log/log.module'
 
 @Module({
   imports: [
+    LogModule,
     AvnTransactionModule,
     forwardRef(() => EditionModule),
     MongooseModule.forFeature([

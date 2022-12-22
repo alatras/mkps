@@ -3,26 +3,31 @@ import {
   Post,
   Body,
   Request,
-  BadRequestException,
-  NotFoundException,
-  InternalServerErrorException,
-  ConflictException,
   UseInterceptors,
   UseGuards,
   UsePipes
 } from '@nestjs/common'
+import { LoggerService } from '@nestjs/common'
 import { CreateEditionDto, EditionResponseDto } from '../dto/edition.dto'
 import { EditionService } from '../edition.service'
+import { LogService } from '../../log/log.service'
 import { DataWrapper } from '../../common/dataWrapper'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
 import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
+import { errorResponseGenerator } from '../../core/errors/error-response-generator'
 
 @Controller('edition')
 export class EditionController {
-  constructor(private editionService: EditionService) {}
+  private log: LoggerService
+  constructor(
+    private editionService: EditionService,
+    private logService: LogService
+  ) {
+    this.log = this.logService.getLogger()
+  }
 
   @UseInterceptors(MongooseClassSerializerInterceptor(EditionResponseDto))
   @Permissions('write:nfts')
@@ -39,18 +44,11 @@ export class EditionController {
         (req as any).user
       )
     } catch (err) {
-      switch (err.status) {
-        case 404:
-          throw new NotFoundException(err.message)
-        case 400:
-          throw new BadRequestException(err.message)
-        case 409:
-          throw new ConflictException(err.message)
-        case 500:
-          throw new InternalServerErrorException(err.message)
-        default:
-          throw new InternalServerErrorException(err.message)
-      }
+      this.log.error(
+        '[getPresignedUrlForOriginalAsset] cannot create presigned URL for original image:',
+        err
+      )
+      errorResponseGenerator(err)
     }
   }
 }

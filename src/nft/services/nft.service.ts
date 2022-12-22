@@ -2,7 +2,8 @@ import {
   BadGatewayException,
   forwardRef,
   Inject,
-  Injectable
+  Injectable,
+  UnprocessableEntityException
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model } from 'mongoose'
@@ -50,6 +51,8 @@ export class NftService {
       status: NftStatus.draft,
       minterId: uuidFrom(userId)
     }
+
+    this.validateNftProperties(newNft)
 
     const ceratedNft = await this.nftModel.create(newNft)
 
@@ -223,7 +226,7 @@ export class NftService {
         Object.keys(nftDynamicProperties).includes(prop)
       )
     ) {
-      throw new Error(
+      throw new UnprocessableEntityException(
         `Nft Properties must include all of the following: "${enabledNftProperties.join(
           '", "'
         )}".`
