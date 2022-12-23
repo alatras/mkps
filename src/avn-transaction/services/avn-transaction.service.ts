@@ -26,7 +26,7 @@ export class AvnTransactionService {
   constructor(
     @InjectModel(AvnNftTransaction.name)
     private avnTransactionModel: Model<AvnNftTransaction>,
-    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy // private nftService: NftService,
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.mUUID = MUUID.mode('relaxed')
   }
@@ -39,17 +39,18 @@ export class AvnTransactionService {
    * @returns New AvnTransaction
    */
   async createMintAvnTransaction(
-    nftId: string
+    nftUuid: string
   ): Promise<AvnTransactionMintResponse> {
-    const nft = await this.getNft(nftId)
+    const nft = await this.getNft(nftUuid)
     if (!nft) {
       throw new NotFoundException('NFT not found')
     }
 
-    const user: User = await this.getUser(nft.owner._id)
+    const user: User = await this.getUser(nft.minterId)
     if (!user) {
-      throw new NotFoundException('NFT user not found')
+      throw new NotFoundException('NFT minter user not found')
     }
+
     if (!user.avnPubKey) {
       throw new InvalidDataError('ANV public key is not set for user')
     }
@@ -57,13 +58,13 @@ export class AvnTransactionService {
     const royalties: Royalties[] = getRoyalties()
 
     const data: AvnMintNFTTransactionData = {
-      unique_external_ref: nftId,
+      unique_external_ref: nftUuid,
       userId: uuidFrom(user._id as MUUID.MUUID),
       royalties
     }
 
     const newDoc: AvnMintTransaction = {
-      request_id: `avnMint:${nftId}`,
+      request_id: `avnMint:${nftUuid}`,
       type: AvnTransactionType.MintSingleNft,
       data: data,
       state: AvnTransactionState.NEW,

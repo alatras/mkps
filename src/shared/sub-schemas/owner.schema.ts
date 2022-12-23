@@ -21,5 +21,5 @@ export class Owner {
 
   @Prop({ required: false, default: null })
   @IsString()
-  userName?: string
+  username?: string
 }

@@ -16,8 +16,8 @@ import { EditionListingService } from '../../edition-listing/services/edition-li
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 import { LogService } from '../../log/log.service'
 import {
-  AvnEditionTransaction,
-  AvnNftTransaction
+  AvnNftTransaction,
+  AvnEditionTransaction
 } from '../../avn-transaction/schemas/avn-transaction.schema'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'

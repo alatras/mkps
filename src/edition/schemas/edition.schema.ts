@@ -5,6 +5,7 @@ import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { ImagesSet } from '../../nft/schemas/asset.schema'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
+import { UnlockableContent } from '../../nft/schemas/nft.schema'
 
 export type NftEditionDocument = NftEdition & Document
 
@@ -39,8 +40,14 @@ export class NftEdition {
   @Prop()
   availableCount: number
 
+  @Prop({ type: 'object' })
+  properties: Record<string, any>
+
+  @Prop({ type: UnlockableContent })
+  unlockableContent?: UnlockableContent
+
   @Prop()
-  status?: NftStatus
+  status?: NftStatus // TODO: move to EditionResponseDTO - this will never be in DB - should come from EditionResponseDTO's constructor
 
   @Prop()
   ownedCount: number
@@ -58,7 +65,7 @@ export class NftEdition {
   updatedAt?: Date
 
   @Prop()
-  listingType?: AuctionType.fixedPrice | AuctionType.freeClaim
+  listingType?: AuctionType.fixedPrice | AuctionType.freeClaim // TODO: move to EditionResponseDTO - this will never be in DB - should come from EditionResponseDTO's constructor
 
   @Prop({ type: ImagesSet })
   image: ImagesSet

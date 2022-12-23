@@ -41,6 +41,7 @@ export class CreateUnlockableContentDto {
 
   @Prop({ default: 0 })
   @IsNumber()
+  @IsOptional()
   @ApiProperty()
   @IsOptional()
   claimedCount: number
@@ -71,8 +72,7 @@ export class CreateNftDto {
 
   @IsObject()
   @ApiProperty()
-  @IsOptional()
-  properties?: Record<string, any>
+  properties: Record<string, any>
 
   @ApiProperty()
   @Type(() => Owner)
@@ -186,6 +186,7 @@ export class NftResponseDto {
   @Expose()
   @ApiProperty()
   @IsNumber()
+  @IsOptional()
   royalties?: number
 
   constructor(partial: Partial<Nft>) {

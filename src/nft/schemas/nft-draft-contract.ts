@@ -10,6 +10,9 @@ export class NftDraftContract {
   @Prop()
   id?: string
 
+  @Prop()
+  name: string
+
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
@@ -54,4 +57,7 @@ export class NftDraftContract {
 
   @Prop({ type: Owner })
   owner: Owner
+
+  @Prop()
+  properties: Record<string, any>
 }

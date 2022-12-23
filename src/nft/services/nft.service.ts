@@ -1,8 +1,10 @@
 import {
   BadGatewayException,
+  BadRequestException,
   forwardRef,
   Inject,
-  Injectable
+  Injectable,
+  LoggerService
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model } from 'mongoose'
@@ -14,7 +16,7 @@ import { HistoryType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
-import { v4 } from 'uuid-mongodb'
+import { MUUID, v4 } from 'uuid-mongodb'
 import { NftWithEdition } from '../schemas/nft-with-edition'
 import { NftDraftContract } from '../schemas/nft-draft-contract'
 import { User } from '../../user/schemas/user.schema'
@@ -22,39 +24,66 @@ import { NftDraftModel } from '../schemas/nft-draft-model'
 import { getNftProperties } from '../../utils/nftProperties'
 import { ImagesSet } from '../schemas/asset.schema'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
+import { firstValueFrom } from 'rxjs'
+import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { ClientProxy } from '@nestjs/microservices'
+import { LogService } from '../../log/log.service'
 
 @Injectable()
 export class NftService {
+  private log: LoggerService
+
   constructor(
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
     @InjectModel(NftHistory.name) private nftHistoryModel: Model<NftHistory>,
     private readonly avnTransactionService: AvnTransactionService,
     @Inject(forwardRef(() => EditionService))
-    private editionService: EditionService
-  ) {}
+    private editionService: EditionService,
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
+    private logService: LogService
+  ) {
+    this.log = this.logService.getLogger()
+  }
 
   async create(
-    userId: string,
+    userId: MUUID,
     createNftDto: CreateNftDto
   ): Promise<CreateNftResponseDto> {
-    const newNft: Nft = {
+    const minterUser: User = await this.getUser(userId)
+
+    const newNft: NftDraftModel = {
       ...createNftDto,
       isHidden: true,
-      ...(createNftDto.owner && {
-        owner: {
-          _id: uuidFrom(userId),
-          avnPubKey: createNftDto.owner.avnPubKey,
-          userName: createNftDto.owner.userName
-        }
-      }),
+      ...(createNftDto.owner
+        ? {
+            owner: {
+              _id: uuidFrom(userId),
+              avnPubKey: createNftDto.owner.avnPubKey,
+              username: createNftDto.owner.username
+            }
+          }
+        : {
+            owner: {
+              _id: uuidFrom(userId),
+              avnPubKey: minterUser.avnPubKey,
+              username: minterUser.username
+            }
+          }),
       status: NftStatus.draft,
       minterId: uuidFrom(userId)
     }
 
-    const ceratedNft = await this.nftModel.create(newNft)
+    try {
+      this.validateNftProperties(newNft)
+    } catch (e) {
+      this.log.error(e)
+      throw new BadRequestException('Missing properties: ' + e.message)
+    }
+
+    const nft = await this.createNft(newNft)
 
     const mint = await this.avnTransactionService.createMintAvnTransaction(
-      ceratedNft._id.toString()
+      nft._id.toString()
     )
 
     return { requestId: mint.request_id }
@@ -207,20 +236,12 @@ export class NftService {
       []
     )
 
-    const {
-      _id,
-      owner,
-      isHidden,
-      image,
-      assets,
-      minterId,
-      unlockableContent,
-      ...nftDynamicProperties
-    } = nftDraftModel
-
+    // TODO: replace this with a @Pipe() validator in the NFT DTO class.
     if (
       !enabledNftProperties.every(prop =>
-        Object.keys(nftDynamicProperties).includes(prop)
+        Object.keys(
+          prop === 'name' ? nftDraftModel : nftDraftModel.properties
+        ).includes(prop)
       )
     ) {
       throw new Error(
@@ -252,11 +273,9 @@ export class NftService {
       }
     }
 
-    const finalDoc: Nft = {
+    const finalDoc: NftDraftModel = {
       ...nftDraft,
-      eid: '',
       status: nftStatus ?? NftStatus.draft,
-      _id: uuidFrom(nftDraft._id.toString()),
       assets: nftDraft.assets || [],
       isHidden: nftDraft.isHidden || true,
       image,
@@ -267,5 +286,13 @@ export class NftService {
     }
 
     return await this.nftModel.create(finalDoc)
+  }
+
+  private async getUser(userId: MUUID): Promise<User> {
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
+        userId: userId.toString()
+      })
+    )
   }
 }

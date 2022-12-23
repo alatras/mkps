@@ -82,7 +82,6 @@ describe('NftService', () => {
     it('should create a new NFT', async () => {
       const nftDto: CreateNftDto = {
         name: 'string',
-        properties: {},
         image: {
           small: {
             url: 'string',
@@ -117,6 +116,13 @@ describe('NftService', () => {
           quantity: 1,
           details: 'string',
           claimedCount: 0
+        },
+        properties: {
+          sport: 'Test NFT 0000001',
+          collection: 'Test NFT 0000001',
+          athlete: 'Test NFT 0000001',
+          artist: 'Test NFT 0000001',
+          description: 'Test NFT 0000001'
         }
       }
 
@@ -128,7 +134,13 @@ describe('NftService', () => {
           )
           .mockImplementationOnce(() => Promise.resolve({ request_id: '555' }))
 
-        const res = await service.create(MUUID.v4().toString(), nftDto)
+        jest
+          .spyOn(NftService.prototype as any, 'getUser')
+          .mockImplementationOnce(() =>
+            Promise.resolve({ avnPubKey: 'asdasdas', username: 'testUsername' })
+          )
+
+        const res = await service.create(MUUID.v4(), nftDto)
 
         expect(createMintAvnTransaction).toHaveBeenCalled()
 

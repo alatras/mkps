@@ -13,6 +13,7 @@ import { EditionListing } from '../../edition-listing/schemas/edition-listing.sc
 
 export const getMockNft = (): Nft => {
   return {
+    name: 'NFT name',
     _id: MUUID.from('15e3da3c-542b-4375-9b9d-2115413b8f4c'),
     minterId: MUUID.from('0bfdc700-48e3-11ed-b878-0242ac120002'),
     assets: [{ type: AssetType.video, url: 'string', key: 'string' }],
@@ -37,7 +38,13 @@ export const getMockNft = (): Nft => {
     ethAddresses: [],
     createdAt: new Date('2022-05-18T13:23:39.468Z'),
     updatedAt: new Date('2022-05-18T13:23:39.468Z'),
-    properties: {}
+    properties: {
+      sport: 'Test NFT 10023',
+      collection: 'Test NFT 10023',
+      athlete: 'Test NFT 10023',
+      artist: 'Test NFT 10023',
+      description: 'Test NFT 100233'
+    }
   }
 }
 
@@ -88,6 +95,13 @@ export const getNftEdition = (): NftEdition => {
         url: 'string',
         key: 'string'
       }
+    },
+    properties: {
+      sport: 'Test NFT 10023',
+      collection: 'Test NFT 10023',
+      athlete: 'Test NFT 10023',
+      artist: 'Test NFT 10023',
+      description: 'Test NFT 100233'
     }
   }
 }

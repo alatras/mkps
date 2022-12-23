@@ -21,14 +21,14 @@ import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 
 @Controller('edition')
-export class EditionController {
+export class EditionHttpController {
   constructor(private editionService: EditionService) {}
 
   @UseInterceptors(MongooseClassSerializerInterceptor(EditionResponseDto))
   @Permissions('write:nfts')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @UsePipes(new ErrorValidationPipe())
-  @Post()
+  @Post('mint')
   async create(
     @Body() createEditionDto: CreateEditionDto,
     @Request() req: Express.Request
