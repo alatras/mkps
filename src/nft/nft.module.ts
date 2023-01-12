@@ -8,7 +8,14 @@ import { EditionModule } from '../edition/edition.module'
 import { DbCollections } from '../shared/enum'
 import { NftMsController } from './controllers/nft.ms-controller'
 import { AvnTransactionModule } from '../avn-transaction/avn-transaction.module'
-import { LogModule } from 'src/log/log.module'
+import {
+  ClientProxy,
+  ClientProxyFactory,
+  Closeable,
+  Transport
+} from '@nestjs/microservices'
+import { getRedisOptions } from '../utils/get-redis-options'
+import { LogModule } from '../log/log.module'
 
 @Module({
   imports: [
@@ -29,7 +36,18 @@ import { LogModule } from 'src/log/log.module'
     ])
   ],
   controllers: [NftHttpController, NftMsController],
-  providers: [NftService],
+  providers: [
+    NftService,
+    {
+      provide: 'TRANSPORT_CLIENT',
+      useFactory: (): ClientProxy & Closeable => {
+        return ClientProxyFactory.create({
+          transport: Transport.REDIS,
+          options: getRedisOptions()
+        })
+      }
+    }
+  ],
   exports: [NftService]
 })
 export class NftModule {}

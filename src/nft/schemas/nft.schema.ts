@@ -40,7 +40,8 @@ export type NftDocument = Nft & Document
 
 @Schema({
   collection: DbCollections.NFTs,
-  versionKey: false
+  versionKey: false,
+  timestamps: true
 })
 export class Nft {
   @Transform(({ value }) => from(value).toString())
@@ -49,7 +50,10 @@ export class Nft {
     value: { type: 'Buffer' },
     default: () => v4()
   })
-  _id?: MUUID
+  _id: MUUID
+
+  @Prop()
+  name: string
 
   @Prop({
     type: 'object',

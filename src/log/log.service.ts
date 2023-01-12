@@ -28,31 +28,31 @@ export class LogService {
     return isDevelopment ? 'debug' : 'warn'
   }
 
+  private formatSplat = (splat: Array<any>): string => {
+    if (splat && splat.length) {
+      return splat.length === 1
+        ? JSON.stringify(splat[0])
+        : JSON.stringify(splat)
+    }
+    return ''
+  }
+
   private format = winston.format.combine(
     this.timestamp(),
     winston.format.printf(info => {
-      const data = info['data'] ? `\n${JSON.stringify(info['data'])}` : ''
+      /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
+      // @ts-ignore
+      const splat = info[Symbol.for('splat')] ?? {}
+      const stack = info['stack']
+      const data = info['data']
 
-      let message = info.message ?? ''
+      const dataStr = data ? `\n${JSON.stringify(data)}` : ''
 
-      if (info['stack']) {
-        const stacks = Array.isArray(info['stack'])
-          ? info['stack']
-          : [info['stack']]
+      const context = splat[0].context || ''
 
-        if (stacks[0] !== undefined) {
-          message = stacks.reduce((vs, stack) => {
-            if (stack.constructor === Object) {
-              return `${vs}\n${JSON.stringify(stack)}`
-            }
-            return `${vs}\n${stack}`
-          }, message)
-        }
-      }
-
-      const context = info['context'] ? ` [${info['context']}] ` : ' '
-
-      return `${info.timestamp} ${info.level}:${context}${message}${data}`
+      return `${info.timestamp} ${info.level}: ${
+        context ? `[${context}]` : ''
+      } ${info.message} ${stack || ''}${dataStr}`
     }),
     this.errors({ stack: true })
   )

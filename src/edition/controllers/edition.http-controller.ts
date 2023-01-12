@@ -33,7 +33,7 @@ export class EditionController {
   @Permissions('write:nfts')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @UsePipes(new ErrorValidationPipe())
-  @Post()
+  @Post('mint')
   async create(
     @Body() createEditionDto: CreateEditionDto,
     @Request() req: Express.Request

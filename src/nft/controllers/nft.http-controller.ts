@@ -19,12 +19,12 @@ import {
 } from '../dto/nft.dto'
 import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
 import { User } from '../../user/schemas/user.schema'
-import { from, MUUID } from 'uuid-mongodb'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { errorResponseGenerator } from '../../core/errors/error-response-generator'
+import { from, MUUID } from 'uuid-mongodb'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
@@ -46,14 +46,14 @@ export class NftHttpController {
   @UseInterceptors(MongooseClassSerializerInterceptor(CreateNftResponseDto))
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('write:nfts')
-  @Post()
+  @Post('mint')
   async create(
     @Request() req: Express.Request,
     @Body() createNftDto: CreateNftDto
   ): Promise<CreateNftResponseDto> {
     try {
       return await this.nftService.create(
-        from((req.user as User)._id as MUUID).toString(),
+        from((req.user as User)._id as MUUID),
         createNftDto
       )
     } catch (err) {
