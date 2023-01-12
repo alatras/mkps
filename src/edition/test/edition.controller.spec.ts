@@ -27,7 +27,7 @@ const ClientProxyMock = () => ({
   send: jest.fn()
 })
 
-describe('EditionHttpController', () => {
+describe('EditionController', () => {
   let controller: EditionController
 
   beforeEach(async () => {
