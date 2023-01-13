@@ -20,19 +20,19 @@ import {
 } from '../../avn-transaction/schemas/avn-transaction.schema'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
-import { EditionHttpController } from '../controllers/edition.http-controller'
+import { EditionController } from '../controllers/edition.http-controller'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
   send: jest.fn()
 })
 
-describe('EditionHttpController', () => {
-  let controller: EditionHttpController
+describe('EditionController', () => {
+  let controller: EditionController
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [EditionHttpController],
+      controllers: [EditionController],
       providers: [
         AvnTransactionService,
         { provide: getModelToken(Nft.name), useValue: getMockNft() },
@@ -64,7 +64,7 @@ describe('EditionHttpController', () => {
       ]
     }).compile()
 
-    controller = module.get<EditionHttpController>(EditionHttpController)
+    controller = module.get<EditionController>(EditionController)
   })
 
   it('should be defined', () => {

@@ -82,6 +82,11 @@ describe('NftService', () => {
     it('should create a new NFT', async () => {
       const nftDto: CreateNftDto = {
         name: 'string',
+        sport: 'basket',
+        collection: 'basketters',
+        athlete: 'Jake All',
+        artist: 'Jake Half',
+        description: 'super test collection',
         image: {
           small: {
             url: 'string',

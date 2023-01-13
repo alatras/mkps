@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { ApiCreatedResponse } from '@nestjs/swagger'
+import { errorResponseGenerator } from '../../core/errors/error-response-generator'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../../auth/permissions.guard'
@@ -81,7 +82,7 @@ export class AssetController {
         '[getPresignedUrlForOriginalAsset] cannot create presigned URL for original image:',
         err
       )
-      return new InternalServerErrorException(err.message)
+      errorResponseGenerator(err)
     }
   }
 }

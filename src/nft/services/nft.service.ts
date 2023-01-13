@@ -4,6 +4,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  UnprocessableEntityException,
   LoggerService
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
@@ -244,7 +245,7 @@ export class NftService {
         ).includes(prop)
       )
     ) {
-      throw new Error(
+      throw new UnprocessableEntityException(
         `Nft Properties must include all of the following: "${enabledNftProperties.join(
           '", "'
         )}".`

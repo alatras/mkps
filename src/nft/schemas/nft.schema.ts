@@ -62,7 +62,7 @@ export class Nft {
     // required: true
   })
   @Transform(({ value }) => from(value).toString())
-  minterId?: MUUID
+  minterId: MUUID
 
   @Prop([Asset])
   assets: Asset[]
@@ -100,7 +100,7 @@ export class Nft {
   year?: string
 
   @Prop({ type: ImagesSet })
-  image?: ImagesSet
+  image: ImagesSet
 
   @Prop({
     type: String,

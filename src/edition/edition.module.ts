@@ -5,7 +5,7 @@ import {
   Closeable,
   Transport
 } from '@nestjs/microservices'
-import { EditionHttpController } from './controllers/edition.http-controller'
+import { EditionController } from './controllers/edition.http-controller'
 import { EditionService } from './edition.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { NftEdition, NftEditionSchema } from './schemas/edition.schema'
@@ -49,7 +49,7 @@ import { EditionMsController } from './controllers/edition.ms-controller'
       }
     ])
   ],
-  controllers: [EditionHttpController, EditionMsController],
+  controllers: [EditionController, EditionMsController],
   providers: [
     EditionService,
     {
