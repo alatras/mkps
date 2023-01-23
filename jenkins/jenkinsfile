@@ -38,6 +38,12 @@ pipeline {
                     else if (env.JOB_NAME.contains('listing')) {
                         _SERVICE = "LISTING_SERVICE"
                     }    
+                    else if (env.JOB_NAME.contains('user')) {
+                        _SERVICE = "USER_SERVICE"
+                    }    
+                    else if (env.JOB_NAME.contains('asset')) {
+                        _SERVICE = "ASSET_SERVICE"
+                    }    
                     
                     account_id = sh (script: "aws sts get-caller-identity --query 'Account' --output text", returnStdout: true).trim()
                     namespace = "app-${params.environment}"
