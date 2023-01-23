@@ -88,6 +88,3 @@ affinity:
           - key: node
             operator: Exists
         topologyKey: topology.kubernetes.io/zone
-
-selectors:
-  node: ohio
