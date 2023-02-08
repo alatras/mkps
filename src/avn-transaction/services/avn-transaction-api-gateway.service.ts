@@ -9,7 +9,7 @@ import {
   AvnTransactionState,
   PollingTransactionStatus
 } from '../../shared/enum'
-import { AvnApi, AvnPolState } from '../schemas/apv-api'
+import { AvnApi, AvnPolState } from '../schemas/avn-api'
 
 @Injectable()
 export class AvnTransactionApiGatewayService {
