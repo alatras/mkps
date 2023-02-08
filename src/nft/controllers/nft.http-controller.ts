@@ -24,7 +24,6 @@ import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { errorResponseGenerator } from '../../core/errors/error-response-generator'
-import { from, MUUID } from 'uuid-mongodb'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
@@ -38,24 +37,26 @@ export class NftHttpController {
     this.log = this.logService.getLogger()
   }
 
+  /**
+   * Mint an NFT
+   * @param req Express Request
+   * @param createNftDto Create NFT DTO
+   */
   @ApiCreatedResponse({
     description:
-      'Creates an NFT Draft, to be used to create an Avn Transaction',
+      'Mint an NFT. This creates an NFT Draft, uses it to create an Avn Transaction, and returns request ID.',
     type: NftResponseDto
   })
   @UseInterceptors(MongooseClassSerializerInterceptor(CreateNftResponseDto))
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('write:nfts')
   @Post('mint')
-  async create(
+  async mint(
     @Request() req: Express.Request,
     @Body() createNftDto: CreateNftDto
   ): Promise<CreateNftResponseDto> {
     try {
-      return await this.nftService.create(
-        from((req.user as User)._id as MUUID),
-        createNftDto
-      )
+      return await this.nftService.mint(req.user as User, createNftDto)
     } catch (err) {
       this.log.error('[NftHttpController] cannot create NFT:', err)
       errorResponseGenerator(err)

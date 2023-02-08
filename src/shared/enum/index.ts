@@ -14,7 +14,9 @@ export enum AvnTransactionType {
   AvnCancelNftListing = 'AvnCancelNftListing',
   AvnEndBatchListing = 'AvnEndBatchListing',
   AvnTransferTo = 'AvnTransferTo',
-  AvnMintTo = 'AvnMintTo'
+  AvnMintTo = 'AvnMintTo',
+  // Temporary type to avoid Highlander minting - to be removed
+  Random = 'Random'
 }
 
 export enum AvnTransactionState {
@@ -122,4 +124,10 @@ export enum NftPropertyTypes {
 export enum PresignedUrlUploadType {
   nftOriginal = 'nftOriginal',
   nftThumbnail = 'nftThumbnail'
+}
+
+export enum PollingTransactionStatus {
+  pending = 'Pending',
+  processed = 'Processed',
+  rejected = 'Rejected'
 }

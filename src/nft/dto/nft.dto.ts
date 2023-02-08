@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsObject,
   IsOptional,
+  IsPositive,
   IsString,
   Min,
   ValidateNested
@@ -81,6 +82,8 @@ export class CreateNftDto {
 
   @ApiProperty()
   @IsNumber()
+  @IsPositive()
+  @IsOptional()
   royalties?: number
 
   @ApiProperty()

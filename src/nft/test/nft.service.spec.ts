@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
+import { ConfigService } from '@nestjs/config'
 import { getModelToken } from '@nestjs/mongoose'
-import * as MUUID from 'uuid-mongodb'
 import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
 import {
@@ -26,6 +26,8 @@ import { LogService } from '../../log/log.service'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { CreateNftDto } from '../dto/nft.dto'
+import { getMockUser } from '../../user/test/mocks'
+import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/avn-transaction-api-gateway.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -42,6 +44,8 @@ describe('NftService', () => {
         EditionService,
         EditionListingService,
         AvnTransactionService,
+        AvnTransactionApiGatewayService,
+        ConfigService,
         LogService,
         {
           provide: 'TRANSPORT_CLIENT',
@@ -142,10 +146,16 @@ describe('NftService', () => {
         jest
           .spyOn(NftService.prototype as any, 'getUser')
           .mockImplementationOnce(() =>
-            Promise.resolve({ avnPubKey: 'asdasdas', username: 'testUsername' })
+            Promise.resolve({
+              _id: '0c8564bc-a743-11ed-afa1-0242ac120002',
+              avnPubKey: 'asdasdas',
+              username: 'testUsername'
+            })
           )
 
-        const res = await service.create(MUUID.v4(), nftDto)
+        // Mock user
+        const user = getMockUser()
+        const res = await service.mint(user, nftDto)
 
         expect(createMintAvnTransaction).toHaveBeenCalled()
 

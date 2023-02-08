@@ -5,7 +5,7 @@ import { Asset, ImagesSet } from './asset.schema'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
 import { UnlockableContent } from './nft.schema'
 import { IsBoolean } from 'class-validator'
-import { NftStatus } from 'src/shared/enum'
+import { NftStatus } from '../../shared/enum'
 
 export class NftDraftModel {
   @Transform(({ value }) => value.toString())

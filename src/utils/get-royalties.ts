@@ -2,7 +2,7 @@ import { InternalServerErrorException } from '@nestjs/common'
 import {
   Royalties,
   RoyaltyRate
-} from 'src/avn-transaction/schemas/avn-transaction.schema'
+} from '../avn-transaction/schemas/avn-transaction.schema'
 
 export function getRoyalties(): Royalties[] {
   try {

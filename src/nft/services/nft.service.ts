@@ -1,6 +1,5 @@
 import {
   BadGatewayException,
-  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
@@ -29,6 +28,7 @@ import { firstValueFrom } from 'rxjs'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { ClientProxy } from '@nestjs/microservices'
 import { LogService } from '../../log/log.service'
+import { InvalidDataError } from '../../core/errors'
 
 @Injectable()
 export class NftService {
@@ -46,11 +46,22 @@ export class NftService {
     this.log = this.logService.getLogger()
   }
 
-  async create(
-    userId: MUUID,
+  /**
+   * Mint an NFT.
+   * This creates the NFT locally and sends it to AVN Transaction
+   * Service to be minted on the blockchain.
+   * @param user Logged in user
+   * @param createNftDto Request body
+   * @returns request ID
+   */
+  async mint(
+    user: User,
     createNftDto: CreateNftDto
   ): Promise<CreateNftResponseDto> {
-    const minterUser: User = await this.getUser(userId)
+    const fullUserObject = await this.getUser(user._id)
+    if (!fullUserObject.avnPubKey) {
+      throw new InvalidDataError('ANV public key is not set for user')
+    }
 
     const newNft: NftDraftModel = {
       ...createNftDto,
@@ -58,33 +69,29 @@ export class NftService {
       ...(createNftDto.owner
         ? {
             owner: {
-              _id: uuidFrom(userId),
+              _id: uuidFrom(fullUserObject._id),
               avnPubKey: createNftDto.owner.avnPubKey,
               username: createNftDto.owner.username
             }
           }
         : {
             owner: {
-              _id: uuidFrom(userId),
-              avnPubKey: minterUser.avnPubKey,
-              username: minterUser.username
+              _id: uuidFrom(fullUserObject._id),
+              avnPubKey: fullUserObject.avnPubKey,
+              username: fullUserObject.username
             }
           }),
       status: NftStatus.draft,
-      minterId: uuidFrom(userId)
+      minterId: uuidFrom(fullUserObject._id)
     }
 
-    try {
-      this.validateNftProperties(newNft)
-    } catch (e) {
-      this.log.error(e)
-      throw new BadRequestException('Missing properties: ' + e.message)
-    }
+    this.validateNftProperties(newNft)
 
     const nft = await this.createNft(newNft)
 
     const mint = await this.avnTransactionService.createMintAvnTransaction(
-      nft._id.toString()
+      nft._id.toString(),
+      fullUserObject
     )
 
     return { requestId: mint.request_id }

@@ -40,7 +40,7 @@ KEYS_EXTRA=(
 
 getJsonSecrets() {
   SECRETS=$(aws secretsmanager get-secret-value --secret-id $1 --query SecretString --output text)
-  echo $SECRETS | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' >> .env.tmp
+  echo $SECRETS | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' >>.env.tmp
 }
 
 assumeRole() {
@@ -54,24 +54,23 @@ assumeRole() {
 }
 
 decodeKeys() {
-  for index in "${KEY_MAP[@]}" ; do
+  for index in "${KEY_MAP[@]}"; do
     KEY="${index%%::*}"
     VALUE="${index##*::}"
     LINE=$(sed -n -e "/^$KEY=/p" .env.tmp)
     LINE=$(echo ${LINE//$KEY/$VALUE})
 
     # Need to tranform Mongo URI
-    if [ $KEY == 'url' ]
-    then
+    if [ $KEY == 'url' ]; then
       LINE="${LINE%%\?*}"
       LINE="$LINE?tls=true&tlsCAFile=rds-combined-ca-bundle.pem"
     fi
-    echo $LINE >> .env
+    echo $LINE >>.env
   done
 }
 
 decodeExtras() {
-  for key in "${KEYS_EXTRA[@]}" ; do
+  for key in "${KEYS_EXTRA[@]}"; do
     KEY=$key
     VALUE=$(echo $key | tr '[:lower:]' '[:upper:]')
     echo $KEY
@@ -79,7 +78,7 @@ decodeExtras() {
     LINE=$(sed -n -e "/^$KEY=/p" .env.tmp)
     echo $LINE
     LINE=$(echo ${LINE//$KEY/$VALUE})
-    echo $LINE >> .env
+    echo $LINE >>.env
   done
 }
 
@@ -87,19 +86,30 @@ decodeExtras() {
 aws configure set region us-east-2
 assumeRole arn:aws:iam::696165561482:role/developer
 
-echo "" > .env.tmp
+echo "" >.env.tmp
 getJsonSecrets $AWS_SECRET_ID_AWS
 getJsonSecrets $AWS_SECRET_ID_MONGO
 getJsonSecrets $AWS_SECRET_ID_AUTH0
 getJsonSecrets $AWS_SECRET_ID_STRIPE
 getJsonSecrets $AWS_SECRET_ID_BACKEND
 
-echo "# Auto-Generated" > .env
+echo "# Auto-Generated" >.env
 decodeKeys
 
-# CLEANUP and EXTRA
-echo "PORT=5002" >> .env
-echo "ENVIRONMENT=local" >> .env
-echo "WEB_APP_URL=http://localhost:4001" >> .env
-echo "IS_SQS_DISABLED=1" >> .env
+# EXTRA
+echo "PORT=5002" >>.env
+echo "ENVIRONMENT=local" >>.env
+echo "WEB_APP_URL=http://localhost:4001" >>.env
+echo "IS_SQS_DISABLED=1" >>.env
+
+# API Gateway
+echo "AVN_GATEWAY_URL=https://testnet.gateway.aventus.io/" >>.env
+echo "SUBSTRATE_ACCOUNT_PRIVATE_KEY=0x816ef9f2c7f9e8c013fd5fca220a1bf23ff2f3b268f8bcd94d4b5df96534173f" >>.env
+echo "EXTERNAL_REF_VERSION=v1" >>.env
+echo "AVN_RELAYER=5EcAFwVcBo8s2D3ZSTnx2sq49wVDF3rc1yGJMx5nRp2GsK62" >>.env
+echo "AVN_AUTHORITY=0x808fd4D056Eb3998859B8265c308E48DaA45864B" >>.env
+echo "AVN_POLLING_INTERVAL=5000" >>.env
+echo "AVN_POLLING_TIMEOUT=180000" >>.env
+
+# CLEANUP
 rm -f .env.tmp
