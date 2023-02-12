@@ -4,10 +4,13 @@ import {
   IsBoolean,
   IsDate,
   IsEnum,
+  IsInt,
   IsNumber,
   IsObject,
   IsOptional,
+  IsPositive,
   IsString,
+  Max,
   Min,
   ValidateNested
 } from 'class-validator'
@@ -80,7 +83,10 @@ export class CreateNftDto {
   owner?: Owner
 
   @ApiProperty()
-  @IsNumber()
+  @IsInt()
+  @IsPositive()
+  @Max(80)
+  @IsOptional()
   royalties?: number
 
   @ApiProperty()
