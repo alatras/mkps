@@ -1,10 +1,10 @@
 import {
-  BadGatewayException,
   forwardRef,
   Inject,
   Injectable,
   UnprocessableEntityException,
-  LoggerService
+  LoggerService,
+  BadRequestException
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model } from 'mongoose'
@@ -81,13 +81,13 @@ export class NftService {
               username: fullUserObject.username
             }
           }),
-      status: NftStatus.draft,
+      status: NftStatus.minting,
       minterId: uuidFrom(fullUserObject._id)
     }
 
-    this.validateNftProperties(newNft)
+    this.validateNftProperties(newNft.properties)
 
-    const nft = await this.createNft(newNft)
+    const nft = await this.createNft(newNft, NftStatus.minting)
 
     const mint = await this.avnTransactionService.createMintAvnTransaction(
       nft._id.toString(),
@@ -232,30 +232,24 @@ export class NftService {
   }
 
   /**
-   * Validates that required properties in an NFT
-   * to be created are present.
+   * Validates that required properties are present in NFT draft.
    */
-  validateNftProperties(nftDraftModel: NftDraftModel): void {
-    const enabledNftProperties: string[] = getNftProperties().reduce(
-      (values, prop) =>
-        prop.required && prop.key !== 'quantity'
-          ? [...values, prop.key]
-          : values,
-      []
+  validateNftProperties(
+    nftDraftModelProperties: NftDraftModel['properties']
+  ): void {
+    const requiredProperties = getNftProperties()
+      .filter(prop => prop.required && prop.key !== 'quantity')
+      .map(prop => prop.key)
+
+    const missingProperties = requiredProperties.filter(
+      prop => !Object.keys(nftDraftModelProperties).includes(prop)
     )
 
-    // TODO: replace this with a @Pipe() validator in the NFT DTO class.
-    if (
-      !enabledNftProperties.every(prop =>
-        Object.keys(
-          prop === 'name' ? nftDraftModel : nftDraftModel.properties
-        ).includes(prop)
-      )
-    ) {
+    if (missingProperties.length) {
       throw new UnprocessableEntityException(
-        `Nft Properties must include all of the following: "${enabledNftProperties.join(
-          '", "'
-        )}".`
+        `Nft Properties must include all of the following: ${requiredProperties.join(
+          ', '
+        )}.`
       )
     }
   }
@@ -266,7 +260,7 @@ export class NftService {
   ): Promise<Nft> {
     const { small, large } = nftDraft.image
     if (!small || !large) {
-      throw new BadGatewayException('noImages: ' + nftDraft.image)
+      throw new BadRequestException('noImages: ' + nftDraft.image)
     }
 
     const image: ImagesSet = {

@@ -51,9 +51,6 @@ export class NftDraftModel {
   })
   editionId?: MUUID.MUUID
 
-  @Prop()
-  name: string
-
   @Prop({ type: 'object' })
   properties: Record<string, any>
 

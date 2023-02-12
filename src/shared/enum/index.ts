@@ -15,8 +15,8 @@ export enum AvnTransactionType {
   AvnEndBatchListing = 'AvnEndBatchListing',
   AvnTransferTo = 'AvnTransferTo',
   AvnMintTo = 'AvnMintTo',
-  // Temporary type to avoid Highlander minting - to be removed
-  Random = 'Random'
+  // Transactions sent to API Gateway
+  MintSingleNftApiGateway = 'MintSingleNftApiGateway'
 }
 
 export enum AvnTransactionState {

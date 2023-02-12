@@ -55,8 +55,7 @@ export class AvnTransactionService {
 
     const newDoc: AvnMintTransaction = {
       request_id: `avnMint:${nftId}`,
-      // TODO: This temporary type is to bypass Highlander. Change it to AvnTransactionType.MintSingleNft.
-      type: AvnTransactionType.Random,
+      type: AvnTransactionType.MintSingleNftApiGateway,
       data: data,
       state: AvnTransactionState.NEW,
       history: []

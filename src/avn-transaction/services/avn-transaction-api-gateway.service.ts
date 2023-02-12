@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Inject } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Model } from 'mongoose'
+import { firstValueFrom } from 'rxjs'
+import { ClientProxy } from '@nestjs/microservices'
 import { InjectModel } from '@nestjs/mongoose'
 import { LogService } from '../../log/log.service'
 import { AvnNftTransaction } from '../schemas/avn-transaction.schema'
@@ -9,7 +11,10 @@ import {
   AvnTransactionState,
   PollingTransactionStatus
 } from '../../shared/enum'
+// import { Nft } from '../../../../schemas/nft.schema'
 import { AvnApi, AvnPolState } from '../schemas/avn-api'
+import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { NftStatus } from '../../shared/enum'
 
 @Injectable()
 export class AvnTransactionApiGatewayService {
@@ -20,7 +25,8 @@ export class AvnTransactionApiGatewayService {
     private configService: ConfigService,
     private logService: LogService,
     @InjectModel(AvnNftTransaction.name)
-    private avnTransactionModel: Model<AvnNftTransaction>
+    private avnTransactionModel: Model<AvnNftTransaction>,
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.configService = configService
     this.log = this.logService.getLogger()
@@ -52,7 +58,7 @@ export class AvnTransactionApiGatewayService {
         `[AvnTransactionApiGatewayService] Mint NFT result from API Gateway: ${mintResult}`
       )
 
-      this.getConfirmation(mintResult, localRequestId)
+      this.getConfirmation(mintResult, localRequestId, nftId)
     } catch (e) {
       this.log.error(
         `[AvnTransactionApiGatewayService] Error minting NFT via API Gateway: ${nftId}`
@@ -81,7 +87,8 @@ export class AvnTransactionApiGatewayService {
    */
   private async getConfirmation(
     avnRequestId: string,
-    localRequestId: string
+    localRequestId: string,
+    nftId: string
   ): Promise<void> {
     const avnPollingInterval: number =
       this.configService.get<number>('app.avn.pollingInterval') || 5000 // 5 seconds
@@ -101,16 +108,21 @@ export class AvnTransactionApiGatewayService {
         `[AvnTransactionApiGatewayService] Polling transaction status: ${polledState.status}`
       )
 
+      // Update NFT status
+      this.updateNftStatus(nftId, polledState)
+
+      // If transaction is committed stop polling
       if (this.transactionIsCommitted(polledState)) {
+        transactionCommitted = true
         this.log.log(
           `[AvnTransactionApiGatewayService] Transaction of local request ID ${localRequestId}, ` +
             `AVN request ID ${avnRequestId}, is committed with status ${polledState.status}`
         )
-        transactionCommitted = true
         break
       }
     }
 
+    // Update transaction history
     this.updateTransactionHistory(localRequestId, polledState)
 
     if (!transactionCommitted) {
@@ -185,5 +197,45 @@ export class AvnTransactionApiGatewayService {
         }
       }
     )
+  }
+
+  /**
+   * Update NFT status to adapted status from API Gateway polling
+   * @param nftId NFT ID
+   * @param polledState Polled state
+   */
+  private updateNftStatus(nftId: string, avnPolState: AvnPolState): void {
+    const nftStatus = this.getNftStatusFromPolledState(avnPolState)
+
+    firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('nft', 'setStatusToNft'), {
+        nftId,
+        nftStatus
+      })
+    )
+  }
+
+  /**
+   * Get NFT status from polled state
+   * @param polledState Polled state
+   * @returns NFT status
+   */
+  getNftStatusFromPolledState(polledState: AvnPolState): NftStatus {
+    let nftStatus: NftStatus
+    switch (polledState.status) {
+      case PollingTransactionStatus.pending:
+        nftStatus = NftStatus.minting
+        break
+      case PollingTransactionStatus.processed:
+        nftStatus = NftStatus.minted
+        break
+      case PollingTransactionStatus.rejected:
+        nftStatus = NftStatus.draft
+        break
+      default:
+        nftStatus = NftStatus.draft
+    }
+
+    return nftStatus
   }
 }
