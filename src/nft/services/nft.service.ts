@@ -60,7 +60,7 @@ export class NftService {
   ): Promise<CreateNftResponseDto> {
     const fullUserObject = await this.getUser(user._id)
     if (!fullUserObject.avnPubKey) {
-      throw new InvalidDataError('ANV public key is not set for user')
+      throw new InvalidDataError('AvV public key is not set for user')
     }
 
     const newNft: NftDraftModel = {

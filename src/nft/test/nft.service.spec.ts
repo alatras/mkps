@@ -148,7 +148,8 @@ describe('NftService', () => {
           .mockImplementationOnce(() =>
             Promise.resolve({
               _id: '0c8564bc-a743-11ed-afa1-0242ac120002',
-              avnPubKey: 'asdasdas',
+              avnPubKey:
+                '0x32eedc9a3debfb48cd4a47bebcfd4a3a780e6c91d7a64fe373ffffbdf4ecfb42',
               username: 'testUsername'
             })
           )
