@@ -295,7 +295,6 @@ export class EditionService {
             _id,
             editionNumber: index + 1,
             image: updatedEdition.image,
-            name: updatedEdition.name,
             owner: updatedEdition.owner,
             minterId: updatedEdition.owner._id,
             editionId: uuidFrom(editionId)

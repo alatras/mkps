@@ -51,10 +51,6 @@ export class CreateUnlockableContentDto {
 }
 
 export class CreateNftDto {
-  @IsString()
-  @ApiProperty()
-  name: string
-
   @IsOptional()
   @ValidateNested()
   @Type(() => ImagesSetDto)
@@ -83,6 +79,7 @@ export class CreateNftDto {
   owner?: Owner
 
   @ApiProperty()
+  @IsNumber()
   @IsInt()
   @IsPositive()
   @Max(80)

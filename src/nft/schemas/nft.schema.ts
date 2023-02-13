@@ -88,8 +88,7 @@ export class Nft {
   @Transform(({ value }) => from(value).toString())
   @Prop({
     type: 'object',
-    value: { type: 'Buffer' },
-    default: () => v4()
+    value: { type: 'Buffer' }
   })
   editionId?: MUUID
 

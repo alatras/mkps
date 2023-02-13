@@ -1,5 +1,6 @@
 import { AvnTransactionHttpController } from './controllers/avn-transaction.http-controller'
 import { AvnTransactionChangeStreamService } from './services/avn-transaction-change-stream.service'
+import { AvnTransactionApiGatewayService } from './services/avn-transaction-api-gateway.service'
 import { AvnTransactionService } from './services/avn-transaction.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import {
@@ -32,6 +33,7 @@ import { getRedisOptions } from '../utils/get-redis-options'
   providers: [
     AvnTransactionService,
     AvnTransactionChangeStreamService,
+    AvnTransactionApiGatewayService,
     {
       provide: 'TRANSPORT_CLIENT',
       useFactory: (): ClientProxy & Closeable => {

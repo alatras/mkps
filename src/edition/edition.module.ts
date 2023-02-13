@@ -19,7 +19,7 @@ import {
   AvnNftTransaction,
   AvnNftTransactionSchema,
   AvnEditionTransaction
-} from 'src/avn-transaction/schemas/avn-transaction.schema'
+} from '../avn-transaction/schemas/avn-transaction.schema'
 import { EditionMsController } from './controllers/edition.ms-controller'
 
 @Module({

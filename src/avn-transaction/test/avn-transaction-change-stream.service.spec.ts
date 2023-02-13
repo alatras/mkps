@@ -26,6 +26,7 @@ import { EditionListing } from '../../edition-listing/schemas/edition-listing.sc
 import { AvnTransactionChangeStreamService } from '../services/avn-transaction-change-stream.service'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { LogService } from '../../log/log.service'
+import { AvnTransactionApiGatewayService } from '../services/avn-transaction-api-gateway.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -43,6 +44,7 @@ describe('AvnTransactionChangeStreamService', () => {
         UserService,
         AvnTransactionChangeStreamService,
         AvnTransactionService,
+        AvnTransactionApiGatewayService,
         NftService,
         LogService,
         EditionService,
