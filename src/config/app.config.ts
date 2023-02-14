@@ -33,5 +33,18 @@ export default registerAs('app', () => ({
   redis: {
     port: process.env.REDIS_PORT,
     host: process.env.REDIS_URL
+  },
+  vault: {
+    baseUrl: process.env.VAULT_BASE_URL,
+    roleId: process.env.VAULT_ROLE_ID,
+    secretId: process.env.VAULT_SECRET_ID,
+    authority: {
+      username: process.env.VAULT_AUTHORITY_USERNAME,
+      password: process.env.VAULT_AUTHORITY_PASSWORD
+    },
+    relayer: {
+      username: process.env.VAULT_RELAYER_USERNAME,
+      password: process.env.VAULT_RELAYER_PASSWORD
+    }
   }
 }))

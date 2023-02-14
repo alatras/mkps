@@ -16,6 +16,7 @@ import {
   Transport
 } from '@nestjs/microservices'
 import { getRedisOptions } from '../utils/get-redis-options'
+import { HttpModule } from "@nestjs/axios";
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { getRedisOptions } from '../utils/get-redis-options'
         collection: DbCollections.AvnTransactions
       }
     ]),
-    LogModule
+    LogModule,
+    HttpModule
   ],
   providers: [
     AvnTransactionService,
