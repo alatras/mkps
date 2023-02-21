@@ -58,13 +58,15 @@ export class VaultService {
 
   private async get(url: string, token: string): Promise<any> {
     try {
-      return await firstValueFrom(
+      const res = await firstValueFrom(
         this.httpService.get(`${this.config.baseUrl}/${url}`, {
           headers: {
             'X-Vault-Token': token
           }
         })
-      ).then(response => response.data.data)
+      )
+
+      return res.data.data
     } catch (error) {
       if (error.response) {
         if (
@@ -81,9 +83,9 @@ export class VaultService {
     }
   }
 
-  private async post(
+  private async post<T>(
     url: string,
-    data: any,
+    data: T,
     token?: string
   ): Promise<string | any> {
     const headers = { 'Content-Type': 'application/json' }
@@ -98,9 +100,9 @@ export class VaultService {
         this.httpService.post(`${this.config.baseUrl}/${url}`, data, {
           headers
         })
-      ).then(response => response.data)
+      )
 
-      return token ? response.auth.client_token : response.data
+      return token ? response.data.auth.client_token : response.data.data
     } catch (e) {
       if (e.response) {
         throw new Error(`VaultService.post: ${e.response.data.errors}`)
@@ -173,9 +175,11 @@ export class VaultService {
       return existingUser.publicKey
     }
 
-    return await this.post(userUrl, {
+    const res = await this.post(userUrl, {
       username
-    }).then(r => r.publicKey)
+    })
+
+    return res.publicKey
   }
 
   private async authoritySign(message: string): Promise<string> {
@@ -201,24 +205,6 @@ export class VaultService {
     } catch (error) {
       throw new Error(`VaultService.authoritySign: ${error.message}`)
     }
-  }
-
-  private async getRelayerSeed(): Promise<string> {
-    if (!this.relayer.set) {
-      throw new Error('VaultService.getRelayerSeed: Relayer not set')
-    }
-    const token = await this.appLogin(this.config.roleId, this.config.secretId)
-
-    const res = await this.get(
-      `avn-vault/relayer/${this.relayer.username}`,
-      token
-    )
-
-    if (!res) {
-      throw new Error('VaultService.getRelayerSeed: Relayer does not exist')
-    }
-
-    return res.seed
   }
 
   // In the case of the NFT Marketplace, the username is the Provider ID

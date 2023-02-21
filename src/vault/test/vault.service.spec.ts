@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { VaultService } from '../services/vault.service'
 import { HttpModule } from '@nestjs/axios'
-import { ConfigModule, ConfigService } from '@nestjs/config'
+import { ConfigModule } from '@nestjs/config'
 import config from '../../config/app.config'
 
 describe('VaultService', () => {
@@ -50,6 +50,7 @@ describe('VaultService', () => {
       'secret/authority',
       'token'
     )
+    expect((VaultService.prototype as any).authority.set).toBe(true)
     expect(address).toBe('address')
   })
 
@@ -82,6 +83,7 @@ describe('VaultService', () => {
       'secret/relayer',
       'token'
     )
+    expect((VaultService.prototype as any).relayer.set).toBe(true)
     expect(publicKey).toBe('publicKey')
   })
 
@@ -153,35 +155,6 @@ describe('VaultService', () => {
 
     expect(await (VaultService.prototype as any).authoritySign('data')).toEqual(
       'signature'
-    )
-  })
-
-  it('should return the correct seed when calling getRelayerSeed', async () => {
-    jest
-      .spyOn(VaultService.prototype as any, 'appLogin')
-      .mockResolvedValueOnce('token')
-    ;(VaultService.prototype as any).relayer = {
-      username: 'xxxx',
-      password: 'xxxx',
-      set: true
-    }
-    ;(VaultService.prototype as any).config = {
-      baseUrl: process.env.VAULT_BASE_URL,
-      roleId: process.env.VAULT_ROLE_ID,
-      secretId: process.env.VAULT_SECRET_ID,
-      authority: {
-        username: process.env.VAULT_AUTHORITY_USERNAME,
-        password: process.env.VAULT_AUTHORITY_PASSWORD
-      }
-    }
-
-    jest.spyOn(VaultService.prototype as any, 'get').mockResolvedValueOnce({
-      seed: 'seed'
-    })
-    jest.spyOn(service, 'appLogin').mockResolvedValueOnce('token')
-
-    expect(await (VaultService.prototype as any).getRelayerSeed()).toEqual(
-      'seed'
     )
   })
 
