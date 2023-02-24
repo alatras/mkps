@@ -12,6 +12,7 @@ import {
   IsString,
   Max,
   Min,
+  Validate,
   ValidateNested
 } from 'class-validator'
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
@@ -24,6 +25,8 @@ import { NftStatus } from '../../shared/enum'
 import { Prop } from '@nestjs/mongoose'
 import { ApiProperty } from '@nestjs/swagger'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
+import { getRequiredNftProperties } from '../../utils/nftProperties/getRequiredNftProperties'
+import { validateDynamicNftProperties } from '../../utils/nftProperties/validateNftProperties'
 
 export class CreateUnlockableContentDto {
   @Prop()
@@ -71,7 +74,12 @@ export class CreateNftDto {
 
   @IsObject()
   @ApiProperty()
-  properties: Record<string, any>
+  @Validate(values => validateDynamicNftProperties(values), {
+    message: `Nft Properties must include all of the following: ${getRequiredNftProperties().join(
+      ', '
+    )}.`
+  })
+  properties: Record<string, string>
 
   @ApiProperty()
   @Type(() => Owner)
@@ -88,28 +96,7 @@ export class CreateNftDto {
 
   @ApiProperty()
   @IsString()
-  @IsOptional()
-  sport?: string
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  collection?: string
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  athlete?: string
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  artist?: string
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  description?: string
+  description: string
 
   constructor(partial: Partial<Nft>) {
     Object.assign(this, partial)
@@ -184,7 +171,7 @@ export class NftResponseDto {
   @Expose()
   @ApiProperty()
   @IsObject()
-  properties: Record<string, any>
+  properties: Record<string, string>
 
   @Expose()
   @ApiProperty()
