@@ -55,7 +55,11 @@ export class EditionListing {
   @Prop()
   seller: EthAuctionSeller
 
-  @Prop()
+  @Prop({
+    type: String,
+    enum: Object.values(Currency),
+    required: true
+  })
   currency: Currency
 
   @Prop()

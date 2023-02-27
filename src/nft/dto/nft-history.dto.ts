@@ -1,4 +1,4 @@
-import { HistoryType } from '../../shared/enum'
+import { AuctionType, Currency, HistoryType } from '../../shared/enum'
 import { IsEnum, IsOptional, IsString } from 'class-validator'
 import { Expose } from 'class-transformer'
 
@@ -35,4 +35,19 @@ export class CreateNftHistoryDto {
   @IsOptional()
   @IsEnum(HistoryType)
   type: HistoryType
+
+  @Expose()
+  @IsOptional()
+  @IsEnum(AuctionType)
+  saleType?: AuctionType
+
+  @Expose()
+  @IsOptional()
+  @IsEnum(Currency)
+  currency?: Currency
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  amount?: string
 }

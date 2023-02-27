@@ -4,7 +4,9 @@ import {
   Injectable,
   UnprocessableEntityException,
   LoggerService,
-  BadRequestException
+  BadRequestException,
+  UnauthorizedException,
+  ConflictException
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model } from 'mongoose'
@@ -12,7 +14,7 @@ import { CreateNftDto, CreateNftResponseDto } from '../dto/nft.dto'
 import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftHistory } from '../schemas/nft-history.schema'
-import { HistoryType } from '../../shared/enum'
+import { AuctionStatus, Currency, HistoryType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
@@ -29,6 +31,11 @@ import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { ClientProxy } from '@nestjs/microservices'
 import { LogService } from '../../log/log.service'
 import { InvalidDataError } from '../../core/errors'
+import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
+import { validateListingPrice } from 'src/utils/validateListingPrice'
+import { PaymentService } from 'src/payment/payment.service'
+import { ListingService } from 'src/listing/listing.service'
+import { DataWrapper } from 'src/common/dataWrapper'
 
 @Injectable()
 export class NftService {
@@ -41,7 +48,9 @@ export class NftService {
     @Inject(forwardRef(() => EditionService))
     private editionService: EditionService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
-    private logService: LogService
+    private logService: LogService,
+    private paymentService: PaymentService,
+    private listingService: ListingService
   ) {
     this.log = this.logService.getLogger()
   }
@@ -97,6 +106,111 @@ export class NftService {
     return { requestId: mint.request_id }
   }
 
+  /**
+   * Mint an NFT.
+   * This lists the NFT locally and sends listing to AVN Transaction.
+   * @param user Logged in user
+   * @param createNftDto Request body
+   */
+  async list(user: User, listNftDto: ListNftDto): Promise<ListNftResponseDto> {
+    validateListingPrice(listNftDto)
+
+    const nftUUId = uuidFrom(listNftDto.nft.id)
+    const nft = await this.findOneById(nftUUId.toString())
+    if (!nft) {
+      throw new BadRequestException('NFT not found')
+    }
+
+    // Throw if NFT status isn't minted or owned
+    if (![NftStatus.minted, NftStatus.owned].includes(nft.status)) {
+      this.log.debug(
+        `NFT ${nftUUId} can't be listed because it has status: ${nft.status}`
+      )
+      throw new UnprocessableEntityException(
+        `Cannot create auction of NFT with status: ${nft.status}`
+      )
+    }
+
+    // Throw if NFT is hidden
+    if (nft.isHidden) {
+      this.log.debug(`NFT ${nftUUId} can't be listed because it is hidden`)
+      throw new UnprocessableEntityException('auctionOnHiddenNft')
+    }
+
+    // Throw if NFT is an edition NFT
+    if (nft.status === NftStatus.minted && nft.editionId) {
+      this.log.debug(`NFT ${nftUUId} is an edition NFT`)
+      throw new UnprocessableEntityException('cannotListEditionNft')
+    }
+
+    // If NFT is listed in USD and never been on sale before
+    if (
+      listNftDto.currency === Currency.USD &&
+      nft.status !== NftStatus.minted
+    ) {
+      // Based on: if NFT status is 'minted' it has never been on sale before.
+      // This checks if it's a secondary NFT sale in USD
+
+      // Throw if user has not completed Stripe onboarding
+      if (!user.stripeAccountId) {
+        this.log.debug(`User ${user._id} has no connected stripe account`)
+        throw new UnauthorizedException('noConnectedStripeAccount')
+      }
+
+      // Throw ir user has not completed Stripe onboarding
+      const account = await this.paymentService.getAccount(user.stripeAccountId)
+      if (!account.details_submitted) {
+        this.log.debug(`User ${user._id} has not completed Stripe onboarding`)
+        throw new UnauthorizedException('stripeOnboardingIncomplete')
+      }
+    }
+
+    // Throw if NFT is already on sale
+    const existingAuction = await this.listingService.getCurrentAuctionByNftId(
+      nftUUId
+    )
+    if (existingAuction) {
+      this.log.debug(`NFT ${nftUUId} already has an auction`)
+      throw new ConflictException('alreadyOnSale')
+    }
+
+    // Is NFT on 2nd sale?
+    const isSecondary = await this.listingService.isNftSecondHand(
+      uuidFrom(listNftDto.nft.id)
+    )
+
+    // Check if NFT is allowed to be sold in the requested currency
+    this.listingService.checkAllowedSaleCurrency(listNftDto, isSecondary, nft)
+
+    // Validate auction close date currency is not ETH
+    if (listNftDto.currency !== Currency.ETH) {
+      this.listingService.validateAuctionCloseDate(listNftDto)
+    }
+
+    // Set auction status
+    if (!listNftDto.status) {
+      listNftDto.status = [Currency.USD, Currency.ADA].includes(
+        listNftDto.currency
+      )
+        ? AuctionStatus.open
+        : AuctionStatus.unconfirmed
+    }
+
+    // Create auction
+    const auction = await this.listingService.createAuction(
+      { _id: user._id, avnPubKey: user.avnPubKey, username: user.username },
+      listNftDto,
+      isSecondary
+    )
+
+    return new DataWrapper({ data: auction, message: 'auctionCreated' })
+  }
+
+  /**
+   * Get NFT by ID
+   * @param id NFT ID
+   * @returns NFT
+   */
   async findOneById(id: string): Promise<Nft> {
     return this.nftModel.findOne({ _id: uuidFrom(id) }).lean()
   }
@@ -147,7 +261,7 @@ export class NftService {
     return nft
   }
 
-  async addHistory(historyParams: CreateNftHistoryDto): Promise<void> {
+  async addHistory(historyParams: CreateNftHistoryDto): Promise<unknown> {
     const history = historyParams.transactionHash
       ? await this.nftHistoryModel.findOne({
           transactionHash: historyParams.transactionHash
@@ -155,16 +269,18 @@ export class NftService {
       : null
 
     if (!history) {
-      await this.nftHistoryModel.create({
-        ...historyParams
-      })
-
-      return
+      return await this.nftHistoryModel.create(
+        {
+          ...historyParams
+        },
+        { new: true }
+      )
     }
 
-    await this.nftHistoryModel.updateOne(
+    return await this.nftHistoryModel.updateOne(
       { transactionHash: historyParams.transactionHash },
-      { $set: { ...historyParams } }
+      { $set: { ...historyParams } },
+      { new: true }
     )
   }
 

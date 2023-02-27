@@ -11,7 +11,6 @@ import {
   AvnTransactionState,
   PollingTransactionStatus
 } from '../../shared/enum'
-// import { Nft } from '../../../../schemas/nft.schema'
 import { AvnApi, AvnPolState } from '../schemas/avn-api'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { NftStatus } from '../../shared/enum'

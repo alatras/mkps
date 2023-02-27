@@ -9,6 +9,7 @@ export default registerAs('app', () => ({
   environment: process.env.ENVIRONMENT,
   isSqsDisabled: process.env.IS_SQS_DISABLED,
   tenantName: process.env.TENANT_NAME,
+  secondarySaleMode: process.env.SECONDARY_SALE_MODE,
   auth0: {
     domain: process.env.AUTH0_DOMAIN,
     clientId: process.env.AUTH0_CLIENT_ID,

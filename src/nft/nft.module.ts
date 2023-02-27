@@ -16,6 +16,10 @@ import {
 } from '@nestjs/microservices'
 import { getRedisOptions } from '../utils/get-redis-options'
 import { LogModule } from '../log/log.module'
+import { ListingModule } from 'src/listing/listing.module'
+import { PaymentModule } from 'src/payment/payment.module'
+import { PaymentService } from 'src/payment/payment.service'
+import { ListingService } from 'src/listing/listing.service'
 
 @Module({
   imports: [
@@ -33,11 +37,15 @@ import { LogModule } from '../log/log.module'
         schema: NftHistorySchema,
         collection: DbCollections.NftHistory
       }
-    ])
+    ]),
+    ListingModule,
+    PaymentModule
   ],
   controllers: [NftHttpController, NftMsController],
   providers: [
     NftService,
+    PaymentService,
+    ListingService,
     {
       provide: 'TRANSPORT_CLIENT',
       useFactory: (): ClientProxy & Closeable => {

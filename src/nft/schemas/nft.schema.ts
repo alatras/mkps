@@ -4,7 +4,7 @@ import { Transform } from 'class-transformer'
 import { MUUID, from, v4 } from 'uuid-mongodb'
 import { User } from '../../user/schemas/user.schema'
 import { Asset, ImagesSet } from './asset.schema'
-import { DbCollections, NftStatus } from '../../shared/enum'
+import { Currency, DbCollections, NftStatus } from '../../shared/enum'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
 import { ApiProperty } from '@nestjs/swagger'
 
@@ -119,6 +119,13 @@ export class Nft {
 
   @Prop()
   editionNumber?: number
+
+  @Prop({
+    type: String,
+    enum: Object.values(Currency),
+    required: false
+  })
+  primarySaleCurrency?: Currency
 }
 
 export const NftSchema = SchemaFactory.createForClass(Nft)

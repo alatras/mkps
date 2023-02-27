@@ -24,6 +24,7 @@ import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { errorResponseGenerator } from '../../core/errors/error-response-generator'
+import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
@@ -39,7 +40,6 @@ export class NftHttpController {
 
   /**
    * Mint an NFT
-   * @param req Express Request
    * @param createNftDto Create NFT DTO
    */
   @ApiCreatedResponse({
@@ -59,6 +59,31 @@ export class NftHttpController {
       return await this.nftService.mint(req.user as User, createNftDto)
     } catch (err) {
       this.log.error('[NftHttpController] cannot create NFT:', err)
+      errorResponseGenerator(err)
+    }
+  }
+
+  /**
+   * List an NFT
+   * @param listNftDto Create NFT DTO
+   */
+  @ApiCreatedResponse({
+    description:
+      'List an NFT. This creates an auction for the NFT, registers a listing in AvN Network, and returns Auction.',
+    type: ListNftResponseDto
+  })
+  @UseInterceptors(MongooseClassSerializerInterceptor(CreateNftResponseDto))
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('write:nfts')
+  @Post('list')
+  async list(
+    @Request() req: Express.Request,
+    @Body() listNftDto: ListNftDto
+  ): Promise<ListNftResponseDto> {
+    try {
+      return await this.nftService.list(req.user as User, listNftDto)
+    } catch (err) {
+      this.log.error('[NftHttpController] cannot list NFT:', err)
       errorResponseGenerator(err)
     }
   }

@@ -27,8 +27,7 @@ import { getRedisOptions } from '../utils/get-redis-options'
         schema: AvnNftTransactionSchema,
         collection: DbCollections.AvnTransactions
       }
-    ]),
-    LogModule
+    ])
   ],
   providers: [
     AvnTransactionService,
@@ -45,6 +44,6 @@ import { getRedisOptions } from '../utils/get-redis-options'
     }
   ],
   controllers: [AvnTransactionHttpController],
-  exports: [AvnTransactionService]
+  exports: [AvnTransactionService, AvnTransactionApiGatewayService]
 })
 export class AvnTransactionModule {}

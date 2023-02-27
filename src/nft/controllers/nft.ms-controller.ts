@@ -4,6 +4,7 @@ import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { Nft } from '../schemas/nft.schema'
 import { NftStatus } from '../../shared/enum'
+import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 
 @Controller()
 export class NftMsController {
@@ -33,5 +34,10 @@ export class NftMsController {
       payload.nftId,
       payload.nftStatus
     )
+  }
+
+  @MessagePattern(MessagePatternGenerator('nft', 'addHistory'))
+  async addHistory(@Payload() payload: CreateNftHistoryDto): Promise<unknown> {
+    return await this.nftService.addHistory(payload)
   }
 }
