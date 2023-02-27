@@ -90,7 +90,7 @@ describe('VaultService', () => {
   it('should be able to create a new user', async () => {
     jest
       .spyOn(VaultService.prototype as any, 'post')
-      .mockResolvedValueOnce({ publicKey: 'publicKey' })
+      .mockResolvedValueOnce({ data: { publicKey: 'publicKey' } })
     jest
       .spyOn(VaultService.prototype as any, 'appLogin')
       .mockResolvedValueOnce('token')
@@ -151,7 +151,7 @@ describe('VaultService', () => {
 
     jest
       .spyOn(VaultService.prototype as any, 'post')
-      .mockResolvedValueOnce({ signature: 'signature' })
+      .mockResolvedValueOnce({ auth: { client_token: 'signature' } })
 
     expect(await (VaultService.prototype as any).authoritySign('data')).toEqual(
       'signature'

@@ -86,23 +86,19 @@ export class VaultService {
   private async post<T>(
     url: string,
     data: T,
-    token?: string
+    headers?: Record<string, string>
   ): Promise<string | any> {
-    const headers = { 'Content-Type': 'application/json' }
-
-    if (token) {
-      headers['X-Vault-Token'] = token
-      headers['X-Vault-Request'] = 'true'
-    }
+    const defaultHeaders = { 'Content-Type': 'application/json' }
 
     try {
       const response = await firstValueFrom(
         this.httpService.post(`${this.config.baseUrl}/${url}`, data, {
+          ...defaultHeaders,
           headers
         })
       )
 
-      return token ? response.data.auth.client_token : response.data.data
+      return response.data
     } catch (e) {
       if (e.response) {
         throw new Error(`VaultService.post: ${e.response.data.errors}`)
@@ -113,19 +109,23 @@ export class VaultService {
   }
 
   async appLogin(roleId: string, secretId: string): Promise<string> {
-    return await this.post(`auth/approle/login`, {
+    const res = await this.post(`auth/approle/login`, {
       role_id: roleId,
       secret_id: secretId
     })
+
+    return res.data
   }
 
   private async userPassLogin(
     username: string,
     password: string
   ): Promise<string> {
-    return await this.post(`auth/userpass/login/${username}`, {
+    const res = await this.post(`auth/userpass/login/${username}`, {
       password
     })
+
+    return res.data
   }
 
   private async setAuthority(): Promise<void> {
@@ -179,7 +179,7 @@ export class VaultService {
       username
     })
 
-    return res.publicKey
+    return res.data.publicKey
   }
 
   private async authoritySign(message: string): Promise<string> {
@@ -198,10 +198,13 @@ export class VaultService {
         {
           message
         },
-        token
+        {
+          'X-Vault-Token': token,
+          'X-Vault-Request': 'true'
+        }
       )
 
-      return res.signature
+      return res.auth.client_token
     } catch (error) {
       throw new Error(`VaultService.authoritySign: ${error.message}`)
     }

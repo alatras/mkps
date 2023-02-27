@@ -16,7 +16,7 @@ import {
   Transport
 } from '@nestjs/microservices'
 import { getRedisOptions } from '../utils/get-redis-options'
-import { HttpModule } from "@nestjs/axios";
+import { HttpModule } from '@nestjs/axios'
 
 @Module({
   imports: [
