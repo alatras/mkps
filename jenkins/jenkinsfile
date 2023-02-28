@@ -1,6 +1,5 @@
 def _ACCOUNT_NAME = env.ACCOUNT_NAME == "eos" || env.ACCOUNT_NAME == "test" ? "eos" : params.account_name
 def _ENV_NAME = env.JOB_NAME.contains('dev') ? "dev" : env.JOB_NAME.contains('qa') ? "qa" : env.JOB_NAME.contains('uat') ? "uat" : env.ENV_NAME
-def _BRANCH = _ENV_NAME == "dev" ? "main" : _ENV_NAME == "qa" ||  _ENV_NAME == "uat" ? "qa" : ""
 
 pipeline {
     agent any
@@ -22,7 +21,6 @@ pipeline {
         string(name: "account_name", defaultValue: "${env.ACCOUNT_NAME}", description: "Account name to use for deployment")
         string(name: "environment", defaultValue: "${_ENV_NAME}", description: "Environment name to use for deployment")
         string(name: "aws_region", defaultValue: "${env.REGION}", description: 'AWS Region to use for deployment')
-        string(name: "branch", defaultValue: "${_BRANCH}", description: 'Add branch name or tag')
     }
 
     stages {
@@ -37,6 +35,12 @@ pipeline {
                     }    
                     else if (env.JOB_NAME.contains('listing')) {
                         _SERVICE = "LISTING_SERVICE"
+                    }    
+                    else if (env.JOB_NAME.contains('user')) {
+                        _SERVICE = "USER_SERVICE"
+                    }    
+                    else if (env.JOB_NAME.contains('asset')) {
+                        _SERVICE = "ASSET_SERVICE"
                     }    
                     
                     account_id = sh (script: "aws sts get-caller-identity --query 'Account' --output text", returnStdout: true).trim()
