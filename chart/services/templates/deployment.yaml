@@ -255,6 +255,12 @@ spec:
                   name: market-place-be
                   key: cybavo_api_secret
                   optional: true
+            - name: "AWS_S3_BUCKET_NAME_AVATAR"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: aws_s3_bucket_name_avatar
+                  optional: true
             - name: "PORT"
               value: "5002"
             - name: "NODE_EXTRA_CA_CERTS"
