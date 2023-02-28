@@ -14,7 +14,9 @@ export enum AvnTransactionType {
   AvnCancelNftListing = 'AvnCancelNftListing',
   AvnEndBatchListing = 'AvnEndBatchListing',
   AvnTransferTo = 'AvnTransferTo',
-  AvnMintTo = 'AvnMintTo'
+  AvnMintTo = 'AvnMintTo',
+  // Transactions sent to API Gateway
+  MintSingleNftApiGateway = 'MintSingleNftApiGateway'
 }
 
 export enum AvnTransactionState {
@@ -122,4 +124,10 @@ export enum NftPropertyTypes {
 export enum PresignedUrlUploadType {
   nftOriginal = 'nftOriginal',
   nftThumbnail = 'nftThumbnail'
+}
+
+export enum PollingTransactionStatus {
+  pending = 'Pending',
+  processed = 'Processed',
+  rejected = 'Rejected'
 }

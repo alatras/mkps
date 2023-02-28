@@ -8,6 +8,7 @@ export default registerAs('app', () => ({
   originalContentPublic: process.env.ORIGINAL_CONTENT_PUBLIC,
   environment: process.env.ENVIRONMENT,
   isSqsDisabled: process.env.IS_SQS_DISABLED,
+  tenantName: process.env.TENANT_NAME,
   auth0: {
     domain: process.env.AUTH0_DOMAIN,
     clientId: process.env.AUTH0_CLIENT_ID,
@@ -46,5 +47,14 @@ export default registerAs('app', () => ({
       username: process.env.VAULT_RELAYER_USERNAME,
       password: process.env.VAULT_RELAYER_PASSWORD
     }
+  },
+  avn: {
+    gatewayUrl: process.env.AVN_GATEWAY_URL,
+    relayer: process.env.AVN_RELAYER,
+    externalRefVersion: process.env.EXTERNAL_REF_VERSION,
+    avnAuthority: process.env.AVN_AUTHORITY,
+    suri: process.env.SUBSTRATE_ACCOUNT_PRIVATE_KEY,
+    anvPollingInterval: process.env.AVN_POLLING_INTERVAL,
+    avnPollingTimeout: process.env.AVN_POLLING_TIMEOUT
   }
 }))

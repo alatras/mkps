@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
+import { ConfigService } from '@nestjs/config'
 import { getModelToken } from '@nestjs/mongoose'
-import * as MUUID from 'uuid-mongodb'
 import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
 import {
@@ -26,6 +26,8 @@ import { LogService } from '../../log/log.service'
 import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { CreateNftDto } from '../dto/nft.dto'
+import { getMockUser } from '../../user/test/mocks'
+import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/avn-transaction-api-gateway.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -42,6 +44,8 @@ describe('NftService', () => {
         EditionService,
         EditionListingService,
         AvnTransactionService,
+        AvnTransactionApiGatewayService,
+        ConfigService,
         LogService,
         {
           provide: 'TRANSPORT_CLIENT',
@@ -81,7 +85,6 @@ describe('NftService', () => {
   describe('create', () => {
     it('should create a new NFT', async () => {
       const nftDto: CreateNftDto = {
-        name: 'string',
         sport: 'basket',
         collection: 'basketters',
         athlete: 'Jake All',
@@ -123,6 +126,7 @@ describe('NftService', () => {
           claimedCount: 0
         },
         properties: {
+          name: 'string',
           sport: 'Test NFT 0000001',
           collection: 'Test NFT 0000001',
           athlete: 'Test NFT 0000001',
@@ -142,10 +146,17 @@ describe('NftService', () => {
         jest
           .spyOn(NftService.prototype as any, 'getUser')
           .mockImplementationOnce(() =>
-            Promise.resolve({ avnPubKey: 'asdasdas', username: 'testUsername' })
+            Promise.resolve({
+              _id: '0c8564bc-a743-11ed-afa1-0242ac120002',
+              avnPubKey:
+                '0x32eedc9a3debfb48cd4a47bebcfd4a3a780e6c91d7a64fe373ffffbdf4ecfb42',
+              username: 'testUsername'
+            })
           )
 
-        const res = await service.create(MUUID.v4(), nftDto)
+        // Mock user
+        const user = getMockUser()
+        const res = await service.mint(user, nftDto)
 
         expect(createMintAvnTransaction).toHaveBeenCalled()
 

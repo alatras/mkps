@@ -7,14 +7,16 @@ import {
   UseGuards,
   NotFoundException
 } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common'
+import { Request, LoggerService } from '@nestjs/common'
+import { Request as ExpressRequest } from 'express'
 import { AuthGuard } from '@nestjs/passport'
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger'
+import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
 import { LogService } from '../../log/log.service'
+import { User } from '../../user/schemas/user.schema'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { MintAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger'
-import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
 import { AvnNftTransaction } from '../schemas/avn-transaction.schema'
 import { errorResponseGenerator } from '../../core/errors/error-response-generator'
 
@@ -38,16 +40,21 @@ export class AvnTransactionHttpController {
   })
   @Post('mint')
   async createMintAvnTransaction(
+    @Request() req: ExpressRequest,
     @Body() dto: MintAvnTransactionDto
   ): Promise<AvnTransactionMintResponse | Error> {
     try {
+      const user: User = (req as any).user
       const create = await this.avnTransactionService.createMintAvnTransaction(
-        dto.nftId
+        dto.nftId,
+        user
       )
+
       this.log.log(
         '[AvnTransactionHttpController] ANV transaction created successfully:',
         dto
       )
+
       return create
     } catch (err) {
       this.log.error(

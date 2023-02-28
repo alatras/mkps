@@ -15,7 +15,7 @@ export class Owner {
   @IsString()
   _id: MUUID.MUUID
 
-  @Prop({ required: false, default: null })
+  @Prop({ required: true, default: null })
   @IsString()
   avnPubKey: string
 

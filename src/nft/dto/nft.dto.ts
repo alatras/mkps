@@ -4,10 +4,13 @@ import {
   IsBoolean,
   IsDate,
   IsEnum,
+  IsInt,
   IsNumber,
   IsObject,
   IsOptional,
+  IsPositive,
   IsString,
+  Max,
   Min,
   ValidateNested
 } from 'class-validator'
@@ -48,10 +51,6 @@ export class CreateUnlockableContentDto {
 }
 
 export class CreateNftDto {
-  @IsString()
-  @ApiProperty()
-  name: string
-
   @IsOptional()
   @ValidateNested()
   @Type(() => ImagesSetDto)
@@ -81,6 +80,10 @@ export class CreateNftDto {
 
   @ApiProperty()
   @IsNumber()
+  @IsInt()
+  @IsPositive()
+  @Max(80)
+  @IsOptional()
   royalties?: number
 
   @ApiProperty()

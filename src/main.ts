@@ -26,8 +26,8 @@ async function bootstrap() {
   await app.startAllMicroservices()
 
   const config = new DocumentBuilder()
-    .setTitle('VereNFT')
-    .setDescription(`Various APIs in the VereNFT ecosystem`)
+    .setTitle('NFT Marketplace API')
+    .setDescription(`Various APIs in the Marketplace ecosystem`)
     .setVersion(getVersion())
     .build()
 
