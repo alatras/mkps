@@ -20,6 +20,8 @@ import { ListingModule } from 'src/listing/listing.module'
 import { PaymentModule } from 'src/payment/payment.module'
 import { PaymentService } from 'src/payment/payment.service'
 import { ListingService } from 'src/listing/listing.service'
+import { Auction, AuctionSchema } from 'src/listing/schemas/auction.schema'
+import { AvnNftTransaction, AvnNftTransactionSchema } from 'src/avn-transaction/schemas/avn-transaction.schema'
 
 @Module({
   imports: [
@@ -31,6 +33,16 @@ import { ListingService } from 'src/listing/listing.service'
         name: Nft.name,
         schema: NftSchema,
         collection: DbCollections.NFTs
+      },
+      {
+        name: Auction.name,
+        schema: AuctionSchema,
+        collection: DbCollections.Auctions
+      },
+      {
+        name: AvnNftTransaction.name,
+        schema: AvnNftTransactionSchema,
+        collection: DbCollections.AvnTransactions
       },
       {
         name: NftHistory.name,
@@ -58,4 +70,4 @@ import { ListingService } from 'src/listing/listing.service'
   ],
   exports: [NftService]
 })
-export class NftModule {}
+export class NftModule { }

@@ -22,7 +22,6 @@ import { AvnTransactionService } from 'src/avn-transaction/services/avn-transact
   imports: [
     LogModule,
     AvnTransactionModule,
-    ListingModule,
     MongooseModule.forFeature([
       {
         name: Auction.name,
@@ -50,4 +49,4 @@ import { AvnTransactionService } from 'src/avn-transaction/services/avn-transact
     }
   ]
 })
-export class ListingModule {}
+export class ListingModule { }
