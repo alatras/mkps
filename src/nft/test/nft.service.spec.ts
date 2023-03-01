@@ -85,10 +85,7 @@ describe('NftService', () => {
   describe('create', () => {
     it('should create a new NFT', async () => {
       const nftDto: CreateNftDto = {
-        sport: 'basket',
-        collection: 'basketters',
-        athlete: 'Jake All',
-        artist: 'Jake Half',
+        name: 'Test NFT 0000001',
         description: 'super test collection',
         image: {
           small: {
@@ -126,12 +123,10 @@ describe('NftService', () => {
           claimedCount: 0
         },
         properties: {
-          name: 'string',
           sport: 'Test NFT 0000001',
           collection: 'Test NFT 0000001',
           athlete: 'Test NFT 0000001',
-          artist: 'Test NFT 0000001',
-          description: 'Test NFT 0000001'
+          artist: 'Test NFT 0000001'
         }
       }
 

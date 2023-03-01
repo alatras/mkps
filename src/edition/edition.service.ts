@@ -147,13 +147,6 @@ export class EditionService {
       user
     )
 
-    try {
-      this.nftService.validateNftProperties(nftDoc)
-    } catch (e) {
-      this.log.error(e)
-      throw new BadRequestException('Missing properties: ' + e.message)
-    }
-
     const editionDoc: NftEdition = {
       _id: v4(),
       name: createEditionDto.name,

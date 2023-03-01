@@ -2,7 +2,6 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  UnprocessableEntityException,
   LoggerService,
   BadRequestException
 } from '@nestjs/common'
@@ -21,7 +20,6 @@ import { NftWithEdition } from '../schemas/nft-with-edition'
 import { NftDraftContract } from '../schemas/nft-draft-contract'
 import { User } from '../../user/schemas/user.schema'
 import { NftDraftModel } from '../schemas/nft-draft-model'
-import { getNftProperties } from '../../utils/nftProperties'
 import { ImagesSet } from '../schemas/asset.schema'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { firstValueFrom } from 'rxjs'
@@ -84,8 +82,6 @@ export class NftService {
       status: NftStatus.minting,
       minterId: uuidFrom(fullUserObject._id)
     }
-
-    this.validateNftProperties(newNft.properties)
 
     const nft = await this.createNft(newNft, NftStatus.minting)
 
@@ -228,29 +224,6 @@ export class NftService {
       isHidden: true, // Default draft NFT to hidden
       minterId: ownerId,
       unlockableContent
-    }
-  }
-
-  /**
-   * Validates that required properties are present in NFT draft.
-   */
-  validateNftProperties(
-    nftDraftModelProperties: NftDraftModel['properties']
-  ): void {
-    const requiredProperties = getNftProperties()
-      .filter(prop => prop.required && prop.key !== 'quantity')
-      .map(prop => prop.key)
-
-    const missingProperties = requiredProperties.filter(
-      prop => !Object.keys(nftDraftModelProperties).includes(prop)
-    )
-
-    if (missingProperties.length) {
-      throw new UnprocessableEntityException(
-        `Nft Properties must include all of the following: ${requiredProperties.join(
-          ', '
-        )}.`
-      )
     }
   }
 
