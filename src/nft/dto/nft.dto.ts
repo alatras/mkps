@@ -11,7 +11,9 @@ import {
   IsPositive,
   IsString,
   Max,
+  MaxLength,
   Min,
+  MinLength,
   Validate,
   ValidateNested
 } from 'class-validator'
@@ -54,6 +56,18 @@ export class CreateUnlockableContentDto {
 }
 
 export class CreateNftDto {
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  @MinLength(1, { message: 'name cannot be empty.' })
+  name: string
+
+  @ApiProperty()
+  @IsString()
+  @MaxLength(1000, { message: 'description must be maximum 1000 characters.' })
+  @MinLength(1, { message: 'description cannot be empty.' })
+  description: string
+
   @IsOptional()
   @ValidateNested()
   @Type(() => ImagesSetDto)
@@ -94,10 +108,6 @@ export class CreateNftDto {
   @IsOptional()
   royalties?: number
 
-  @ApiProperty()
-  @IsString()
-  description: string
-
   constructor(partial: Partial<Nft>) {
     Object.assign(this, partial)
   }
@@ -124,6 +134,16 @@ export class NftResponseDto {
   @Transform(({ value }) => MUUID.from(value).toString())
   @IsString()
   minterId: string
+
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  name: string
+
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  description: string
 
   @IsArray()
   @ValidateNested({ each: true })
