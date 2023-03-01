@@ -5,7 +5,8 @@ import {
   LoggerService,
   BadRequestException,
   UnauthorizedException,
-  ConflictException
+  ConflictException,
+  UnprocessableEntityException
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model } from 'mongoose'
