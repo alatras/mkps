@@ -6,7 +6,10 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
+  MinLength,
+  Validate,
   ValidateNested
 } from 'class-validator'
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
@@ -17,6 +20,8 @@ import { CreateUnlockableContentDto } from '../../nft/dto/nft.dto'
 import { PaymentProviders } from '../../shared/enum'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
 import { ApiProperty } from '@nestjs/swagger'
+import { getRequiredNftProperties } from '../../utils/nftProperties/getRequiredNftProperties'
+import { validateDynamicNftProperties } from '../../utils/nftProperties/validateNftProperties'
 
 export class NftOwner {
   @IsString()
@@ -34,9 +39,17 @@ export class CreateEditionDto {
   @IsOptional()
   id?: string
 
+  @Expose()
+  @ApiProperty()
   @IsString()
+  @MinLength(1, { message: 'name cannot be empty.' })
   name: string
 
+  @ApiProperty()
+  @IsString()
+  @MaxLength(1000, { message: 'description must be maximum 1000 characters.' })
+  @MinLength(1, { message: 'description cannot be empty.' })
+  description: string
   @Expose()
   @Type(() => ImagesSetDto)
   @ValidateNested({ each: true })
@@ -73,8 +86,13 @@ export class CreateEditionDto {
 
   @IsObject()
   @ApiProperty()
+  @Validate(values => validateDynamicNftProperties(values), {
+    message: `Nft Properties must include all of the following: ${getRequiredNftProperties().join(
+      ', '
+    )}.`
+  })
   @Expose()
-  properties: Record<string, any>
+  properties: Record<string, string>
 }
 
 export class ListingOptions {
