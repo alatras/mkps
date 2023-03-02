@@ -116,6 +116,12 @@ export class ListingOptions {
 @Exclude()
 export class EditionResponseDto {
   @Expose()
+  @ApiProperty()
   @IsString()
   requestId: string
+
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  id: string
 }

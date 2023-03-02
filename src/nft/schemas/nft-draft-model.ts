@@ -16,6 +16,12 @@ export class NftDraftModel {
   })
   _id?: MUUID.MUUID
 
+  @Prop()
+  name: string
+
+  @Prop()
+  description: string
+
   @Prop({ type: Owner })
   owner: Owner
 
