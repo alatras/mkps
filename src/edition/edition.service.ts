@@ -150,6 +150,7 @@ export class EditionService {
     const editionDoc: NftEdition = {
       _id: v4(),
       name: createEditionDto.name,
+      description: createEditionDto.description,
       quantity: createEditionDto.quantity,
       availableCount: 0,
       listingIndex: 0,
@@ -286,6 +287,7 @@ export class EditionService {
           {
             ...updatedEdition,
             _id,
+            description: updatedEdition.description,
             editionNumber: index + 1,
             image: updatedEdition.image,
             owner: updatedEdition.owner,

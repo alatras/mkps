@@ -13,6 +13,9 @@ export class NftDraftContract {
   @Prop()
   name: string
 
+  @Prop()
+  description: string
+
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
