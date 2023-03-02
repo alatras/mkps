@@ -92,7 +92,7 @@ export class CreateEditionDto {
     )}.`
   })
   @Expose()
-  properties: Record<string, string>
+  properties: Record<string, unknown>
 }
 
 export class ListingOptions {
