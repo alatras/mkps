@@ -112,7 +112,7 @@ export class Nft {
   owner: Owner
 
   @Prop({ type: 'object' })
-  properties?: Record<string, any>
+  properties: Record<string, unknown>
 
   @Prop({ type: [String] })
   ethAddresses?: string[]

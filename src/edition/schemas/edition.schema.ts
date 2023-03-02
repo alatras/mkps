@@ -41,7 +41,7 @@ export class NftEdition {
   availableCount: number
 
   @Prop({ type: 'object' })
-  properties: Record<string, string>
+  properties: Record<string, unknown>
 
   @Prop({ type: UnlockableContent })
   unlockableContent?: UnlockableContent
