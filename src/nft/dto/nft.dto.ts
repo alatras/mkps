@@ -119,6 +119,11 @@ export class CreateNftResponseDto {
   @ApiProperty()
   @IsString()
   requestId: string
+
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  id: string
 }
 
 @Exclude()

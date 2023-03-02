@@ -125,7 +125,7 @@ export class EditionService {
 
     await this.createAvnBatchTransaction(createdEdition, user, requestId)
 
-    return { data: { requestId } }
+    return { data: { requestId, id: createdEdition._id.toString() } }
   }
 
   /**

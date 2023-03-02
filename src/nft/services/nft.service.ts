@@ -90,7 +90,7 @@ export class NftService {
       fullUserObject
     )
 
-    return { requestId: mint.request_id }
+    return { requestId: mint.request_id, id: nft._id.toString() }
   }
 
   async findOneById(id: string): Promise<Nft> {
