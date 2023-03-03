@@ -9,19 +9,21 @@ import { User } from 'src/user/schemas/user.schema'
 import { DataWrapper } from 'src/common/dataWrapper'
 import { Auction } from 'src/listing/schemas/auction.schema'
 
-class Nft {
+export class ListingNft {
   @ApiProperty({ required: true })
   @IsString()
   id: string
 
+  @ApiProperty({ required: true })
   @IsString()
   eid: string
 }
 
 export class Seller {
   @Transform(({ value }) => MUUID.from(value).toString())
-  @Prop({ type: 'object', required: true })
-  _id: object
+  @ApiProperty({ required: true })
+  @IsString()
+  id: string
 
   @IsString()
   @ApiProperty({ required: true })
@@ -33,13 +35,15 @@ export class Seller {
 
   @IsString()
   @ApiProperty({ required: false })
+  @IsOptional()
   ethAddress?: string
 }
 
 export class ListNftDto {
   @ValidateNested()
+  @Type(() => ListingNft)
   @ApiProperty({ required: true })
-  nft: Nft
+  nft: ListingNft
 
   @ValidateNested()
   @Type(() => Seller)
@@ -51,21 +55,31 @@ export class ListNftDto {
   reservePrice: string
 
   @ApiProperty({ required: true })
-  @IsDate()
-  endTime: Date
+  @IsString()
+  endTime: string
 
-  @ApiProperty({ required: true })
+  @ApiProperty({
+    required: true,
+    type: String,
+    enum: Object.values(AuctionType)
+  })
+  @IsString()
   type: AuctionType
 
+  // For Airdrop and FreeClaim Auctions
   @IsOptional()
   @IsString()
   requestId?: string
 
+  // Airdrop or Free claim = NONE
+  // Stripe = USD
+  // ETH = ETH
   @ApiProperty({
     required: true,
     type: String,
     enum: Object.values(Currency)
   })
+  @IsString()
   currency: Currency
 
   @Prop({
@@ -82,4 +96,4 @@ export class ListNftDto {
 }
 
 @Exclude()
-export class ListNftResponseDto extends DataWrapper<Auction> {}
+export class ListNftResponseDto extends DataWrapper<Auction> { }

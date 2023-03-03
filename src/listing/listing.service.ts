@@ -56,8 +56,16 @@ export class ListingService {
   async createAuction(
     seller: Seller,
     listNftDto: ListNftDto,
-    isSecondary: boolean
+    isSecondary: boolean,
+    nft: Nft
   ): Promise<Auction> {
+    // Throw error if currency is invalid
+    if (
+      ![Currency.ETH, Currency.USD, Currency.NONE].includes(listNftDto.currency)
+    ) {
+      throw new UnprocessableEntityException('Auction malformed.')
+    }
+
     const auction: Auction = {
       _id: v4(),
       nft: {
@@ -65,38 +73,27 @@ export class ListingService {
         eid: listNftDto.nft.eid
       },
       seller: {
-        _id: seller._id,
+        _id: uuidFrom(seller.id),
         avnPubKey: seller.avnPubKey
       },
-      endTime: listNftDto.endTime,
+      endTime: new Date(listNftDto.endTime),
       isSecondary,
       // We only set the winner for FreeClaim to prevent claiming twice
       ...(listNftDto.type === AuctionType.freeClaim &&
         listNftDto.winner && {
-          winner: {
-            _id: uuidFrom(listNftDto.winner._id),
-            avnPubKey: listNftDto.winner.avnPubKey
-          }
-        }),
+        winner: {
+          _id: uuidFrom(listNftDto.winner._id),
+          avnPubKey: listNftDto.winner.avnPubKey
+        }
+      }),
       highestBidId: null,
       status: listNftDto.status,
       reservePrice: listNftDto.reservePrice,
-      currency: listNftDto.currency,
-      type: listNftDto.type ?? AuctionType.highestBid
+      currency: Currency[listNftDto.currency] ?? Currency.NONE,
+      type: AuctionType[listNftDto.type] ?? AuctionType.highestBid
     }
 
-    switch (listNftDto.currency) {
-      case Currency.ETH:
-        return await this.handleNewEthAuction(
-          auction,
-          auction.nft._id.toString()
-        )
-      case Currency.USD:
-      case Currency.NONE:
-        return await this.handleNewFiatOrFreeAuction(auction, seller)
-      default:
-        throw new UnprocessableEntityException('Auction malformed.')
-    }
+    return await this.auctionModel.create(auction)
   }
 
   /**
@@ -189,11 +186,10 @@ export class ListingService {
       throw new BadRequestException(
         {
           endDate: {
-            message: 'pastEndTime',
+            message: 'End date must be in the future',
             value: listNftDto.endTime
           }
         },
-        'Validation failed'
       )
     }
 
@@ -203,11 +199,10 @@ export class ListingService {
       throw new BadRequestException(
         {
           endDate: {
-            message: 'maximumAuctionTime',
+            message: 'NFTs can be auctioned for a maximum of 30 days',
             value: listNftDto.endTime
           }
-        },
-        'Validation failed'
+        }
       )
     }
 
@@ -216,147 +211,11 @@ export class ListingService {
       throw new BadRequestException(
         {
           endDate: {
-            message: 'minimumAuctionTime',
+            message: 'End time must be at least 15 minutes after listing the item for sale.',
             value: listNftDto.endTime
           }
-        },
-        'Validation failed'
+        }
       )
     }
-  }
-
-  /**
-   * Create a new auction for ETH
-   * @param newAuction new auction
-   * @param nftId NFT ID
-   */
-  async handleNewEthAuction(
-    newAuction: Auction,
-    nftId: string
-  ): Promise<Auction> {
-    const newAuctionEth = {
-      ...newAuction,
-      currency: Currency.ETH
-    }
-    await this.auctionModel.create(newAuctionEth)
-    // Set status to 'opening' and wait for Ethereum
-    // "auction start" event to open it for sale
-    await this.updateNftStatus(nftId, NftStatus.saleOpening)
-    return newAuctionEth
-  }
-
-  /**
-   * Create a new fiat or free auction
-   * @param newAuction new auction
-   * @param seller seller
-   */
-  private async handleNewFiatOrFreeAuction(
-    newAuction: Auction,
-    seller: Seller
-  ): Promise<Auction> {
-    await this.updateNftStatus(
-      newAuction.nft._id.toString(),
-      NftStatus.saleOpening
-    )
-
-    const nft = await this.getNft(newAuction.nft._id.toString())
-
-    // TODO: Add auction as: await this.auctionModel.create(newAuctionEth)
-
-    const nftHistoryEntry: CreateNftHistoryDto = {
-      nftId: newAuction.nft._id.toString(),
-      userAddress: seller.avnPubKey,
-      auctionId: newAuction._id.toString(),
-      currency: newAuction.currency,
-      amount: newAuction.reservePrice,
-      saleType: newAuction.type,
-      type: HistoryType.listed
-    }
-    await this.addNftHistory(nftHistoryEntry)
-
-    const avnListingTransaction: ListAvnTransactionDto = {
-      request_id: v4().toString(),
-      type: AvnTransactionType.OpenSingleNftListing,
-      data: {
-        nft_id: nft.eid,
-        market: Market.Fiat,
-        userId: seller._id,
-        ethereumAddress: '', // This is only used for FIAT so it is unused
-        isFixedPrice: newAuction.type === AuctionType.fixedPrice,
-        endTime: new Date(newAuction.endTime).getTime() / 1000 // Convert to Unix timestamp (secs)
-      },
-      state: AvnTransactionState.NEW,
-      history: []
-    }
-    await this.addNftListingToAvn(avnListingTransaction)
-
-    return newAuction
-  }
-
-  /**
-   * Update NFT status with NFT service via transporter
-   * @param nftId NFT ID
-   * @param nftStatus NFT status
-   */
-  private async updateNftStatus(
-    nftId: string,
-    nftStatus: NftStatus
-  ): Promise<void> {
-    const update = await firstValueFrom(
-      this.clientProxy.send(MessagePatternGenerator('nft', 'setStatusToNft'), {
-        nftId,
-        nftStatus
-      })
-    )
-
-    if (!update) {
-      this.log.error(
-        `[ListingService] Failed to update NFT status to ${nftStatus} for NFT ID ${nftId}`
-      )
-    }
-  }
-
-  /**
-   * Add NFT history with NFT service via transporter
-   * @param historyParams history params
-   */
-  private async addNftHistory(
-    historyParams: CreateNftHistoryDto
-  ): Promise<void> {
-    const history = await firstValueFrom(
-      this.clientProxy.send(
-        MessagePatternGenerator('nft', 'addHistory'),
-        historyParams
-      )
-    )
-
-    if (!history) {
-      this.log.error(
-        `[ListingService] Failed to add NFT history for NFT ID ${historyParams.nftId}`
-      )
-    }
-  }
-
-  /**
-   * Get NFT from NFT Service via Redis.
-   * @param nftId NFT ID
-   */
-  private async getNft(nftId: string): Promise<Nft> {
-    return await firstValueFrom(
-      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
-        nftId
-      })
-    )
-  }
-
-  /**
-   * Add NFT listing to AVN
-   * @param avnTransaction AVN transaction
-   * @returns AVN transaction
-   */
-  private async addNftListingToAvn(
-    avnTransaction: ListAvnTransactionDto
-  ): Promise<AvnNftTransaction> {
-    return await this.avnNftTransactionModel.create(avnTransaction)
   }
 }

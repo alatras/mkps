@@ -26,7 +26,6 @@ export class NftHistory {
   @Prop({
     type: 'object',
     value: { type: 'Buffer' },
-    transform: val => uuidFrom(val)
   })
   nftId: string
 
@@ -38,14 +37,17 @@ export class NftHistory {
   })
   auctionId?: object
 
-  @Prop({ required: true })
+  @Prop()
   userAddress: string
+
+  @Prop()
+  type: string
 
   @Prop()
   fromAddress?: string
 
-  @Prop({ type: String, enum: HistoryType })
-  saleType?: AuctionType
+  @Prop()
+  saleType?: string
 
   @Prop()
   amount?: string
@@ -56,11 +58,8 @@ export class NftHistory {
   @Prop()
   transactionHash?: string
 
-  @Prop({ type: String, enum: HistoryType })
-  currency?: Currency
-
-  @Prop({ type: String, required: true, enum: HistoryType })
-  type: HistoryType
+  @Prop()
+  currency?: string
 
   constructor(partial: Partial<NftHistory>) {
     Object.assign(this, partial)

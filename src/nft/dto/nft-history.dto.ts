@@ -38,13 +38,13 @@ export class CreateNftHistoryDto {
 
   @Expose()
   @IsOptional()
-  @IsEnum(AuctionType)
-  saleType?: AuctionType
+  @IsString()
+  saleType?: string
 
   @Expose()
   @IsOptional()
-  @IsEnum(Currency)
-  currency?: Currency
+  @IsString()
+  currency?: string
 
   @Expose()
   @IsOptional()

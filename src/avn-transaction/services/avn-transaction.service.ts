@@ -18,6 +18,7 @@ import { firstValueFrom } from 'rxjs'
 import { getRoyalties } from '../../utils/get-royalties'
 import { Nft } from '../../nft/schemas/nft.schema'
 import { AvnTransactionApiGatewayService } from './avn-transaction-api-gateway.service'
+import { ListAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 
 @Injectable()
 export class AvnTransactionService {
@@ -73,23 +74,14 @@ export class AvnTransactionService {
     return avnTransaction
   }
 
-  private async getUser(userId: MUUID.MUUID): Promise<User> {
-    return await firstValueFrom(
-      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
-        userId: userId.toString()
-      })
-    )
-  }
-
   /**
-   * Get NFT from NFT Service via Redis.
+   * Create a new doc in AvnTransactions collection to list NFT.
+   * @param listNftAvnTransaction List NFT transaction
    */
-  private async getNft(nftId: string): Promise<Nft> {
-    return await firstValueFrom(
-      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
-        nftId
-      })
-    )
+  async createListNftAvnTransaction(
+    listNftAvnTransaction: ListAvnTransactionDto
+  ) {
+    await this.avnTransactionModel.create(listNftAvnTransaction)
   }
 
   getAvnTransactionByRequestId = async (
