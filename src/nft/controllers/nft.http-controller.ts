@@ -24,6 +24,7 @@ import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { errorResponseGenerator } from '../../core/errors/error-response-generator'
+import { DataWrapper } from '../../common/dataWrapper'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
@@ -54,9 +55,14 @@ export class NftHttpController {
   async mint(
     @Request() req: Express.Request,
     @Body() createNftDto: CreateNftDto
-  ): Promise<CreateNftResponseDto> {
+  ): Promise<DataWrapper<NftResponseDto>> {
     try {
-      return await this.nftService.mint(req.user as User, createNftDto)
+      const mintResult = await this.nftService.mint(
+        req.user as User,
+        createNftDto
+      )
+
+      return { data: mintResult }
     } catch (err) {
       this.log.error('[NftHttpController] cannot create NFT:', err)
       errorResponseGenerator(err)
