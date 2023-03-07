@@ -87,9 +87,15 @@ export class AvnTransactionApiGatewayService {
   }
 
   /**
-   * Get and store confirmation on AVN transaction by polling the result from API Gateway.
-   * Used by minting and listing.
-   * This should not be waited for, but run in the background.
+   * Get and store confirmations of AvN transaction by polling the result from API Gateway.
+   * This is used by minting and listing so far.
+   * This should not be waited for. It runs in the background.
+   * It resolves once:
+   * 1- The transaction is committed with 'processed', 'rejected', or 'failed'.
+   * 2- When it completes its tasks:
+   *    a- Checking for transaction to commit
+   *    b- Updating relevant docs in DB while / after polling
+   *    c- Logging any errors
    * @param avnRequestId request ID returned by API Gateway
    * @param localRequestId request ID returned to this BE consumer
    */
@@ -119,7 +125,6 @@ export class AvnTransactionApiGatewayService {
           `Transaction status: ${polledState.status}`
       )
 
-      // Update NFT mint status
       if (pollingOperation === ApiGateWayPollingOption.mintSingleNft) {
         this.updateNftMintStatus(nftId, polledState)
       }
@@ -302,23 +307,27 @@ export class AvnTransactionApiGatewayService {
    * Get NFT ID from AvN via API Gateway
    * @param externalRef the External reference used to mint the NFT
    */
-  private async getNftIdFromAvn(
-    externalRef: string,
-    attemptNo = 0
-  ): Promise<string> {
-    const res = await this.avnApi.query.getNftId(externalRef)
-
-    if (!res && attemptNo < 2) {
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      return this.getNftIdFromAvn(externalRef, attemptNo + 1)
+  private async getNftIdFromAvn(externalRef: string): Promise<string> {
+    let res = null
+    for (let i = 0; i < 3 && !res; i++) {
+      res = await this.avnApi.query.getNftId(externalRef)
+      if (!res) {
+        await new Promise(resolve => setTimeout(resolve, 3000))
+      } else {
+        break
+      }
     }
-    this.log.debug(
-      `[AvnTransactionApiGatewayService.getNftIdFromAvn] NFT ID from AvN: ${res}`
-    )
+
     if (!res) {
+      this.log.error(
+        '[AvnTransactionApiGatewayService.getNftIdFromAvn] NFT ID form AvN not found'
+      )
       throw new Error('AvN NFT ID not found')
     }
 
+    this.log.debug(
+      `[AvnTransactionApiGatewayService.getNftIdFromAvn] NFT ID from AvN: ${res}`
+    )
     return res
   }
 
