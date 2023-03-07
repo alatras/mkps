@@ -89,7 +89,6 @@ export class VaultService {
     headers?: Record<string, string>
   ): Promise<string | any> {
     const defaultHeaders = { 'Content-Type': 'application/json' }
-
     try {
       const response = await firstValueFrom(
         this.httpService.post(`${this.config.baseUrl}/${url}`, data, {
