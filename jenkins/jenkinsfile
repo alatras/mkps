@@ -51,8 +51,12 @@ pipeline {
 
                     if ("${params.account_name}" == "eos") {
                         tag = "v${params.environment}-$BUILD_NUMBER"
-                        latest = "${params.environment}-latest"                        
+                        latest = "${params.environment}-latest"
                     } 
+                    if ("${params.account_name}" == "prod") {
+                        helm_chart = "values-${params.account_name}-${_SERVICE.toLowerCase()}.yaml"
+                    }
+
                     if ("${params.account_name}" == "demo") {
                         namespace = "app-pentest"
                         helm_chart = "values-${params.account_name}-${_SERVICE.toLowerCase()}.yaml"
