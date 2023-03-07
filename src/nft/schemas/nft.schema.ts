@@ -59,7 +59,6 @@ export class Nft {
     type: 'object',
     value: { type: 'Buffer' },
     ref: User.name
-    // required: true
   })
   @Transform(({ value }) => from(value).toString())
   minterId: MUUID
@@ -126,6 +125,9 @@ export class Nft {
     required: false
   })
   primarySaleCurrency?: Currency
+
+  @Prop({ required: false })
+  avnNftId?: string
 }
 
 export const NftSchema = SchemaFactory.createForClass(Nft)

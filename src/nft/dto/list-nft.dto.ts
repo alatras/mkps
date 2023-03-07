@@ -1,13 +1,13 @@
-import { IsDate, IsOptional, IsString, ValidateNested } from 'class-validator'
+import { IsOptional, IsString, ValidateNested } from 'class-validator'
 import { Exclude, Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { AuctionStatus, Currency } from '../../shared/enum'
 import { Prop } from '@nestjs/mongoose'
 import { ApiProperty } from '@nestjs/swagger'
 import { AuctionType } from '../../shared/enum'
-import { User } from 'src/user/schemas/user.schema'
-import { DataWrapper } from 'src/common/dataWrapper'
-import { Auction } from 'src/listing/schemas/auction.schema'
+import { User } from '../../user/schemas/user.schema'
+import { DataWrapper } from '../../common/dataWrapper'
+import { Auction } from '../../listing/schemas/auction.schema'
 
 export class ListingNft {
   @ApiProperty({ required: true })
@@ -96,4 +96,4 @@ export class ListNftDto {
 }
 
 @Exclude()
-export class ListNftResponseDto extends DataWrapper<Auction> { }
+export class ListNftResponseDto extends DataWrapper<Auction> {}

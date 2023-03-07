@@ -2,8 +2,7 @@ import { Document } from 'mongoose'
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose'
-import { AuctionType, Currency, DbCollections } from '../../shared/enum'
-import { HistoryType } from '../../shared/enum'
+import { DbCollections } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 
 export type NftHistoryDocument = NftHistory & Document
@@ -25,7 +24,7 @@ export class NftHistory {
   @Transform(({ value }) => uuidFrom(value).toString())
   @Prop({
     type: 'object',
-    value: { type: 'Buffer' },
+    value: { type: 'Buffer' }
   })
   nftId: string
 

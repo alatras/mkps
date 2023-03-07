@@ -5,15 +5,16 @@ import {
   IsNumber,
   IsEnum,
   IsNotEmpty,
-  IsString
+  IsString,
+  IsOptional
 } from 'class-validator'
-import { Nft } from 'src/nft/schemas/nft.schema'
+import { Nft } from '../../nft/schemas/nft.schema'
 import { from } from 'uuid-mongodb'
 import {
   AvnTransactionState,
   AvnTransactionType,
   Market
-} from 'src/shared/enum'
+} from '../../shared/enum'
 import { AvnTransactionHistoryBase } from '../schemas/avn-transaction.schema'
 
 export class MintAvnTransactionDto {
@@ -46,32 +47,16 @@ class AvnOpenForSaleTransactionData {
   // if the listing type is an auction or fixed price
   @IsBoolean()
   isFixedPrice: boolean
+
+  @IsString()
+  @IsOptional()
+  avnNftId?: string
+
+  // NFT ID in local database
+  @IsString()
+  @IsOptional()
+  nftId?: string
 }
-
-// class AvnOpenForSaleHistoryOperationData {
-//   @IsString()
-//   ethereumProof: string
-
-//   @IsNumber()
-//   opId: number
-
-//   @IsString()
-//   royalties: string
-
-//   @IsString()
-//   error?: string
-// }
-
-// class AvnOpenForSaleHistory {
-//   @Prop({ type: AvnOpenForSaleHistoryOperationData })
-//   operation_data: AvnOpenForSaleHistoryOperationData
-
-//   @Prop({ type: AvnTransactionState })
-//   state: AvnTransactionState
-
-//   @IsNumber()
-//   timestamp: number
-// }
 
 export class ListAvnTransactionDto {
   @IsString()

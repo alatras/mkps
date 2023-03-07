@@ -14,7 +14,15 @@ import { CreateNftDto, CreateNftResponseDto } from '../dto/nft.dto'
 import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftHistory } from '../schemas/nft-history.schema'
-import { AuctionStatus, AuctionType, AvnTransactionState, AvnTransactionType, Currency, HistoryType, Market } from '../../shared/enum'
+import {
+  AuctionStatus,
+  AuctionType,
+  AvnTransactionState,
+  AvnTransactionType,
+  Currency,
+  HistoryType,
+  Market
+} from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
@@ -31,12 +39,11 @@ import { ClientProxy } from '@nestjs/microservices'
 import { LogService } from '../../log/log.service'
 import { InvalidDataError } from '../../core/errors'
 import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
-import { validateListingPrice } from 'src/utils/validateListingPrice'
-import { PaymentService } from 'src/payment/payment.service'
-import { ListingService } from 'src/listing/listing.service'
-import { DataWrapper } from 'src/common/dataWrapper'
-import { ListAvnTransactionDto } from 'src/avn-transaction/dto/mint-avn-transaction.dto'
-import { AvnNftTransaction } from 'src/avn-transaction/schemas/avn-transaction.schema'
+import { validateListingPrice } from '../../utils/validateListingPrice'
+import { PaymentService } from '../../payment/payment.service'
+import { ListingService } from '../../listing/listing.service'
+import { ListAvnTransactionDto } from '../../avn-transaction/dto/mint-avn-transaction.dto'
+import { AvnNftTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
 
 @Injectable()
 export class NftService {
@@ -45,7 +52,8 @@ export class NftService {
   constructor(
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
     @InjectModel(NftHistory.name) private nftHistoryModel: Model<NftHistory>,
-    @InjectModel(AvnNftTransaction.name) private avnNftTransactionModel: Model<AvnNftTransaction>,
+    @InjectModel(AvnNftTransaction.name)
+    private avnNftTransactionModel: Model<AvnNftTransaction>,
     private readonly avnTransactionService: AvnTransactionService,
     @Inject(forwardRef(() => EditionService))
     private editionService: EditionService,
@@ -79,26 +87,26 @@ export class NftService {
       isHidden: true,
       ...(createNftDto.owner
         ? {
-          owner: {
-            _id: uuidFrom(fullUserObject._id),
-            avnPubKey: createNftDto.owner.avnPubKey,
-            username: createNftDto.owner.username
+            owner: {
+              _id: uuidFrom(fullUserObject._id),
+              avnPubKey: createNftDto.owner.avnPubKey,
+              username: createNftDto.owner.username
+            }
           }
-        }
         : {
-          owner: {
-            _id: uuidFrom(fullUserObject._id),
-            avnPubKey: fullUserObject.avnPubKey,
-            username: fullUserObject.username
-          }
-        }),
+            owner: {
+              _id: uuidFrom(fullUserObject._id),
+              avnPubKey: fullUserObject.avnPubKey,
+              username: fullUserObject.username
+            }
+          }),
       status: NftStatus.minting,
       minterId: uuidFrom(fullUserObject._id)
     }
 
     const nft = await this.createNft(newNft, NftStatus.minting)
 
-    const mint = await this.avnTransactionService.createMintAvnTransaction(
+    const mint = await this.avnTransactionService.mintNft(
       nft._id.toString(),
       fullUserObject
     )
@@ -108,7 +116,7 @@ export class NftService {
 
   /**
    * List an NFT (Auction)
-   * This updates NFT status to 'Sale opening', creates an Auction, 
+   * This updates NFT status to 'Sale opening', creates an Auction,
    * adds NFT history item, and adds the listing to AVN Transactions.
    * @param user Logged in user
    * @param createNftDto Request body
@@ -132,6 +140,12 @@ export class NftService {
     if (!nft) {
       this.log.debug(`[NftService.list] NFT ${nftUUId} not found to list`)
       throw new BadRequestException('NFT not found')
+    }
+
+    // Throw if NFT has no AvN ID
+    if (!nft.avnNftId) {
+      this.log.debug(`[NftService.list] NFT ${nftUUId} has no AvN ID`)
+      throw new BadRequestException('NFT has no AvN ID')
     }
 
     // Throw if NFT status isn't minted or owned
@@ -186,9 +200,14 @@ export class NftService {
     }
 
     // Throw if NFT is not allowed to be sold in the requested currency
-    const isSecondarySale = await this.listingService.isNftSecondHand(uuidFrom(listNftDto.nft.id))
-    this.listingService.checkAllowedSaleCurrency(listNftDto, isSecondarySale, nft)
-
+    const isSecondarySale = await this.listingService.isNftSecondHand(
+      uuidFrom(listNftDto.nft.id)
+    )
+    this.listingService.checkAllowedSaleCurrency(
+      listNftDto,
+      isSecondarySale,
+      nft
+    )
 
     // Throw if auction close date is invalid (for none ETH)
     if (listNftDto.currency !== Currency.ETH) {
@@ -205,21 +224,17 @@ export class NftService {
     }
 
     // Set NFT status to 'Sale opening'
-    await this.setStatusToNft(
-      listNftDto.nft.id,
-      NftStatus.saleOpening
-    )
+    await this.setStatusToNft(listNftDto.nft.id, NftStatus.saleOpening)
 
     // Create auction
     const auction = await this.listingService.createAuction(
       {
         id: uuidFrom(fullUserObject._id).toString(),
         avnPubKey: fullUserObject.avnPubKey,
-        username: fullUserObject.username,
+        username: fullUserObject.username
       },
       listNftDto,
-      isSecondarySale,
-      nft,
+      isSecondarySale
     )
 
     // Add NFT history entry
@@ -235,7 +250,7 @@ export class NftService {
     await this.addHistory(nftHistoryEntry)
 
     // Add listing to AVN transactions in DB
-    const avnListingTransaction: ListAvnTransactionDto = {
+    const listAvnTransaction: ListAvnTransactionDto = {
       request_id: v4().toString(),
       type: AvnTransactionType.OpenSingleNftListing,
       data: {
@@ -244,12 +259,15 @@ export class NftService {
         userId: uuidFrom(listNftDto.seller.id),
         ethereumAddress: '', // This is only used for FIAT so it is unused
         isFixedPrice: listNftDto.type === AuctionType.fixedPrice,
-        endTime: new Date(listNftDto.endTime).getTime() / 1000 // Convert to Unix timestamp (secs)
+        endTime: new Date(listNftDto.endTime).getTime() / 1000, // Convert to Unix timestamp (secs)
+        avnNftId: nft.avnNftId,
+        nftId: nft._id.toString()
       },
       state: AvnTransactionState.NEW,
       history: []
     }
-    await this.avnTransactionService.createListNftAvnTransaction(avnListingTransaction)
+
+    await this.avnTransactionService.listNft(listAvnTransaction)
 
     return { data: auction, message: 'auctionCreated' }
   }
@@ -283,6 +301,7 @@ export class NftService {
   }
 
   async setStatusToNft(id: string, status: NftStatus): Promise<Nft> {
+    this.log.debug(`Setting status of NFT ${id} to ${status}`)
     const nft = await this.nftModel.findOneAndUpdate(
       { _id: uuidFrom(id) },
       {
@@ -312,8 +331,8 @@ export class NftService {
   async addHistory(historyParams: CreateNftHistoryDto): Promise<unknown> {
     const history = historyParams.transactionHash
       ? await this.nftHistoryModel.findOne({
-        transactionHash: historyParams.transactionHash
-      })
+          transactionHash: historyParams.transactionHash
+        })
       : null
 
     if (!history) {
@@ -429,6 +448,27 @@ export class NftService {
     }
 
     return await this.nftModel.create(finalDoc)
+  }
+
+  /**
+   * Update NFT with AvN NFT ID
+   * @param nftId NFT ID
+   * @param avnNftId AvN NFT ID
+   */
+  async setAvnNftIdToNft(nftId: string, avnNftId: string): Promise<Nft> {
+    this.log.debug(`Setting AvN NFT ID ${avnNftId} to NFT ${nftId}`)
+    return await this.nftModel.findOneAndUpdate(
+      { _id: uuidFrom(nftId) },
+      {
+        $set: {
+          avnNftId,
+          updatedAt: new Date()
+        }
+      },
+      {
+        returnDocument: 'after'
+      }
+    )
   }
 
   private async getUser(userId: MUUID): Promise<User> {

@@ -16,12 +16,15 @@ import {
 } from '@nestjs/microservices'
 import { getRedisOptions } from '../utils/get-redis-options'
 import { LogModule } from '../log/log.module'
-import { ListingModule } from 'src/listing/listing.module'
-import { PaymentModule } from 'src/payment/payment.module'
-import { PaymentService } from 'src/payment/payment.service'
-import { ListingService } from 'src/listing/listing.service'
-import { Auction, AuctionSchema } from 'src/listing/schemas/auction.schema'
-import { AvnNftTransaction, AvnNftTransactionSchema } from 'src/avn-transaction/schemas/avn-transaction.schema'
+import { ListingModule } from '../listing/listing.module'
+import { PaymentModule } from '../payment/payment.module'
+import { PaymentService } from '../payment/payment.service'
+import { ListingService } from '../listing/listing.service'
+import { Auction, AuctionSchema } from '../listing/schemas/auction.schema'
+import {
+  AvnNftTransaction,
+  AvnNftTransactionSchema
+} from '../avn-transaction/schemas/avn-transaction.schema'
 
 @Module({
   imports: [
@@ -70,4 +73,4 @@ import { AvnNftTransaction, AvnNftTransactionSchema } from 'src/avn-transaction/
   ],
   exports: [NftService]
 })
-export class NftModule { }
+export class NftModule {}

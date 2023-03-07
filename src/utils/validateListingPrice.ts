@@ -1,6 +1,6 @@
 import { UnprocessableEntityException } from '@nestjs/common'
-import { ListNftDto } from 'src/nft/dto/list-nft.dto'
-import { Currency } from 'src/shared/enum'
+import { ListNftDto } from '../nft/dto/list-nft.dto'
+import { Currency } from '../shared/enum'
 
 /**
  * Validate listing price for NFT or Edition if currency is not ETH.

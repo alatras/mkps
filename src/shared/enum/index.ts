@@ -137,3 +137,8 @@ export enum SecondarySaleMode {
   match_primary = 'match_primary',
   none = 'none'
 }
+
+export enum ApiGateWayPollingOption {
+  mintSingleNft = 'mintSingleNft',
+  listSingleNft = 'listSingleNft'
+}

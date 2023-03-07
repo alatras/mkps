@@ -8,29 +8,20 @@ import { LoggerService } from '@nestjs/common'
 import {
   AuctionStatus,
   AuctionType,
-  AvnTransactionState,
-  AvnTransactionType,
   Currency,
-  HistoryType,
-  Market,
-  NftStatus,
   SecondarySaleMode
-} from 'src/shared/enum'
-import { firstValueFrom } from 'rxjs'
+} from '../shared/enum'
 import { ClientProxy } from '@nestjs/microservices'
 import { Auction } from './schemas/auction.schema'
 import { InjectModel } from '@nestjs/mongoose'
 import { ConfigService } from '@nestjs/config'
 import { FilterQuery, Model } from 'mongoose'
 import { MUUID, v4 } from 'uuid-mongodb'
-import { ListNftDto, Seller } from 'src/nft/dto/list-nft.dto'
-import { uuidFrom } from 'src/utils/uuid'
-import { Nft } from 'src/nft/schemas/nft.schema'
+import { ListNftDto, Seller } from '../nft/dto/list-nft.dto'
+import { uuidFrom } from '../utils/uuid'
+import { Nft } from '../nft/schemas/nft.schema'
 import { LogService } from '../log/log.service'
-import { MessagePatternGenerator } from '../utils/message-pattern-generator'
-import { CreateNftHistoryDto } from 'src/nft/dto/nft-history.dto'
-import { ListAvnTransactionDto } from 'src/avn-transaction/dto/mint-avn-transaction.dto'
-import { AvnNftTransaction } from 'src/avn-transaction/schemas/avn-transaction.schema'
+import { AvnNftTransaction } from '../avn-transaction/schemas/avn-transaction.schema'
 
 @Injectable()
 export class ListingService {
@@ -56,8 +47,7 @@ export class ListingService {
   async createAuction(
     seller: Seller,
     listNftDto: ListNftDto,
-    isSecondary: boolean,
-    nft: Nft
+    isSecondary: boolean
   ): Promise<Auction> {
     // Throw error if currency is invalid
     if (
@@ -81,11 +71,11 @@ export class ListingService {
       // We only set the winner for FreeClaim to prevent claiming twice
       ...(listNftDto.type === AuctionType.freeClaim &&
         listNftDto.winner && {
-        winner: {
-          _id: uuidFrom(listNftDto.winner._id),
-          avnPubKey: listNftDto.winner.avnPubKey
-        }
-      }),
+          winner: {
+            _id: uuidFrom(listNftDto.winner._id),
+            avnPubKey: listNftDto.winner.avnPubKey
+          }
+        }),
       highestBidId: null,
       status: listNftDto.status,
       reservePrice: listNftDto.reservePrice,
@@ -183,39 +173,34 @@ export class ListingService {
     const endTime = new Date(listNftDto.endTime).getTime()
     const now = Date.now()
     if (endTime < now) {
-      throw new BadRequestException(
-        {
-          endDate: {
-            message: 'End date must be in the future',
-            value: listNftDto.endTime
-          }
-        },
-      )
+      throw new BadRequestException({
+        endDate: {
+          message: 'End date must be in the future',
+          value: listNftDto.endTime
+        }
+      })
     }
 
     const isFixedPrice = listNftDto.type === AuctionType.fixedPrice
     const maxDays = 30
     if (!isFixedPrice && endTime > now + maxDays * 24 * 60 * 60 * 1000) {
-      throw new BadRequestException(
-        {
-          endDate: {
-            message: 'NFTs can be auctioned for a maximum of 30 days',
-            value: listNftDto.endTime
-          }
+      throw new BadRequestException({
+        endDate: {
+          message: 'NFTs can be auctioned for a maximum of 30 days',
+          value: listNftDto.endTime
         }
-      )
+      })
     }
 
     const minMinutes = 15
     if (endTime < now + minMinutes * 60 * 1000) {
-      throw new BadRequestException(
-        {
-          endDate: {
-            message: 'End time must be at least 15 minutes after listing the item for sale.',
-            value: listNftDto.endTime
-          }
+      throw new BadRequestException({
+        endDate: {
+          message:
+            'End time must be at least 15 minutes after listing the item for sale.',
+          value: listNftDto.endTime
         }
-      )
+      })
     }
   }
 }

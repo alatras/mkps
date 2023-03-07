@@ -6,17 +6,17 @@ import {
   Transport
 } from '@nestjs/microservices'
 import { MongooseModule } from '@nestjs/mongoose'
-import { DbCollections } from 'src/shared/enum'
+import { DbCollections } from '../shared/enum'
 import {
   AvnNftTransaction,
   AvnNftTransactionSchema
-} from 'src/avn-transaction/schemas/avn-transaction.schema'
+} from '../avn-transaction/schemas/avn-transaction.schema'
 import { ListingService } from './listing.service'
 import { Auction, AuctionSchema } from './schemas/auction.schema'
 import { getRedisOptions } from '../utils/get-redis-options'
 import { LogModule } from '../log/log.module'
-import { AvnTransactionModule } from 'src/avn-transaction/avn-transaction.module'
-import { AvnTransactionService } from 'src/avn-transaction/services/avn-transaction.service'
+import { AvnTransactionModule } from '../avn-transaction/avn-transaction.module'
+import { AvnTransactionService } from '../avn-transaction/services/avn-transaction.service'
 
 @Module({
   imports: [
@@ -49,4 +49,4 @@ import { AvnTransactionService } from 'src/avn-transaction/services/avn-transact
     }
   ]
 })
-export class ListingModule { }
+export class ListingModule {}

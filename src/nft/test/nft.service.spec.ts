@@ -28,6 +28,9 @@ import { AvnTransactionService } from '../../avn-transaction/services/avn-transa
 import { CreateNftDto } from '../dto/nft.dto'
 import { getMockUser } from '../../user/test/mocks'
 import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/avn-transaction-api-gateway.service'
+import { PaymentService } from '../../payment/payment.service'
+import { ListingService } from '../../listing/listing.service'
+import { Auction } from '../../listing/schemas/auction.schema'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -47,6 +50,8 @@ describe('NftService', () => {
         AvnTransactionApiGatewayService,
         ConfigService,
         LogService,
+        PaymentService,
+        ListingService,
         {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
@@ -65,6 +70,10 @@ describe('NftService', () => {
         },
         {
           provide: getModelToken(NftHistory.name),
+          useValue: getMockNftHistory()
+        },
+        {
+          provide: getModelToken(Auction.name),
           useValue: getMockNftHistory()
         },
         { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
@@ -131,11 +140,8 @@ describe('NftService', () => {
       }
 
       try {
-        const createMintAvnTransaction = jest
-          .spyOn(
-            AvnTransactionService.prototype as any,
-            'createMintAvnTransaction'
-          )
+        const mintNft = jest
+          .spyOn(AvnTransactionService.prototype as any, 'mintNft')
           .mockImplementationOnce(() => Promise.resolve({ request_id: '555' }))
 
         jest
@@ -153,7 +159,7 @@ describe('NftService', () => {
         const user = getMockUser()
         const res = await service.mint(user, nftDto)
 
-        expect(createMintAvnTransaction).toHaveBeenCalled()
+        expect(mintNft).toHaveBeenCalled()
 
         expect(JSON.stringify(res)).toBe(JSON.stringify({ requestId: '555' }))
       } catch (e) {

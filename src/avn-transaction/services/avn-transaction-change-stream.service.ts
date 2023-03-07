@@ -104,6 +104,10 @@ export class AvnTransactionChangeStreamService
             this.handleMintingEdition(transaction as AvnEditionTransaction)
             break
 
+          case AvnTransactionType.MintSingleNftApiGateway:
+            this.log.debug(`${logString} needs no handling`)
+            break
+
           default:
             this.log.warn(`${logString} has MISSING HANDLER`)
         }

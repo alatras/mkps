@@ -27,7 +27,7 @@ export class NftMsController {
   }
 
   @MessagePattern(MessagePatternGenerator('nft', 'setStatusToNft'))
-  async updateNft(
+  async setStatusToNft(
     @Payload() payload: { nftId: string; nftStatus: NftStatus }
   ): Promise<Nft> {
     return await this.nftService.setStatusToNft(
@@ -39,5 +39,15 @@ export class NftMsController {
   @MessagePattern(MessagePatternGenerator('nft', 'addHistory'))
   async addHistory(@Payload() payload: CreateNftHistoryDto): Promise<unknown> {
     return await this.nftService.addHistory(payload)
+  }
+
+  @MessagePattern(MessagePatternGenerator('nft', 'setAvnNftIdToNft'))
+  async setAvnNftIdToNft(
+    @Payload() payload: { nftId: string; avnNftId: string }
+  ): Promise<Nft> {
+    return await this.nftService.setAvnNftIdToNft(
+      payload.nftId,
+      payload.avnNftId
+    )
   }
 }

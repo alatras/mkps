@@ -23,6 +23,9 @@ import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { EditionController } from '../controllers/edition.http-controller'
 import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/avn-transaction-api-gateway.service'
+import { PaymentService } from '../../payment/payment.service'
+import { ListingService } from '../../listing/listing.service'
+import { Auction } from '../../listing/schemas/auction.schema'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -39,10 +42,16 @@ describe('EditionController', () => {
         AvnTransactionApiGatewayService,
         ConfigService,
         AvnTransactionService,
+        PaymentService,
+        ListingService,
         { provide: getModelToken(Nft.name), useValue: getMockNft() },
         { provide: getModelToken(NftEdition.name), useValue: getNftEdition() },
         {
           provide: getModelToken(EditionListing.name),
+          useValue: getEditionListing()
+        },
+        {
+          provide: getModelToken(Auction.name),
           useValue: getEditionListing()
         },
         {

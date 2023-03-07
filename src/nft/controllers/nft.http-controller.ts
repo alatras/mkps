@@ -57,8 +57,12 @@ export class NftHttpController {
     try {
       const mintRes = await this.nftService.mint(req.user as User, createNftDto)
       this.log.debug('[NftHttpController.mint] mint NFT succeed:', mintRes)
+      return mintRes
     } catch (err) {
-      this.log.error('[NftHttpController.mint] cannot mint NFT:', JSON.stringify(err))
+      this.log.error(
+        '[NftHttpController.mint] cannot mint NFT:',
+        JSON.stringify(err)
+      )
       return err
     }
   }
@@ -84,7 +88,10 @@ export class NftHttpController {
       this.log.debug('[NftHttpController.list] list NFT succeed:', mintRes)
       return mintRes
     } catch (err) {
-      this.log.error('[NftHttpController.list] cannot list NFT:', JSON.stringify(err))
+      this.log.error(
+        '[NftHttpController.list] cannot list NFT:',
+        JSON.stringify(err)
+      )
       throw err
     }
   }

@@ -23,6 +23,9 @@ import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { getModelToken } from '@nestjs/mongoose'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/avn-transaction-api-gateway.service'
+import { PaymentService } from '../../payment/payment.service'
+import { ListingService } from '../../listing/listing.service'
+import { Auction } from '../../listing/schemas/auction.schema'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -43,7 +46,9 @@ describe('NftMsController', () => {
         AvnTransactionService,
         AvnTransactionApiGatewayService,
         ConfigService,
+        PaymentService,
         LogService,
+        ListingService,
         {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
@@ -54,6 +59,10 @@ describe('NftMsController', () => {
         },
         {
           provide: getModelToken(NftHistory.name),
+          useValue: getMockNftHistory()
+        },
+        {
+          provide: getModelToken(Auction.name),
           useValue: getMockNftHistory()
         },
         {
