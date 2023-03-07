@@ -16,6 +16,12 @@ export class NftDraftModel {
   })
   _id?: MUUID.MUUID
 
+  @Prop()
+  name: string
+
+  @Prop()
+  description: string
+
   @Prop({ type: Owner })
   owner: Owner
 
@@ -52,7 +58,7 @@ export class NftDraftModel {
   editionId?: MUUID.MUUID
 
   @Prop({ type: 'object' })
-  properties: Record<string, string>
+  properties: Record<string, unknown>
 
   @Prop()
   editionNumber?: number

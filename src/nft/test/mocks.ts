@@ -68,6 +68,7 @@ export const getNftEdition = (): NftEdition => {
   return {
     _id: MUUID.from('218f9288-48e3-11ed-b878-0242ac120002'),
     name: 'test',
+    description: 'test',
     avnId: '3d94506a-e29b-4cfe-b20c-3f65653245fa',
     listingIndex: 10,
     availableCount: 10,

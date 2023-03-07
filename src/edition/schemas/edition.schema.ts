@@ -28,6 +28,9 @@ export class NftEdition {
   name: string
 
   @Prop()
+  description: string
+
+  @Prop()
   avnId?: string
   // For Ethereum, every time we start a new batch listing
   // we need to increment an index so the blockchain keeps track.
@@ -41,7 +44,7 @@ export class NftEdition {
   availableCount: number
 
   @Prop({ type: 'object' })
-  properties: Record<string, string>
+  properties: Record<string, unknown>
 
   @Prop({ type: UnlockableContent })
   unlockableContent?: UnlockableContent

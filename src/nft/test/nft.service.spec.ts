@@ -161,7 +161,9 @@ describe('NftService', () => {
 
         expect(mintNft).toHaveBeenCalled()
 
-        expect(JSON.stringify(res)).toBe(JSON.stringify({ requestId: '555' }))
+        expect(res).toHaveProperty('id')
+        expect(res).toHaveProperty('requestId')
+        expect(res.requestId).toBe('555')
       } catch (e) {
         throw e
       }

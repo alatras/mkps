@@ -93,7 +93,7 @@ export class CreateNftDto {
       ', '
     )}.`
   })
-  properties: Record<string, string>
+  properties: Record<string, unknown>
 
   @ApiProperty()
   @Type(() => Owner)
@@ -119,6 +119,11 @@ export class CreateNftResponseDto {
   @ApiProperty()
   @IsString()
   requestId: string
+
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  id: string
 }
 
 @Exclude()
@@ -191,7 +196,7 @@ export class NftResponseDto {
   @Expose()
   @ApiProperty()
   @IsObject()
-  properties: Record<string, string>
+  properties: Record<string, unknown>
 
   @Expose()
   @ApiProperty()

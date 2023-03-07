@@ -92,7 +92,7 @@ export class CreateEditionDto {
     )}.`
   })
   @Expose()
-  properties: Record<string, string>
+  properties: Record<string, unknown>
 }
 
 export class ListingOptions {
@@ -116,6 +116,12 @@ export class ListingOptions {
 @Exclude()
 export class EditionResponseDto {
   @Expose()
+  @ApiProperty()
   @IsString()
   requestId: string
+
+  @Expose()
+  @ApiProperty()
+  @IsString()
+  id: string
 }
