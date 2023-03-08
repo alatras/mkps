@@ -19,7 +19,8 @@
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "lib": ["es5", "es6", "es2015"]
+    "lib": ["es5", "es6", "es2015"],
+    "allowJs": true
   },
   "exclude": ["node_modules"]
 }
