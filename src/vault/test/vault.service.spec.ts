@@ -15,7 +15,6 @@ describe('VaultService', () => {
       .spyOn(VaultService.prototype as any, 'get')
       .mockResolvedValue(Promise.resolve({ address: 'address' }))
 
-
     const module: TestingModule = await Test.createTestingModule({
       imports: [HttpModule, ConfigModule.forRoot({ load: [config] })],
       providers: [VaultService]
@@ -23,21 +22,17 @@ describe('VaultService', () => {
 
     service = module.get<VaultService>(VaultService)
 
-    jest
-      .spyOn(VaultService.prototype as any, 'appLogin')
-      .mockReset()
-    jest
-      .spyOn(VaultService.prototype as any, 'get')
-      .mockReset()
+    jest.spyOn(VaultService.prototype as any, 'appLogin').mockReset()
+    jest.spyOn(VaultService.prototype as any, 'get').mockReset()
 
     jest
       .spyOn(VaultService.prototype as any, 'post')
       .mockResolvedValueOnce({ publicKey: 'publicKey' })
   })
 
-  // it('should be defined', () => {
-  //   expect(service).toBeDefined()
-  // })
+  it('should be defined', () => {
+    expect(service).toBeDefined()
+  })
 
   it('should call get with the correct URL when calling setAuthority and return an address', async () => {
     jest
