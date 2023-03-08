@@ -241,7 +241,7 @@ export class NftService {
     const nftHistoryEntry: CreateNftHistoryDto = {
       nftId: listNftDto.nft.id,
       userAddress: listNftDto.seller.avnPubKey,
-      auctionId: auction._id.toString(),
+      auctionId: auction._id,
       currency: listNftDto.currency,
       amount: listNftDto.reservePrice,
       saleType: listNftDto.type,
@@ -328,7 +328,7 @@ export class NftService {
     return nft
   }
 
-  async addHistory(historyParams: CreateNftHistoryDto): Promise<unknown> {
+  async addHistory(historyParams: CreateNftHistoryDto): Promise<NftHistory> {
     const history = historyParams.transactionHash
       ? await this.nftHistoryModel.findOne({
           transactionHash: historyParams.transactionHash
@@ -336,18 +336,14 @@ export class NftService {
       : null
 
     if (!history) {
-      return await this.nftHistoryModel.create(
-        {
-          ...historyParams
-        },
-        { new: true }
-      )
+      return await this.nftHistoryModel.create({
+        ...historyParams
+      })
     }
 
-    return await this.nftHistoryModel.updateOne(
+    return await this.nftHistoryModel.findOneAndUpdate(
       { transactionHash: historyParams.transactionHash },
-      { $set: { ...historyParams } },
-      { new: true }
+      { $set: { ...historyParams } }
     )
   }
 

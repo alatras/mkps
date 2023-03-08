@@ -90,7 +90,7 @@ export class ListNftDto {
   status?: AuctionStatus
 
   @ValidateNested()
-  @Type(() => Seller)
+  @Type(() => User)
   @Prop({ required: false })
   winner?: User
 }

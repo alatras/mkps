@@ -1,5 +1,4 @@
 import { Prop } from '@nestjs/mongoose'
-import { Transform } from 'class-transformer'
 import {
   IsBoolean,
   IsNumber,
@@ -9,7 +8,7 @@ import {
   IsOptional
 } from 'class-validator'
 import { Nft } from '../../nft/schemas/nft.schema'
-import { from } from 'uuid-mongodb'
+import { MUUID } from 'uuid-mongodb'
 import {
   AvnTransactionState,
   AvnTransactionType,
@@ -28,9 +27,11 @@ class AvnOpenForSaleTransactionData {
   @IsString()
   nft_id: Nft['eid']
 
-  @Prop({ type: 'object', required: true })
-  @Transform(({ value }) => from(value).toString())
-  userId: object
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' }
+  })
+  userId: MUUID
 
   // Fixed string Ethereum
   @IsEnum(Market)

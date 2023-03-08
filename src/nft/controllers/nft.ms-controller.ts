@@ -5,6 +5,7 @@ import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { Nft } from '../schemas/nft.schema'
 import { NftStatus } from '../../shared/enum'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
+import { NftHistory } from '../schemas/nft-history.schema'
 
 @Controller()
 export class NftMsController {
@@ -37,7 +38,9 @@ export class NftMsController {
   }
 
   @MessagePattern(MessagePatternGenerator('nft', 'addHistory'))
-  async addHistory(@Payload() payload: CreateNftHistoryDto): Promise<unknown> {
+  async addHistory(
+    @Payload() payload: CreateNftHistoryDto
+  ): Promise<NftHistory> {
     return await this.nftService.addHistory(payload)
   }
 

@@ -180,7 +180,7 @@ describe('NftService', () => {
 
       jest
         .spyOn(service, 'addHistory')
-        .mockImplementationOnce(() => Promise.resolve())
+        .mockImplementationOnce(() => Promise.resolve(getMockNftHistory()))
 
       await service.handleNftMinted(
         uuidFrom(mockNft._id).toString(),

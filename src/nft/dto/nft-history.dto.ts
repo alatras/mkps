@@ -1,6 +1,7 @@
-import { HistoryType } from '../../shared/enum'
+import { Prop } from '@nestjs/mongoose'
 import { IsEnum, IsOptional, IsString } from 'class-validator'
 import { Expose } from 'class-transformer'
+import { HistoryType } from '../../shared/enum'
 
 export class CreateNftHistoryDto {
   @Expose()
@@ -9,8 +10,12 @@ export class CreateNftHistoryDto {
 
   @Expose()
   @IsOptional()
-  @IsString()
-  auctionId?: string
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' },
+    required: false
+  })
+  auctionId?: object
 
   @Expose()
   @IsString()
