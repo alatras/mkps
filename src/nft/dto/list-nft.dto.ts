@@ -9,16 +9,6 @@ import { User } from '../../user/schemas/user.schema'
 import { DataWrapper } from '../../common/dataWrapper'
 import { Auction } from '../../listing/schemas/auction.schema'
 
-export class ListingNft {
-  @ApiProperty({ required: true })
-  @IsString()
-  id: string
-
-  @ApiProperty({ required: true })
-  @IsString()
-  eid: string
-}
-
 export class Seller {
   @Transform(({ value }) => MUUID.from(value).toString())
   @ApiProperty({ required: true })
@@ -40,10 +30,9 @@ export class Seller {
 }
 
 export class ListNftDto {
-  @ValidateNested()
-  @Type(() => ListingNft)
+  @IsString()
   @ApiProperty({ required: true })
-  nft: ListingNft
+  nftId: string
 
   @ValidateNested()
   @Type(() => Seller)

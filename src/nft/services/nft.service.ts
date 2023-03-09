@@ -119,7 +119,7 @@ export class NftService {
    * This updates NFT status to 'Sale opening', creates an Auction,
    * adds NFT history item, and adds the listing to AVN Transactions.
    * @param user Logged in user
-   * @param createNftDto Request body
+   * @param listNftDto
    */
   async list(user: User, listNftDto: ListNftDto): Promise<ListNftResponseDto> {
     // Throw if listing price is invalid
@@ -135,8 +135,8 @@ export class NftService {
     }
 
     // Throw if NFT is not found
-    const nftUUId = uuidFrom(listNftDto.nft.id)
-    const nft = await this.findOneById(nftUUId.toString())
+    const nftUUId = uuidFrom(listNftDto.nftId)
+    const nft = await this.findOneById(nftUUId)
     if (!nft) {
       this.log.debug(`[NftService.list] NFT ${nftUUId} not found to list`)
       throw new BadRequestException('NFT not found')
@@ -200,9 +200,7 @@ export class NftService {
     }
 
     // Throw if NFT is not allowed to be sold in the requested currency
-    const isSecondarySale = await this.listingService.isNftSecondHand(
-      uuidFrom(listNftDto.nft.id)
-    )
+    const isSecondarySale = await this.listingService.isNftSecondHand(nftUUId)
     this.listingService.checkAllowedSaleCurrency(
       listNftDto,
       isSecondarySale,
@@ -224,7 +222,7 @@ export class NftService {
     }
 
     // Set NFT status to 'Sale opening'
-    await this.setStatusToNft(listNftDto.nft.id, NftStatus.saleOpening)
+    await this.setStatusToNft(nftUUId, NftStatus.saleOpening)
 
     // Create auction
     const auction = await this.listingService.createAuction(
@@ -233,13 +231,13 @@ export class NftService {
         avnPubKey: fullUserObject.avnPubKey,
         username: fullUserObject.username
       },
-      listNftDto,
+      { nftAvnId: nft.eid, ...listNftDto },
       isSecondarySale
     )
 
     // Add NFT history entry
     const nftHistoryEntry: CreateNftHistoryDto = {
-      nftId: listNftDto.nft.id,
+      nftId: listNftDto.nftId,
       userAddress: listNftDto.seller.avnPubKey,
       auctionId: auction._id,
       currency: listNftDto.currency,
@@ -274,11 +272,11 @@ export class NftService {
 
   /**
    * Get NFT by ID
-   * @param id NFT ID
+   * @param _id NFT ID
    * @returns NFT
    */
-  async findOneById(id: string): Promise<Nft> {
-    return this.nftModel.findOne({ _id: uuidFrom(id) }).lean()
+  async findOneById(_id: MUUID): Promise<Nft> {
+    return this.nftModel.findOne({ _id }).lean()
   }
 
   async updateOneById(id: string, updatedValues: Partial<Nft>): Promise<Nft> {
@@ -300,10 +298,10 @@ export class NftService {
     return this.nftModel.countDocuments(filter)
   }
 
-  async setStatusToNft(id: string, status: NftStatus): Promise<Nft> {
-    this.log.debug(`Setting status of NFT ${id} to ${status}`)
+  async setStatusToNft(_id: MUUID, status: NftStatus): Promise<Nft> {
+    this.log.debug(`Setting status of NFT ${_id} to ${status}`)
     const nft = await this.nftModel.findOneAndUpdate(
-      { _id: uuidFrom(id) },
+      { _id },
       {
         $set: {
           status,
@@ -389,7 +387,8 @@ export class NftService {
 
     let unlockableContent: UnlockableContent
     if (id) {
-      unlockableContent = (await this.findOneById(id))?.unlockableContent
+      unlockableContent = (await this.findOneById(uuidFrom(id)))
+        ?.unlockableContent
     } else if (contract.unlockableContent) {
       unlockableContent = { ...contract.unlockableContent, claimedCount: 0 }
     }

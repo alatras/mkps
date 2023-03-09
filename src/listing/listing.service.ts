@@ -46,7 +46,7 @@ export class ListingService {
    */
   async createAuction(
     seller: Seller,
-    listNftDto: ListNftDto,
+    listNftDto: ListNftDto & { nftAvnId: string },
     isSecondary: boolean
   ): Promise<Auction> {
     // Throw error if currency is invalid
@@ -59,8 +59,8 @@ export class ListingService {
     const auction: Auction = {
       _id: v4(),
       nft: {
-        _id: uuidFrom(listNftDto.nft.id),
-        eid: listNftDto.nft.eid
+        _id: uuidFrom(listNftDto.nftId),
+        eid: listNftDto.nftAvnId
       },
       seller: {
         _id: uuidFrom(seller.id),
