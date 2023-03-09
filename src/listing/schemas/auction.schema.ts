@@ -13,7 +13,7 @@ import { IsDate, IsString } from 'class-validator'
 
 export type AuctionDocument = Auction & Document
 
-class Nft {
+class AuctionNft {
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({ type: 'object', required: true })
   _id: object
@@ -105,8 +105,8 @@ export class Auction {
   })
   _id: object
 
-  @Prop({ type: Nft })
-  nft: Nft
+  @Prop({ type: AuctionNft })
+  nft: AuctionNft
 
   @Prop({ default: false })
   isSecondary: boolean

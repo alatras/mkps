@@ -125,9 +125,7 @@ export class AvnTransactionApiGatewayService {
           `Transaction status: ${polledState.status}`
       )
 
-      if (pollingOperation === ApiGateWayPollingOption.mintSingleNft) {
-        this.updateNftMintStatus(nftId, polledState)
-      }
+      this.updateNftStatus(nftId, polledState.status, pollingOperation)
 
       // If transaction is committed stop polling
       if (this.transactionIsCommitted(polledState)) {
@@ -241,6 +239,10 @@ export class AvnTransactionApiGatewayService {
         }
       }
     )
+
+    this.log.debug(
+      `[AvnTransactionApiGatewayService.updateTransactionHistory] Transaction history updated to: ${state}`
+    )
   }
 
   /**
@@ -248,11 +250,40 @@ export class AvnTransactionApiGatewayService {
    * @param nftId NFT ID
    * @param polledState Polled state
    */
-  private updateNftMintStatus(nftId: string, avnPolState: AvnPolState): void {
+  private updateNftStatus(
+    nftId: string,
+    avnPolState: string,
+    pollingOperation: ApiGateWayPollingOption
+  ): void {
+    let nftStatus: NftStatus
+    switch (avnPolState) {
+      case PollingTransactionStatus.pending:
+        nftStatus =
+          pollingOperation === ApiGateWayPollingOption.mintSingleNft
+            ? NftStatus.minting
+            : NftStatus.saleOpening
+        break
+      case PollingTransactionStatus.processed:
+        nftStatus =
+          pollingOperation === ApiGateWayPollingOption.mintSingleNft
+            ? NftStatus.minted
+            : NftStatus.forSale
+        break
+      case PollingTransactionStatus.rejected:
+        nftStatus =
+          pollingOperation === ApiGateWayPollingOption.mintSingleNft
+            ? NftStatus.draft
+            : NftStatus.minted
+        break
+      default:
+        nftStatus = NftStatus.draft
+    }
+
     this.log.debug(
-      `[AvnTransactionApiGatewayService.updateNftMintStatus] Updating NFT ${nftId} status...`
+      `[AvnTransactionApiGatewayService.updateNftMintStatus] ` +
+        `Updating NFT ${nftId} status to ${nftStatus} ` +
+        `according to AvN poll status ${avnPolState}`
     )
-    const nftStatus = this.getNftStatusFromPolledState(avnPolState)
 
     firstValueFrom(
       this.clientProxy.send(MessagePatternGenerator('nft', 'setStatusToNft'), {
@@ -329,30 +360,6 @@ export class AvnTransactionApiGatewayService {
       `[AvnTransactionApiGatewayService.getNftIdFromAvn] NFT ID from AvN: ${res}`
     )
     return res
-  }
-
-  /**
-   * Get NFT status from polled state
-   * @param polledState Polled state
-   * @returns NFT status
-   */
-  getNftStatusFromPolledState(polledState: AvnPolState): NftStatus {
-    let nftStatus: NftStatus
-    switch (polledState.status) {
-      case PollingTransactionStatus.pending:
-        nftStatus = NftStatus.minting
-        break
-      case PollingTransactionStatus.processed:
-        nftStatus = NftStatus.minted
-        break
-      case PollingTransactionStatus.rejected:
-        nftStatus = NftStatus.draft
-        break
-      default:
-        nftStatus = NftStatus.draft
-    }
-
-    return nftStatus
   }
 
   /**
