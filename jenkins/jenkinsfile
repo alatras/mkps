@@ -55,6 +55,7 @@ pipeline {
                     } 
                     if ("${params.account_name}" == "demo") {
                         namespace = "app-pentest"
+                        helm_chart = "values-${params.account_name}-${_SERVICE.toLowerCase()}.yaml"
                     }
                 }
             }

@@ -2,10 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+replicaCount: 2
 
 image:
-  repository: 696165561482.dkr.ecr.us-east-2.amazonaws.com/user_service
+  repository: 495587769252.dkr.ecr.us-east-2.amazonaws.com/listing_service
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: latest
@@ -69,8 +69,8 @@ resources:
 
 autoscaling:
   enabled: enable
-  minReplicas: 1
-  maxReplicas: 1
+  minReplicas: 2
+  maxReplicas: 4
   targetCPUUtilizationPercentage: 75
   targetMemoryUtilizationPercentage: 85
 
@@ -89,5 +89,5 @@ affinity:
             operator: Exists
         topologyKey: topology.kubernetes.io/zone
 
-#selectors:
-#  node: ohio
+selectors:
+  node: ohio

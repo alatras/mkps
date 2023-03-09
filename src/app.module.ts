@@ -13,6 +13,7 @@ import { EditionListingModule } from './edition-listing/edition-listing.module'
 import { AssetModule } from './asset/asset.module'
 import { PaymentModule } from './payment/payment.module'
 import { ListingModule } from './listing/listing.module'
+import { VaultModule } from './vault/vault.module'
 
 const GENERAL_IMPORTS = [
   AuthModule,
@@ -36,6 +37,7 @@ const imports = [
   AssetModule,
   PaymentModule,
   ListingModule,
+  VaultModule,
   ...getActiveMicroservices()
 ]
 

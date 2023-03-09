@@ -17,6 +17,7 @@ import {
   Transport
 } from '@nestjs/microservices'
 import { getRedisOptions } from '../utils/get-redis-options'
+import { HttpModule } from '@nestjs/axios'
 
 @Module({
   imports: [
@@ -27,7 +28,9 @@ import { getRedisOptions } from '../utils/get-redis-options'
         schema: AvnNftTransactionSchema,
         collection: DbCollections.AvnTransactions
       }
-    ])
+    ]),
+    LogModule,
+    HttpModule
   ],
   providers: [
     AvnTransactionService,

@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: 696165561482.dkr.ecr.us-east-2.amazonaws.com/user_service
+  repository: 696165561482.dkr.ecr.us-east-2.amazonaws.com/nft_service
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: latest
