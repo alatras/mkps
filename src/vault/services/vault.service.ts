@@ -53,13 +53,13 @@ export class VaultService {
 
     this.config = vaultConfig
 
-    this.setAuthority().then(r =>
-      this.logger.log(`Authority set - address: ${r}`)
-    )
-
-    this.setRelayer().then(r =>
-      this.logger.log(`Relayer set - publicKey: ${r}`)
-    )
+    // this.setAuthority().then(r =>
+    //   this.logger.log(`Authority set - address: ${r}`)
+    // )
+    //
+    // this.setRelayer().then(r =>
+    //   this.logger.log(`Relayer set - publicKey: ${r}`)
+    // )
   }
 
   private async get(url: string, token: string): Promise<any> {
