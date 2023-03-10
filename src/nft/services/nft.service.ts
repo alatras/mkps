@@ -9,7 +9,7 @@ import {
   UnprocessableEntityException
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { FilterQuery, Model } from 'mongoose'
+import { Model } from 'mongoose'
 import { CreateNftDto, CreateNftResponseDto } from '../dto/nft.dto'
 import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
@@ -27,7 +27,6 @@ import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
 import { MUUID, v4 } from 'uuid-mongodb'
-import { NftWithEdition } from '../schemas/nft-with-edition'
 import { NftDraftContract } from '../schemas/nft-draft-contract'
 import { User } from '../../user/schemas/user.schema'
 import { NftDraftModel } from '../schemas/nft-draft-model'
@@ -294,10 +293,6 @@ export class NftService {
     )
   }
 
-  async countNfts(filter: Record<string, any>): Promise<number> {
-    return this.nftModel.countDocuments(filter)
-  }
-
   async setStatusToNft(_id: MUUID, status: NftStatus): Promise<Nft> {
     this.log.debug(`Setting status of NFT ${_id} to ${status}`)
     const nft = await this.nftModel.findOneAndUpdate(
@@ -339,7 +334,7 @@ export class NftService {
       })
     }
 
-    return await this.nftHistoryModel.findOneAndUpdate(
+    return this.nftHistoryModel.findOneAndUpdate(
       { transactionHash: historyParams.transactionHash },
       { $set: { ...historyParams } }
     )
@@ -356,22 +351,6 @@ export class NftService {
       userAddress: nft.owner.avnPubKey,
       type: HistoryType.minted
     })
-  }
-
-  async getNftsOfEdition(
-    id: string,
-    limit = 20,
-    offset = 0,
-    filter?: FilterQuery<Nft>,
-    sort?: string | any
-  ): Promise<NftWithEdition[]> {
-    const nfts = await this.nftModel
-      .find({ ...filter, editionId: id })
-      .sort(sort)
-      .skip(offset)
-      .limit(limit)
-
-    return nfts.map((n: Nft) => n as NftWithEdition)
   }
 
   /**
@@ -452,7 +431,7 @@ export class NftService {
    */
   async setAvnNftIdToNft(nftId: string, avnNftId: string): Promise<Nft> {
     this.log.debug(`Setting AvN NFT ID ${avnNftId} to NFT ${nftId}`)
-    return await this.nftModel.findOneAndUpdate(
+    return this.nftModel.findOneAndUpdate(
       { _id: uuidFrom(nftId) },
       {
         $set: {
