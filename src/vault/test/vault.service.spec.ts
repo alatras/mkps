@@ -3,6 +3,7 @@ import { VaultService } from '../services/vault.service'
 import { HttpModule } from '@nestjs/axios'
 import { ConfigModule } from '@nestjs/config'
 import config from '../../config/app.config'
+import { LogModule } from '../../log/log.module'
 
 describe('VaultService', () => {
   let service: VaultService
@@ -16,7 +17,11 @@ describe('VaultService', () => {
       .mockResolvedValue(Promise.resolve({ address: 'address' }))
 
     const module: TestingModule = await Test.createTestingModule({
-      imports: [HttpModule, ConfigModule.forRoot({ load: [config] })],
+      imports: [
+        LogModule,
+        HttpModule,
+        ConfigModule.forRoot({ load: [config] })
+      ],
       providers: [VaultService]
     }).compile()
 
