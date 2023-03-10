@@ -299,7 +299,7 @@ export class AvnTransactionApiGatewayService {
       })
     ).then((res: Nft) => {
       this.log.debug(
-        `[AvnTransactionApiGatewayService.updateNftMintStatus] NFT status updated ${res}`
+        `[AvnTransactionApiGatewayService.updateNftMintStatus] NFT status updated ${res?.status}`
       )
     })
   }
@@ -320,7 +320,7 @@ export class AvnTransactionApiGatewayService {
       })
     ).then((res: Nft) => {
       this.log.debug(
-        `[AvnTransactionApiGatewayService.updateNftListingStatus] NFT status updated ${res}`
+        `[AvnTransactionApiGatewayService.updateNftListingStatus] NFT status updated ${res?.status}`
       )
     })
   }
@@ -350,7 +350,7 @@ export class AvnTransactionApiGatewayService {
       )
     ).then((res: Nft) => {
       this.log.debug(
-        `[AvnTransactionApiGatewayService.updateNftAvnNftId] NFT status updated ${res}`
+        `[AvnTransactionApiGatewayService.updateNftAvnNftId] NFT status updated ${res?.status}`
       )
     })
   }
