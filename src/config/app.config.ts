@@ -37,9 +37,9 @@ export default registerAs('app', () => ({
     host: process.env.REDIS_URL
   },
   vault: {
-    baseUrl: process.env.VAULT_BASE_URL,
-    roleId: process.env.VAULT_ROLE_ID,
-    secretId: process.env.VAULT_SECRET_ID,
+    baseUrl: process.env.VAULT_URL,
+    roleId: process.env.VAULT_APP_ROLE_ID,
+    secretId: process.env.VAULT_APP_SECRET_ID,
     authority: {
       username: process.env.VAULT_AUTHORITY_USERNAME,
       password: process.env.VAULT_AUTHORITY_PASSWORD

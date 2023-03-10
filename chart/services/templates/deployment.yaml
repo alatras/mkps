@@ -307,6 +307,48 @@ spec:
                   name: test-auth0
                   key: test_auth0_client_secret
                   optional: true
+            - name: "VAULT_URL"
+              valueFrom:
+                secretKeyRef:
+                  name: avn-backend-conf-secrets
+                  key: vault_url
+                  optional: true
+            - name: "VAULT_APP_ROLE_ID"
+              valueFrom:
+                secretKeyRef:
+                  name: avn-backend-conf-secrets
+                  key: vault_app_role_id
+                  optional: true
+            - name: "VAULT_APP_SECRET_ID"
+              valueFrom:
+                secretKeyRef:
+                  name: avn-backend-conf-secrets
+                  key: vault_app_secret_id
+                  optional: true
+            - name: "VAULT_AUTHORITY_USERNAME"
+              valueFrom:
+                secretKeyRef:
+                  name: avn-backend-conf-secrets
+                  key: vault_authority_username
+                  optional: true
+            - name: "VAULT_AUTHORITY_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  name: avn-backend-conf-secrets
+                  key: vault_authority_password
+                  optional: true
+            - name: "VAULT_RELAYER_USERNAME"
+              valueFrom:
+                secretKeyRef:
+                  name: avn-backend-conf-secrets
+                  key: vault_relayer_username
+                  optional: true
+            - name: "VAULT_RELAYER_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  name: avn-backend-conf-secrets
+                  key: vault_relayer_password
+                  optional: true
           ports:
             - name: http
               containerPort: 5002
