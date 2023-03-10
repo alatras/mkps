@@ -29,7 +29,6 @@ import { HttpModule } from '@nestjs/axios'
         collection: DbCollections.AvnTransactions
       }
     ]),
-    LogModule,
     HttpModule
   ],
   providers: [

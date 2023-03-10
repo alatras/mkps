@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, LoggerService } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import { ConfigService } from '@nestjs/config'
 import { firstValueFrom } from 'rxjs'
+import { LogService } from '../../log/log.service'
 
 interface VaultConfig {
   baseUrl: string
@@ -16,6 +17,7 @@ interface VaultConfig {
 
 @Injectable()
 export class VaultService {
+  private logger: LoggerService
   private readonly config: VaultConfig
   private authority: { username: string; password: string; set: boolean } = {
     username: '',
@@ -30,8 +32,11 @@ export class VaultService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private logService: LogService
   ) {
+    this.logger = this.logService.getLogger()
+
     // create VaultOptions object
     const vaultConfig = this.configService.get<VaultConfig>('app.vault')
 
@@ -48,11 +53,13 @@ export class VaultService {
 
     this.config = vaultConfig
 
-    // call setAuthority function
-    // this.setAuthority().then(r => logger.info(`Authority set - address: ${r}`))
+    this.setAuthority().then(r =>
+      this.logger.log(`Authority set - address: ${r}`)
+    )
 
-    // call setRelayer function
-    // this.setRelayer().then(r => logger.info(`Relayer set - publicKey: ${r}`))
+    this.setRelayer().then(r =>
+      this.logger.log(`Relayer set - publicKey: ${r}`)
+    )
   }
 
   private async get(url: string, token: string): Promise<any> {
