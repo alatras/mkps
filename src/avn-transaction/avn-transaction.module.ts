@@ -47,6 +47,6 @@ import { HttpModule } from '@nestjs/axios'
     }
   ],
   controllers: [AvnTransactionHttpController],
-  exports: [AvnTransactionService]
+  exports: [AvnTransactionService, AvnTransactionApiGatewayService]
 })
 export class AvnTransactionModule {}

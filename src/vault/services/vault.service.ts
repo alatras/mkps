@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import { ConfigService } from '@nestjs/config'
 import { firstValueFrom } from 'rxjs'
-import { logger } from 'ethers'
 
 interface VaultConfig {
   baseUrl: string
@@ -50,10 +49,10 @@ export class VaultService {
     this.config = vaultConfig
 
     // call setAuthority function
-    this.setAuthority().then(r => logger.info(`Authority set - address: ${r}`))
+    // this.setAuthority().then(r => logger.info(`Authority set - address: ${r}`))
 
     // call setRelayer function
-    this.setRelayer().then(r => logger.info(`Relayer set - publicKey: ${r}`))
+    // this.setRelayer().then(r => logger.info(`Relayer set - publicKey: ${r}`))
   }
 
   private async get(url: string, token: string): Promise<any> {

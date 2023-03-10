@@ -94,23 +94,6 @@ export class AvnTransactionBase {
   autoCreate: true,
   timestamps: true
 })
-export class AvnNftTransaction extends AvnTransactionBase {
-  @Prop()
-  history: AvnMintHistory[]
-
-  @Prop()
-  data: AvnMintNFTTransactionData
-}
-
-export const AvnNftTransactionSchema =
-  SchemaFactory.createForClass(AvnNftTransaction)
-
-@Schema({
-  collection: DbCollections.AvnTransactions,
-  versionKey: false,
-  autoCreate: true,
-  timestamps: true
-})
 export class AvnEditionTransaction extends AvnTransactionBase {
   @Prop()
   history: AvnMintBatchHistory[]
@@ -127,3 +110,20 @@ export class AvnCreateBatchTransaction extends AvnTransactionBase {
   data: AvnCreateBatchTransactionData
   history: AvnMintBatchHistory[]
 }
+
+@Schema({
+  collection: DbCollections.AvnTransactions,
+  versionKey: false,
+  autoCreate: true,
+  timestamps: true
+})
+export class AvnNftTransaction extends AvnTransactionBase {
+  @Prop()
+  history: AvnMintHistory[]
+
+  @Prop()
+  data: AvnMintNFTTransactionData
+}
+
+export const AvnNftTransactionSchema =
+  SchemaFactory.createForClass(AvnNftTransaction)

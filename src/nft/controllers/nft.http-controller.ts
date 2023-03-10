@@ -23,7 +23,7 @@ import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
-import { errorResponseGenerator } from '../../core/errors/error-response-generator'
+import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
 import { DataWrapper } from '../../common/dataWrapper'
 
 @UsePipes(new ErrorValidationPipe())
@@ -40,7 +40,6 @@ export class NftHttpController {
 
   /**
    * Mint an NFT
-   * @param req Express Request
    * @param createNftDto Create NFT DTO
    */
   @ApiCreatedResponse({
@@ -61,11 +60,43 @@ export class NftHttpController {
         req.user as User,
         createNftDto
       )
-
+      this.log.debug('[NftHttpController.mint] mint NFT succeed:', mintResult)
       return { data: mintResult }
     } catch (err) {
-      this.log.error('[NftHttpController] cannot create NFT:', err)
-      errorResponseGenerator(err)
+      this.log.error(
+        '[NftHttpController.mint] cannot mint NFT:',
+        JSON.stringify(err)
+      )
+      return err
+    }
+  }
+
+  /**
+   * List an NFT
+   * @param listNftDto Create NFT DTO (Auction)
+   */
+  @ApiCreatedResponse({
+    description:
+      'List an NFT. This creates an auction for the NFT, registers a listing in AvN Network, and returns Auction.',
+    type: ListNftResponseDto
+  })
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('write:nfts')
+  @Post('list')
+  async list(
+    @Request() req: Express.Request,
+    @Body() listNftDto: ListNftDto
+  ): Promise<ListNftResponseDto> {
+    try {
+      const mintRes = await this.nftService.list(req.user as User, listNftDto)
+      this.log.debug('[NftHttpController.list] list NFT succeed:', mintRes)
+      return mintRes
+    } catch (err) {
+      this.log.error(
+        '[NftHttpController.list] cannot list NFT:',
+        JSON.stringify(err)
+      )
+      throw err
     }
   }
 }

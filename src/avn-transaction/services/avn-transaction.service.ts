@@ -13,11 +13,9 @@ import { User } from '../../user/schemas/user.schema'
 import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { AvnTransactionMintResponse } from '../response/anv-transaction-mint-response'
-import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
-import { firstValueFrom } from 'rxjs'
 import { getRoyalties } from '../../utils/get-royalties'
-import { Nft } from '../../nft/schemas/nft.schema'
 import { AvnTransactionApiGatewayService } from './avn-transaction-api-gateway.service'
+import { ListAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 
 @Injectable()
 export class AvnTransactionService {
@@ -33,6 +31,7 @@ export class AvnTransactionService {
   }
 
   /**
+   * Mint an NFT with AvN network.
    * Create a new doc in AvnTransactions collection to mint NFT.
    * Notify Aventus to listed the NFT and create a Proof.
    * The Proof will be used to create a auction in Ethereum.
@@ -40,7 +39,7 @@ export class AvnTransactionService {
    * @param user Logged in user
    * @returns Avn transaction response
    */
-  async createMintAvnTransaction(
+  async mintNft(
     nftId: string,
     user: User
   ): Promise<AvnTransactionMintResponse> {
@@ -73,22 +72,19 @@ export class AvnTransactionService {
     return avnTransaction
   }
 
-  private async getUser(userId: MUUID.MUUID): Promise<User> {
-    return await firstValueFrom(
-      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
-        userId: userId.toString()
-      })
-    )
-  }
-
   /**
-   * Get NFT from NFT Service via Redis.
+   * List an NFT with AvN network
+   * @param listNftAvnTransaction List NFT transaction
    */
-  private async getNft(nftId: string): Promise<Nft> {
-    return await firstValueFrom(
-      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
-        nftId
-      })
+  async listNft(listNftAvnTransaction: ListAvnTransactionDto): Promise<void> {
+    // Create a new doc in AvnTransactions collection to list NFT
+    await this.avnTransactionModel.create(listNftAvnTransaction)
+
+    // List NFT in AvN network
+    this.avnTransactionApiGatewayService.listSingleNft(
+      listNftAvnTransaction.data.nftId,
+      listNftAvnTransaction.data.avnNftId,
+      listNftAvnTransaction.request_id
     )
   }
 

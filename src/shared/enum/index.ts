@@ -62,7 +62,8 @@ export enum DbCollections {
   NFTs = 'nfts',
   NftHistory = 'nftHistory',
   Editions = 'editions',
-  EditionListings = 'editionListings'
+  EditionListings = 'editionListings',
+  Auctions = 'auctions'
 }
 
 export enum NftStatus {
@@ -130,4 +131,14 @@ export enum PollingTransactionStatus {
   pending = 'Pending',
   processed = 'Processed',
   rejected = 'Rejected'
+}
+
+export enum SecondarySaleMode {
+  match_primary = 'match_primary',
+  none = 'none'
+}
+
+export enum ApiGateWayPollingOption {
+  mintSingleNft = 'mintSingleNft',
+  listSingleNft = 'listSingleNft'
 }

@@ -45,10 +45,7 @@ export class AvnTransactionHttpController {
   ): Promise<AvnTransactionMintResponse | Error> {
     try {
       const user: User = (req as any).user
-      const create = await this.avnTransactionService.createMintAvnTransaction(
-        dto.nftId,
-        user
-      )
+      const create = await this.avnTransactionService.mintNft(dto.nftId, user)
 
       this.log.log(
         '[AvnTransactionHttpController] ANV transaction created successfully:',

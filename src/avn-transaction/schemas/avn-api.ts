@@ -1,6 +1,7 @@
 export interface AvnApi {
   send?: any
   poll?: any
+  query?: { getNftId: (query: string) => Promise<string> }
   init: () => Promise<AvnApi>
 }
 

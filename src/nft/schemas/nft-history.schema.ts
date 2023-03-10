@@ -2,8 +2,7 @@ import { Document } from 'mongoose'
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose'
-import { AuctionType, Currency, DbCollections } from '../../shared/enum'
-import { HistoryType } from '../../shared/enum'
+import { AuctionType, DbCollections, Currency } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 
 export type NftHistoryDocument = NftHistory & Document
@@ -25,8 +24,7 @@ export class NftHistory {
   @Transform(({ value }) => uuidFrom(value).toString())
   @Prop({
     type: 'object',
-    value: { type: 'Buffer' },
-    transform: val => uuidFrom(val)
+    value: { type: 'Buffer' }
   })
   nftId: string
 
@@ -38,13 +36,20 @@ export class NftHistory {
   })
   auctionId?: object
 
-  @Prop({ required: true })
+  @Prop()
   userAddress: string
+
+  @Prop()
+  type: string
 
   @Prop()
   fromAddress?: string
 
-  @Prop({ type: String, enum: HistoryType })
+  @Prop({
+    type: String,
+    enum: Object.values(AuctionType),
+    required: false
+  })
   saleType?: AuctionType
 
   @Prop()
@@ -56,11 +61,12 @@ export class NftHistory {
   @Prop()
   transactionHash?: string
 
-  @Prop({ type: String, enum: HistoryType })
+  @Prop({
+    type: String,
+    enum: Object.values(Currency),
+    required: false
+  })
   currency?: Currency
-
-  @Prop({ type: String, required: true, enum: HistoryType })
-  type: HistoryType
 
   constructor(partial: Partial<NftHistory>) {
     Object.assign(this, partial)

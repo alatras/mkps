@@ -11,6 +11,8 @@ import { getActiveMicroservices } from '../utils/microservices'
 import { UserModule } from './user/user.module'
 import { EditionListingModule } from './edition-listing/edition-listing.module'
 import { AssetModule } from './asset/asset.module'
+import { PaymentModule } from './payment/payment.module'
+import { ListingModule } from './listing/listing.module'
 import { VaultModule } from './vault/vault.module'
 
 const GENERAL_IMPORTS = [
@@ -33,6 +35,8 @@ const imports = [
   UserModule,
   EditionListingModule,
   AssetModule,
+  PaymentModule,
+  ListingModule,
   VaultModule,
   ...getActiveMicroservices()
 ]
