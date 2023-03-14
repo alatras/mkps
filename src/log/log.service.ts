@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { WinstonModule } from 'nest-winston'
-// import * as winston from 'winston'
 import winston from 'winston'
 import { ConsoleTransportInstance } from 'winston/lib/winston/transports'
 import DailyRotateFile from 'winston-daily-rotate-file'
 
 @Injectable()
 export class LogService {
-  constructor() {}
-
   private timestamp = winston.format.timestamp
   private errors = winston.format.errors
 
