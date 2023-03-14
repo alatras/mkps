@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { LoggerService } from '@nestjs/common'
 import { WinstonModule } from 'nest-winston'
-import * as winston from 'winston'
+import winston from 'winston'
 import { ConsoleTransportInstance } from 'winston/lib/winston/transports'
 import DailyRotateFile from 'winston-daily-rotate-file'
 
 @Injectable()
 export class LogService {
-  constructor() {
-    this.transports.push(this.dailyRotateFileTransport)
-  }
-
   private timestamp = winston.format.timestamp
   private errors = winston.format.errors
 
@@ -59,16 +55,17 @@ export class LogService {
 
   private consoleTransport = new winston.transports.Console()
 
-  private transports: (ConsoleTransportInstance | DailyRotateFile)[] = [
-    this.consoleTransport
-  ]
-
   private dailyRotateFileTransport = new DailyRotateFile({
     filename: 'application.log',
     dirname: 'logs',
     frequency: '1d',
     maxSize: '20m'
   })
+
+  private transports: (ConsoleTransportInstance | DailyRotateFile)[] = [
+    this.consoleTransport,
+    this.dailyRotateFileTransport
+  ]
 
   private logger = WinstonModule.createLogger({
     level: this.level(),
