@@ -349,6 +349,48 @@ spec:
                   name: avn-backend-conf-secrets
                   key: vault_relayer_password
                   optional: true
+            - name: "SUBSTRATE_ACCOUNT_PRIVATE_KEY"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: substrate_account_private_key
+                  optional: true
+            - name: "AVN_GATEWAY_URL"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: avn_gateway_url
+                  optional: true                  
+            - name: "EXTERNAL_REF_VERSION"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: external_ref_version
+                  optional: true                  
+            - name: "AVN_RELAYER"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: avn_relayer
+                  optional: true                  
+            - name: "AVN_AUTHORITY"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: avn_authority
+                  optional: true                  
+            - name: "AVN_POLLING_INTERVAL"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: avn_polling_interval
+                  optional: true                  
+            - name: "AVN_POLLING_TIMEOUT"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: avn_polling_timeout
+                  optional: true                  
           ports:
             - name: http
               containerPort: 5002
