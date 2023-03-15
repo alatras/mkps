@@ -40,7 +40,7 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: filebeat-sidecar
-          image: "docker.elastic.co/beats/filebeat:8.4.3"
+          image: "docker.elastic.co/beats/filebeat:8.6.0"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             requests:
