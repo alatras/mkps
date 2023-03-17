@@ -2,12 +2,12 @@ import {
   Controller,
   Get,
   InternalServerErrorException,
+  Logger,
   Query,
   UseGuards,
   UseInterceptors,
   UsePipes
 } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common'
 import { ApiCreatedResponse } from '@nestjs/swagger'
 import { errorResponseGenerator } from '../../core/errors/error-response-generator'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
@@ -15,7 +15,6 @@ import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../../auth/permissions.guard'
 import { DataWrapper } from '../../common/dataWrapper'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
-import { LogService } from '../../log/log.service'
 import { ErrorValidationPipe } from '../../pipes/error-validation.pipe'
 import { PresignedUrlQueryDto } from '../dto/presigned-url-request.dto'
 import { PresignedUrlResponse } from '../dto/presigned-url-response.dto'
@@ -23,14 +22,9 @@ import { AssetService } from '../services/asset.service'
 
 @Controller('asset')
 export class AssetController {
-  private log: LoggerService
+  private logger: Logger = new Logger(AssetController.name)
 
-  constructor(
-    private readonly assetService: AssetService,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+  constructor(private readonly assetService: AssetService) {}
 
   @ApiCreatedResponse({
     description:
@@ -51,10 +45,7 @@ export class AssetController {
         query.nftId
       )
     } catch (err) {
-      this.log.error(
-        '[getPresignedUrlForSmallPreview] cannot create presigned URL for small image:',
-        err
-      )
+      this.logger.error('cannot create presigned URL for small image:', err)
       return new InternalServerErrorException(err.message)
     }
   }
@@ -78,10 +69,7 @@ export class AssetController {
         query.nftId
       )
     } catch (err) {
-      this.log.error(
-        '[getPresignedUrlForOriginalAsset] cannot create presigned URL for original image:',
-        err
-      )
+      this.logger.error('cannot create presigned URL for original image:', err)
       errorResponseGenerator(err)
     }
   }

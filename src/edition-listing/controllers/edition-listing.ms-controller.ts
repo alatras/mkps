@@ -1,7 +1,5 @@
-import { Controller } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common'
+import { Controller, Logger } from '@nestjs/common'
 import { Payload, MessagePattern } from '@nestjs/microservices'
-import { LogService } from '../../log/log.service'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { EditionListingService } from '../services/edition-listing.service'
 import { EditionListingStatus } from '../../shared/enum'
@@ -9,14 +7,9 @@ import { errorResponseGenerator } from '../../core/errors/error-response-generat
 
 @Controller()
 export class EditionListingMsController {
-  private log: LoggerService
+  private logger = new Logger(EditionListingMsController.name)
 
-  constructor(
-    private readonly editionListingService: EditionListingService,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+  constructor(private readonly editionListingService: EditionListingService) {}
 
   @MessagePattern(
     MessagePatternGenerator('editionListing', 'getPreviousListingForEdition')
@@ -30,10 +23,7 @@ export class EditionListingMsController {
         payload.status
       )
     } catch (err) {
-      this.log.error(
-        '[getPreviousListingForEdition] cannot get previous listings for Edition:',
-        err
-      )
+      this.logger.error('cannot get previous listings for Edition:', err)
       errorResponseGenerator(err)
     }
   }

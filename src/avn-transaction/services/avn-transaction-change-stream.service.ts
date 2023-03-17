@@ -2,7 +2,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  LoggerService,
+  Logger,
   OnModuleDestroy,
   OnModuleInit
 } from '@nestjs/common'
@@ -23,10 +23,10 @@ import { ClientProxy } from '@nestjs/microservices'
 export class AvnTransactionChangeStreamService
   implements OnModuleInit, OnModuleDestroy
 {
-  private log: LoggerService
-  private options: ChangeStreamOptions
+  private readonly options: ChangeStreamOptions
   private changeStream: ChangeStream
-  private pipeline: Array<Record<string, unknown>>
+  private readonly pipeline: Array<Record<string, unknown>>
+  private readonly logger = new Logger(AvnTransactionChangeStreamService.name)
 
   constructor(
     @InjectModel(AvnNftTransaction.name)
@@ -34,7 +34,6 @@ export class AvnTransactionChangeStreamService
     private logService: LogService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
-    this.log = this.logService.getLogger()
     this.options = { fullDocument: 'updateLookup' }
     this.pipeline = [{ $match: { operationType: 'update' } }]
   }
@@ -70,13 +69,12 @@ export class AvnTransactionChangeStreamService
       }
     } catch (error) {
       if (this.changeStream.closed) {
-        this.log.error(
-          '[AvnTransactionChangeStreamService] changeStream' +
-            ` is closed with error: ${error.message}. Opening again...`
+        this.logger.error(
+          `changeStream closed with error: ${error.message}. Opening again...`
         )
         this.listen()
       } else {
-        this.log.error('[listen] failed: ' + error)
+        this.logger.error('[listen] failed: ' + error)
         throw new InternalServerErrorException(error.message)
       }
     }
@@ -89,9 +87,7 @@ export class AvnTransactionChangeStreamService
     transaction: AvnNftTransaction | AvnEditionTransaction
   ): Promise<void> {
     const state = transaction.state
-    const logString =
-      '[handleChangeStreamChanges] AVN trx on NFT id ' +
-      `${transaction.data['unique_external_ref']} type ${transaction.type}`
+    const logString = `AVN trx on NFT id ${transaction.data['unique_external_ref']} type ${transaction.type}`
 
     switch (state) {
       case AvnTransactionState.PROCESSING_COMPLETE:
@@ -105,24 +101,24 @@ export class AvnTransactionChangeStreamService
             break
 
           case AvnTransactionType.MintSingleNftApiGateway:
-            this.log.debug(`${logString} needs no handling`)
+            this.logger.debug(`${logString} needs no handling`)
             break
 
           default:
-            this.log.warn(`${logString} has MISSING HANDLER`)
+            this.logger.warn(`${logString} has MISSING HANDLER`)
         }
         break
       case AvnTransactionState.PROCESSING_FAILED:
-        this.log.debug(`${logString} has FAILED in AVN`)
+        this.logger.debug(`${logString} has FAILED in AVN`)
         break
       case AvnTransactionState.AVN_LOST:
-        this.log.debug(`${logString} is LOST in AVN`)
+        this.logger.debug(`${logString} is LOST in AVN`)
         break
       case AvnTransactionState.AVN_REJECTED:
-        this.log.debug(`${logString} is REJECTED in AVN`)
+        this.logger.debug(`${logString} is REJECTED in AVN`)
         break
       default:
-        this.log.debug(`${logString} is UNKNOWN in AVN`)
+        this.logger.debug(`${logString} is UNKNOWN in AVN`)
     }
   }
 
@@ -143,7 +139,7 @@ export class AvnTransactionChangeStreamService
     const batchId = history?.operation_data?.batchId
 
     if (!history || !batchId) {
-      this.log.error(
+      this.logger.error(
         `${logString} failed to updated Edition ID ` +
           editionId +
           ' although state is PROCESSING_COMPLETE because a key is missing: ' +
@@ -152,7 +148,7 @@ export class AvnTransactionChangeStreamService
       return
     }
 
-    this.log.log(`${logString} is successfully MINTED in AVN`)
+    this.logger.log(`${logString} is successfully MINTED in AVN`)
 
     this.clientProxy.emit(
       MessagePatternGenerator('edition', 'handleEditionMinted'),
@@ -178,7 +174,7 @@ export class AvnTransactionChangeStreamService
       ]
 
     if (nftId === undefined || eid === undefined) {
-      this.log.error(
+      this.logger.error(
         `${logString} failed to updated NFT ` +
           'although state is "PROCESSING_COMPLETE" ' +
           'because a key is missing. ' +
@@ -189,7 +185,7 @@ export class AvnTransactionChangeStreamService
       return
     }
 
-    this.log.log(`${logString} is successfully MINTED in AVN`)
+    this.logger.log(`${logString} is successfully MINTED in AVN`)
 
     this.clientProxy.emit(MessagePatternGenerator('nft', 'handleNftMinted'), {
       nftId,

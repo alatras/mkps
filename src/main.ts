@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
-import { HttpExceptionsFilter } from './filters/http-exceptions.filter'
+import { GeneralExceptionsFilter } from './filters/http-exceptions.filter'
 import { LogService } from './log/log.service'
 import { Transport } from '@nestjs/microservices'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
@@ -8,12 +8,13 @@ import { getVersion } from 'jest'
 import { getRedisOptions } from './utils/get-redis-options'
 
 async function bootstrap() {
+  const logger = new LogService().getLogger()
   const app = await NestFactory.create(AppModule, {
-    logger: new LogService().getLogger()
+    logger
   })
 
   app.enableCors()
-  app.useGlobalFilters(new HttpExceptionsFilter())
+  app.useGlobalFilters(new GeneralExceptionsFilter())
 
   app.connectMicroservice(
     {

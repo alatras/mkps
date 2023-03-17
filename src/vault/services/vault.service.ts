@@ -1,4 +1,4 @@
-import { Injectable, LoggerService } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import { ConfigService } from '@nestjs/config'
 import { firstValueFrom } from 'rxjs'
@@ -17,7 +17,7 @@ interface VaultConfig {
 
 @Injectable()
 export class VaultService {
-  private logger: LoggerService
+  private readonly logger = new Logger(VaultService.name)
   private readonly config: VaultConfig
   private authority: { username: string; password: string; set: boolean } = {
     username: '',
@@ -35,8 +35,6 @@ export class VaultService {
     private readonly configService: ConfigService,
     private logService: LogService
   ) {
-    this.logger = this.logService.getLogger()
-
     // create VaultOptions object
     const vaultConfig = this.configService.get<VaultConfig>('app.vault')
 
@@ -52,7 +50,6 @@ export class VaultService {
     }
 
     this.config = vaultConfig
-
     // this.setAuthority().then(r =>
     //   this.logger.log(`Authority set - address: ${r}`)
     // )

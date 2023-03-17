@@ -5,7 +5,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  LoggerService
+  Logger
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { ClientProxy } from '@nestjs/microservices'
@@ -28,7 +28,6 @@ import { NftService } from '../nft/services/nft.service'
 import { v4 } from 'uuid-mongodb'
 import { User } from '../user/schemas/user.schema'
 import { DataWrapper } from '../common/dataWrapper'
-import { LogService } from '../log/log.service'
 import { MessagePatternGenerator } from '../utils/message-pattern-generator'
 import { getRoyalties } from '../utils/get-royalties'
 import {
@@ -39,7 +38,7 @@ import { firstValueFrom } from 'rxjs'
 
 @Injectable()
 export class EditionService {
-  private log: LoggerService
+  private logger = new Logger(EditionService.name)
 
   constructor(
     @InjectModel(NftEdition.name) private nftEditionModel: Model<NftEdition>,
@@ -47,11 +46,8 @@ export class EditionService {
     @InjectModel(AvnEditionTransaction.name)
     private avnTransaction: Model<AvnEditionTransaction>,
     @Inject(forwardRef(() => NftService)) private nftService: NftService,
-    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
+  ) {}
 
   /**
    * Update Edition's available count and owned count
@@ -169,10 +165,7 @@ export class EditionService {
       editionDoc
     )
     if (!createdEdition) {
-      this.log.error(
-        '[createEdition] failed to create Edition:',
-        createEditionDto.name
-      )
+      this.logger.error('failed to create Edition:', createEditionDto.name)
       throw new InternalServerErrorException('cannot create Edition')
     }
 
@@ -203,8 +196,8 @@ export class EditionService {
       avnTransactionDoc
     )
     if (!createdAvnTransaction) {
-      this.log.error(
-        '[createAvnBatchTransaction] failed to create AVN transaction for Edition: ' +
+      this.logger.error(
+        'failed to create AVN transaction for Edition: ' +
           edition.name +
           ', user: ' +
           avnTransactionDoc.data.userId

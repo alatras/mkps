@@ -5,12 +5,11 @@ import {
   Request,
   UseInterceptors,
   UseGuards,
-  UsePipes
+  UsePipes,
+  Logger
 } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common'
 import { CreateEditionDto, EditionResponseDto } from '../dto/edition.dto'
 import { EditionService } from '../edition.service'
-import { LogService } from '../../log/log.service'
 import { DataWrapper } from '../../common/dataWrapper'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
@@ -21,13 +20,8 @@ import { errorResponseGenerator } from '../../core/errors/error-response-generat
 
 @Controller('edition')
 export class EditionController {
-  private log: LoggerService
-  constructor(
-    private editionService: EditionService,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+  private logger = new Logger(EditionController.name)
+  constructor(private editionService: EditionService) {}
 
   @UseInterceptors(MongooseClassSerializerInterceptor(EditionResponseDto))
   @Permissions('write:nfts')
@@ -44,10 +38,7 @@ export class EditionController {
         (req as any).user
       )
     } catch (err) {
-      this.log.error(
-        '[getPresignedUrlForOriginalAsset] cannot create presigned URL for original image:',
-        err
-      )
+      this.logger.error('cannot create presigned URL for original image:', err)
       errorResponseGenerator(err)
     }
   }

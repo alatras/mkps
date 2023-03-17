@@ -2,11 +2,11 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  LoggerService,
   BadRequestException,
   UnauthorizedException,
   ConflictException,
-  UnprocessableEntityException
+  UnprocessableEntityException,
+  Logger
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
@@ -35,7 +35,6 @@ import { AvnTransactionService } from '../../avn-transaction/services/avn-transa
 import { firstValueFrom } from 'rxjs'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { ClientProxy } from '@nestjs/microservices'
-import { LogService } from '../../log/log.service'
 import { InvalidDataError } from '../../core/errors'
 import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
 import { validateListingPrice } from '../../utils/validateListingPrice'
@@ -46,7 +45,7 @@ import { AvnNftTransaction } from '../../avn-transaction/schemas/avn-transaction
 
 @Injectable()
 export class NftService {
-  private log: LoggerService
+  private readonly logger = new Logger(NftService.name)
 
   constructor(
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
@@ -57,12 +56,9 @@ export class NftService {
     @Inject(forwardRef(() => EditionService))
     private editionService: EditionService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
-    private logService: LogService,
     private paymentService: PaymentService,
     private listingService: ListingService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+  ) {}
 
   /**
    * Mint an NFT.
@@ -137,19 +133,19 @@ export class NftService {
     const nftUUId = uuidFrom(listNftDto.nftId)
     const nft = await this.findOneById(nftUUId)
     if (!nft) {
-      this.log.debug(`[NftService.list] NFT ${nftUUId} not found to list`)
+      this.logger.debug(`[NftService.list] NFT ${nftUUId} not found to list`)
       throw new BadRequestException('NFT not found')
     }
 
     // Throw if NFT has no AvN ID
     if (!nft.avnNftId) {
-      this.log.debug(`[NftService.list] NFT ${nftUUId} has no AvN ID`)
+      this.logger.debug(`[NftService.list] NFT ${nftUUId} has no AvN ID`)
       throw new BadRequestException('NFT has no AvN ID')
     }
 
     // Throw if NFT status isn't minted or owned
     if (![NftStatus.minted, NftStatus.owned].includes(nft.status)) {
-      this.log.debug(
+      this.logger.debug(
         `NFT ${nftUUId} can't be listed because it has status: ${nft.status}`
       )
       throw new UnprocessableEntityException(
@@ -159,13 +155,13 @@ export class NftService {
 
     // Throw if NFT is hidden
     if (nft.isHidden) {
-      this.log.debug(`NFT ${nftUUId} can't be listed because it is hidden`)
+      this.logger.debug(`NFT ${nftUUId} can't be listed because it is hidden`)
       throw new UnprocessableEntityException('auctionOnHiddenNft')
     }
 
     // Throw if NFT is an edition NFT
     if (nft.status === NftStatus.minted && nft.editionId) {
-      this.log.debug(`NFT ${nftUUId} is an edition NFT`)
+      this.logger.debug(`NFT ${nftUUId} is an edition NFT`)
       throw new UnprocessableEntityException('cannotListEditionNft')
     }
 
@@ -177,14 +173,16 @@ export class NftService {
     ) {
       // Throw if user has not completed Stripe onboarding
       if (!user.stripeAccountId) {
-        this.log.debug(`User ${user._id} has no connected stripe account`)
+        this.logger.debug(`User ${user._id} has no connected stripe account`)
         throw new UnauthorizedException('noConnectedStripeAccount')
       }
 
       // Throw ir user has not completed Stripe onboarding
       const account = await this.paymentService.getAccount(user.stripeAccountId)
       if (!account.details_submitted) {
-        this.log.debug(`User ${user._id} has not completed Stripe onboarding`)
+        this.logger.debug(
+          `User ${user._id} has not completed Stripe onboarding`
+        )
         throw new UnauthorizedException('stripeOnboardingIncomplete')
       }
     }
@@ -194,7 +192,7 @@ export class NftService {
       nftUUId
     )
     if (existingAuction) {
-      this.log.debug(`NFT ${nftUUId} already has an auction`)
+      this.logger.debug(`NFT ${nftUUId} already has an auction`)
       throw new ConflictException('alreadyOnSale')
     }
 
@@ -294,7 +292,7 @@ export class NftService {
   }
 
   async setStatusToNft(_id: MUUID, status: NftStatus): Promise<Nft> {
-    this.log.debug(`Setting status of NFT ${_id} to ${status}`)
+    this.logger.debug(`Setting status of NFT ${_id} to ${status}`)
     const nft = await this.nftModel.findOneAndUpdate(
       { _id },
       {
@@ -430,7 +428,7 @@ export class NftService {
    * @param avnNftId AvN NFT ID
    */
   async setAvnNftIdToNft(nftId: string, avnNftId: string): Promise<Nft> {
-    this.log.debug(`Setting AvN NFT ID ${avnNftId} to NFT ${nftId}`)
+    this.logger.debug(`Setting AvN NFT ID ${avnNftId} to NFT ${nftId}`)
     return this.nftModel.findOneAndUpdate(
       { _id: uuidFrom(nftId) },
       {

@@ -1,11 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common'
+import { Injectable, Inject, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Model } from 'mongoose'
 import { firstValueFrom } from 'rxjs'
 import { ClientProxy } from '@nestjs/microservices'
 import { InjectModel } from '@nestjs/mongoose'
-import { LogService } from '../../log/log.service'
 import { AvnNftTransaction } from '../schemas/avn-transaction.schema'
 import {
   ApiGateWayPollingOption,
@@ -19,18 +17,15 @@ import { Nft } from '../../nft/schemas/nft.schema'
 
 @Injectable()
 export class AvnTransactionApiGatewayService {
-  private log: LoggerService
   private avnApi: AvnApi
-
+  private readonly logger = new Logger(AvnTransactionApiGatewayService.name)
   constructor(
     private configService: ConfigService,
-    private logService: LogService,
     @InjectModel(AvnNftTransaction.name)
     private avnTransactionModel: Model<AvnNftTransaction>,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.configService = configService
-    this.log = this.logService.getLogger()
     this.initTheApi()
   }
 
@@ -55,9 +50,7 @@ export class AvnTransactionApiGatewayService {
         avnAuthority
       )
 
-      this.log.debug(
-        `[AvnTransactionApiGatewayService.mintSingleNft] Mint NFT result from API Gateway: ${mintResult}`
-      )
+      this.logger.debug(`Mint NFT result from API Gateway: ${mintResult}`)
 
       this.getConfirmation(
         mintResult,
@@ -67,9 +60,7 @@ export class AvnTransactionApiGatewayService {
         externalRef
       )
     } catch (e) {
-      this.log.error(
-        `[AvnTransactionApiGatewayService.mintSingleNft] Error minting NFT via API Gateway: ${nftId}`
-      )
+      this.logger.error(`Error minting NFT via API Gateway: ${nftId}`)
       throw e
     }
   }
@@ -125,8 +116,8 @@ export class AvnTransactionApiGatewayService {
         await new Promise(resolve => setTimeout(resolve, avnPollingInterval))
         polledState = await this.avnApi.poll.requestState(avnRequestId)
 
-        this.log.debug(
-          `[AvnTransactionApiGatewayService.getConfirmation] Polling for ${pollingOperation}. ` +
+        this.logger.debug(
+          `Polling for ${pollingOperation}. ` +
             `Transaction status: ${polledState.status}`
         )
 
@@ -135,8 +126,8 @@ export class AvnTransactionApiGatewayService {
         // If transaction is committed stop polling
         if (this.transactionIsCommitted(polledState)) {
           transactionCommitted = true
-          this.log.log(
-            `[AvnTransactionApiGatewayService.getConfirmation] ${pollingOperation} transaction ` +
+          this.logger.log(
+            `${pollingOperation} transaction ` +
               `of local request ID ${localRequestId}, AVN request ID ${avnRequestId}, ` +
               `is committed with status ${polledState.status}`
           )
@@ -152,9 +143,7 @@ export class AvnTransactionApiGatewayService {
         pollingOperation === ApiGateWayPollingOption.mintSingleNft &&
         polledState.status === PollingTransactionStatus.processed
       ) {
-        this.log.debug(
-          `[AvnTransactionApiGatewayService.getConfirmation] Updating NFT ${nftId} with AvN's NFT ID...`
-        )
+        this.logger.debug(`Updating NFT ${nftId} with AvN's NFT ID...`)
         await this.updateNftAvnNftId(nftId, externalRef)
       }
 
@@ -164,16 +153,14 @@ export class AvnTransactionApiGatewayService {
         pollingOperation === ApiGateWayPollingOption.listSingleNft &&
         polledState.status === PollingTransactionStatus.processed
       ) {
-        this.log.debug(
-          `[AvnTransactionApiGatewayService.getConfirmation] Updating NFT ${nftId} status to listed...`
-        )
+        this.logger.debug(`Updating NFT ${nftId} status to listed...`)
         this.updateNftListingStatus(nftId, NftStatus.forSale)
       }
 
       // If transaction is not committed, log error
       if (!transactionCommitted) {
-        this.log.error(
-          `[AvnTransactionApiGatewayService.getConfirmation] ${pollingOperation} transaction` +
+        this.logger.error(
+          `${pollingOperation} transaction` +
             `of request ID ${localRequestId}, AVN request ID ${avnRequestId}, ` +
             ` has timed out with status: ${polledState.status} `
         )
@@ -246,9 +233,7 @@ export class AvnTransactionApiGatewayService {
       }
     )
 
-    this.log.debug(
-      `[AvnTransactionApiGatewayService.updateTransactionHistory] Transaction history updated to: ${state}`
-    )
+    this.logger.debug(`Transaction history updated to: ${state}`)
   }
 
   /**
@@ -286,10 +271,8 @@ export class AvnTransactionApiGatewayService {
         nftStatus = NftStatus.draft
     }
 
-    this.log.debug(
-      `[AvnTransactionApiGatewayService.updateNftMintStatus] ` +
-        `Updating NFT ${nftId} status to ${nftStatus} ` +
-        `according to AvN poll status ${avnPolState}`
+    this.logger.debug(
+      `Updating NFT ${nftId} status to ${nftStatus} according to AvN poll status ${avnPolState}`
     )
 
     firstValueFrom(
@@ -298,9 +281,7 @@ export class AvnTransactionApiGatewayService {
         nftStatus
       })
     ).then((res: Nft) => {
-      this.log.debug(
-        `[AvnTransactionApiGatewayService.updateNftMintStatus] NFT status updated ${res?.status}`
-      )
+      this.logger.debug(`NFT status updated ${res?.status}`)
     })
   }
 
@@ -310,18 +291,14 @@ export class AvnTransactionApiGatewayService {
    * @param nftStatus NFT status
    */
   private updateNftListingStatus(nftId: string, nftStatus: NftStatus): void {
-    this.log.debug(
-      `[AvnTransactionApiGatewayService.updateNftListingStatus] Updating NFT ${nftId} status...`
-    )
+    this.logger.debug(`Updating NFT ${nftId} status...`)
     firstValueFrom(
       this.clientProxy.send(MessagePatternGenerator('nft', 'setStatusToNft'), {
         nftId,
         nftStatus
       })
     ).then((res: Nft) => {
-      this.log.debug(
-        `[AvnTransactionApiGatewayService.updateNftListingStatus] NFT status updated ${res?.status}`
-      )
+      this.logger.debug(`NFT status updated ${res?.status}`)
     })
   }
 
@@ -335,9 +312,7 @@ export class AvnTransactionApiGatewayService {
     nftId: string,
     externalRef: string
   ): Promise<void> {
-    this.log.debug(
-      `[AvnTransactionApiGatewayService.updateNftAvnNftId] Getting NFT ID from AvN...`
-    )
+    this.logger.debug(`Getting NFT ID from AvN...`)
     const avnNftId = await this.getNftIdFromAvn(externalRef)
 
     firstValueFrom(
@@ -349,9 +324,7 @@ export class AvnTransactionApiGatewayService {
         }
       )
     ).then((res: Nft) => {
-      this.log.debug(
-        `[AvnTransactionApiGatewayService.updateNftAvnNftId] NFT status updated ${res?.status}`
-      )
+      this.logger.debug(`NFT status updated ${res?.status}`)
     })
   }
 
@@ -371,15 +344,11 @@ export class AvnTransactionApiGatewayService {
     }
 
     if (!res) {
-      this.log.error(
-        '[AvnTransactionApiGatewayService.getNftIdFromAvn] NFT ID form AvN not found'
-      )
+      this.logger.error('NFT ID form AvN not found')
       throw new Error('AvN NFT ID not found')
     }
 
-    this.log.debug(
-      `[AvnTransactionApiGatewayService.getNftIdFromAvn] NFT ID from AvN: ${res}`
-    )
+    this.logger.debug(`NFT ID from AvN: ${res}`)
     return res
   }
 
@@ -402,9 +371,7 @@ export class AvnTransactionApiGatewayService {
         avnNftId
       )
 
-      this.log.debug(
-        `[AvnTransactionApiGatewayService] List NFT result via API Gateway: ${avnRequestId}`
-      )
+      this.logger.debug(`List NFT result via API Gateway: ${avnRequestId}`)
 
       this.getConfirmation(
         avnRequestId,
@@ -413,9 +380,7 @@ export class AvnTransactionApiGatewayService {
         localRequestId
       )
     } catch (error) {
-      this.log.error(
-        `[AvnTransactionApiGatewayService.listSingleNft] Error listing NFT via API Gateway: ${nftId}`
-      )
+      this.logger.error(`Error listing NFT via API Gateway: ${nftId}`)
       throw error
     }
   }

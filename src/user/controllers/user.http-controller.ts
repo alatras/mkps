@@ -2,14 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Patch,
   Request,
   UnauthorizedException,
   UseGuards,
   UseInterceptors
 } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common'
-import { LogService } from '../../log/log.service'
 import { UserService } from '../user.service'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
 import { PermissionsGuard } from '../../auth/permissions.guard'
@@ -24,14 +23,9 @@ import { errorResponseGenerator } from '../../core/errors/error-response-generat
 @ApiTags('users')
 @Controller('users')
 export class UserHttpController {
-  private log: LoggerService
+  private readonly logger = new Logger(UserHttpController.name)
 
-  constructor(
-    private readonly userService: UserService,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+  constructor(private readonly userService: UserService) {}
 
   @UseInterceptors(MongooseClassSerializerInterceptor(UserResponseDto))
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -78,10 +72,7 @@ export class UserHttpController {
       )
       return new UserResponseDto(user)
     } catch (err) {
-      this.log.error(
-        `[UserHttpController] cannot update user" ` + dto.email,
-        err
-      )
+      this.logger.error(`cannot update user" ` + dto.email, err)
       errorResponseGenerator(err)
     }
   }
@@ -110,10 +101,7 @@ export class UserHttpController {
 
       return new UserResponseDto(updated)
     } catch (err) {
-      this.log.error(
-        `UserController - cannot update Auth0 email" ` + dto.email,
-        err
-      )
+      this.logger.error(`cannot update Auth0 email: ${dto.email}`, err)
       errorResponseGenerator(err)
     }
   }

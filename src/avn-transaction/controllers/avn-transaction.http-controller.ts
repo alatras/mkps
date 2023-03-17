@@ -5,14 +5,14 @@ import {
   Get,
   Post,
   UseGuards,
-  NotFoundException
+  NotFoundException,
+  Logger
 } from '@nestjs/common'
-import { Request, LoggerService } from '@nestjs/common'
+import { Request } from '@nestjs/common'
 import { Request as ExpressRequest } from 'express'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger'
 import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
-import { LogService } from '../../log/log.service'
 import { User } from '../../user/schemas/user.schema'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { MintAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
@@ -23,14 +23,9 @@ import { errorResponseGenerator } from '../../core/errors/error-response-generat
 @ApiTags('AvnTransaction')
 @Controller('avn-transaction')
 export class AvnTransactionHttpController {
-  private log: LoggerService
+  private logger = new Logger(AvnTransactionHttpController.name)
 
-  constructor(
-    private avnTransactionService: AvnTransactionService,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+  constructor(private avnTransactionService: AvnTransactionService) {}
 
   @UseGuards(AuthGuard('jwt'))
   @ApiCreatedResponse({
@@ -47,18 +42,11 @@ export class AvnTransactionHttpController {
       const user: User = (req as any).user
       const create = await this.avnTransactionService.mintNft(dto.nftId, user)
 
-      this.log.log(
-        '[AvnTransactionHttpController] ANV transaction created successfully:',
-        dto
-      )
+      this.logger.log('ANV transaction created successfully:', dto)
 
       return create
     } catch (err) {
-      this.log.error(
-        '[AvnTransactionHttpController] cannot create AVN transaction:',
-        dto,
-        err
-      )
+      this.logger.error('cannot create AVN transaction:', dto, err)
       errorResponseGenerator(err)
     }
   }
@@ -81,7 +69,7 @@ export class AvnTransactionHttpController {
 
       throw new NotFoundException('AVN transaction not found')
     } catch (err) {
-      this.log.error(`[getAvnTransaction] cannot get AVN transaction: `, err)
+      this.logger.error(`cannot get AVN transaction: `, err)
       errorResponseGenerator(err)
     }
   }

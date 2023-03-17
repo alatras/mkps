@@ -43,12 +43,11 @@ export class LogService {
       const data = info['data']
 
       const dataStr = data ? `\n${JSON.stringify(data)}` : ''
-
-      const context = splat[0].context || ''
+      const context = splat[0].context || info['stack']?.[0] || ''
 
       return `${info.timestamp} ${info.level}: ${
         context ? `[${context}]` : ''
-      } ${info.message} ${stack || ''}${dataStr}`
+      } ${info.message} ${stack instanceof Array ? '' : stack || ''}${dataStr}`
     }),
     this.errors({ stack: true })
   )
@@ -78,3 +77,4 @@ export class LogService {
     return this.logger
   }
 }
+// rzvancxl2z

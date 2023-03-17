@@ -7,10 +7,9 @@ import {
   UseGuards,
   UseInterceptors
 } from '@nestjs/common'
-import { LoggerService } from '@nestjs/common'
+import { Logger } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiCreatedResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator'
-import { LogService } from '../../log/log.service'
 import { NftService } from '../services/nft.service'
 import {
   CreateNftDto,
@@ -30,13 +29,8 @@ import { DataWrapper } from '../../common/dataWrapper'
 @Controller('nft')
 @ApiTags('nft')
 export class NftHttpController {
-  private log: LoggerService
-  constructor(
-    private readonly nftService: NftService,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+  private readonly logger: Logger = new Logger(NftHttpController.name)
+  constructor(private readonly nftService: NftService) {}
 
   /**
    * Mint an NFT
@@ -55,20 +49,12 @@ export class NftHttpController {
     @Request() req: Express.Request,
     @Body() createNftDto: CreateNftDto
   ): Promise<DataWrapper<NftResponseDto>> {
-    try {
-      const mintResult = await this.nftService.mint(
-        req.user as User,
-        createNftDto
-      )
-      this.log.debug('[NftHttpController.mint] mint NFT succeed:', mintResult)
-      return { data: mintResult }
-    } catch (err) {
-      this.log.error(
-        '[NftHttpController.mint] cannot mint NFT:',
-        JSON.stringify(err)
-      )
-      return err
-    }
+    const mintResult = await this.nftService.mint(
+      req.user as User,
+      createNftDto
+    )
+    this.logger.debug('mint NFT succeeded:', mintResult)
+    return { data: mintResult }
   }
 
   /**
@@ -89,13 +75,10 @@ export class NftHttpController {
   ): Promise<ListNftResponseDto> {
     try {
       const mintRes = await this.nftService.list(req.user as User, listNftDto)
-      this.log.debug('[NftHttpController.list] list NFT succeed:', mintRes)
+      this.logger.debug('list NFT succeed:', mintRes)
       return mintRes
     } catch (err) {
-      this.log.error(
-        '[NftHttpController.list] cannot list NFT:',
-        JSON.stringify(err)
-      )
+      this.logger.error('cannot list NFT:', JSON.stringify(err))
       throw err
     }
   }

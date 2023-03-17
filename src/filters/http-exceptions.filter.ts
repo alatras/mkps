@@ -3,13 +3,16 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
-  HttpStatus
+  HttpStatus,
+  Logger
 } from '@nestjs/common'
 import { Request, Response } from 'express'
 
-@Catch(HttpException)
-export class HttpExceptionsFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
+@Catch(Error, HttpException)
+export class GeneralExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GeneralExceptionsFilter.name)
+
+  catch(exception: any, host: ArgumentsHost) {
     const context = host.switchToHttp()
     const response = context.getResponse<Response>()
     const request = context.getRequest<Request>()
@@ -18,14 +21,17 @@ export class HttpExceptionsFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR
 
-    const exceptionResponse = exception.getResponse()
+    const message =
+      status !== 500
+        ? exception.message
+        : 'Oops, something went wrong. Please try again later.'
+
+    const exceptionResponse = status === 500 ? message : exception.getResponse()
 
     let formattedErrorObject = {
-      statusCode: exception.getStatus(),
+      statusCode: status,
       message:
-        typeof exceptionResponse === 'string'
-          ? exceptionResponse
-          : exception.message,
+        typeof exceptionResponse === 'string' ? exceptionResponse : message,
       timestamp: new Date().toISOString(),
       path: request.url
     }
@@ -34,6 +40,10 @@ export class HttpExceptionsFilter implements ExceptionFilter {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       formattedErrorObject = { ...formattedErrorObject, ...exceptionResponse }
     }
+
+    this.logger.error(
+      JSON.stringify({ ...formattedErrorObject, message: exception.message })
+    )
 
     response.status(status).json(formattedErrorObject)
   }
