@@ -17,7 +17,7 @@ export class AvnTransactionHistoryBase {
 }
 
 export interface AvnMintTransaction extends AvnNftTransaction {
-  data: AvnMintNFTTransactionData
+  data: AvnMintNftTransactionData
   history: AvnMintHistory[]
 }
 
@@ -25,7 +25,11 @@ export class AvnMintHistory extends AvnTransactionHistoryBase {
   operation_data?: AvnMintHistoryOperationData
 }
 
-export class AvnMintNFTTransactionData {
+export class AvnCancelFiatListingHistory extends AvnTransactionHistoryBase {
+  operation_data?: AvnMintHistoryOperationData
+}
+
+export class AvnMintNftTransactionData {
   // uniqueExternalRef used to access the real NFT stored offchain
   unique_external_ref: string
   // Aventus public key of the minter
@@ -82,6 +86,9 @@ export class AvnTransactionBase {
   request_id: string
 
   @Prop()
+  nftId?: string
+
+  @Prop()
   type: AvnTransactionType
 
   @Prop()
@@ -122,7 +129,7 @@ export class AvnNftTransaction extends AvnTransactionBase {
   history: AvnMintHistory[]
 
   @Prop()
-  data: AvnMintNFTTransactionData
+  data: AvnMintNftTransactionData
 }
 
 export const AvnNftTransactionSchema =

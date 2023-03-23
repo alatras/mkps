@@ -1,4 +1,4 @@
-import { Controller, Get, UsePipes } from '@nestjs/common'
+import { Controller, Get, Post, UsePipes } from '@nestjs/common'
 import { AppService } from './app.service'
 import { ErrorValidationPipe } from './pipes/error-validation.pipe'
 
@@ -9,6 +9,15 @@ export class AppController {
 
   @Get()
   getVersion() {
+    return {
+      app: 'Marketplace API',
+      message: 'App Running',
+      version: this.appService.getVersion()
+    }
+  }
+
+  @Post('testBull')
+  testBull() {
     return {
       app: 'Marketplace API',
       message: 'App Running',

@@ -35,7 +35,6 @@ export class GeneralExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url
     }
-
     if (typeof exceptionResponse === 'object') {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       formattedErrorObject = { ...formattedErrorObject, ...exceptionResponse }

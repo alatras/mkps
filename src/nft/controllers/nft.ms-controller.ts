@@ -17,10 +17,10 @@ export class NftMsController {
     @Payload()
     payload: {
       nftId: string
-      eid: string
+      anvNftId: string
     }
   ): Promise<void> {
-    await this.nftService.handleNftMinted(payload.nftId, payload.eid)
+    await this.nftService.handleNftMinted(payload.nftId, payload.anvNftId)
   }
 
   @MessagePattern(MessagePatternGenerator('nft', 'findOneById'))

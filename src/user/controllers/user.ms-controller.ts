@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common'
 import { UserService } from '../user.service'
-import { MessagePattern, Payload } from '@nestjs/microservices'
+import { Payload, MessagePattern } from '@nestjs/microservices'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import * as MUUID from 'uuid-mongodb'

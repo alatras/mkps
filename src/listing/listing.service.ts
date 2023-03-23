@@ -4,24 +4,30 @@ import {
   Injectable,
   UnprocessableEntityException
 } from '@nestjs/common'
+import { FilterQuery, Model } from 'mongoose'
+import { InjectModel } from '@nestjs/mongoose'
 import { LoggerService } from '@nestjs/common'
+import { MUUID, v4 } from 'uuid-mongodb'
+import { ClientProxy } from '@nestjs/microservices'
+import { firstValueFrom } from 'rxjs'
+import { ConfigService } from '@nestjs/config'
 import {
   AuctionStatus,
   AuctionType,
   Currency,
+  HistoryType,
+  NftStatus,
   SecondarySaleMode
 } from '../shared/enum'
-import { ClientProxy } from '@nestjs/microservices'
 import { Auction } from './schemas/auction.schema'
-import { InjectModel } from '@nestjs/mongoose'
-import { ConfigService } from '@nestjs/config'
-import { FilterQuery, Model } from 'mongoose'
-import { MUUID, v4 } from 'uuid-mongodb'
 import { ListNftDto, Seller } from '../nft/dto/list-nft.dto'
 import { uuidFrom } from '../utils/uuid'
 import { Nft } from '../nft/schemas/nft.schema'
 import { LogService } from '../log/log.service'
-import { AvnNftTransaction } from '../avn-transaction/schemas/avn-transaction.schema'
+import { MessagePatternGenerator } from '../utils/message-pattern-generator'
+import { User } from '../user/schemas/user.schema'
+import { CreateNftHistoryDto } from '../nft/dto/nft-history.dto'
+import { NftHistory } from '../nft/schemas/nft-history.schema'
 
 @Injectable()
 export class ListingService {
@@ -29,8 +35,6 @@ export class ListingService {
 
   constructor(
     @InjectModel(Auction.name) private auctionModel: Model<Auction>,
-    @InjectModel(AvnNftTransaction.name)
-    private avnNftTransactionModel: Model<AvnNftTransaction>,
     private configService: ConfigService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
     private logService: LogService
@@ -46,7 +50,7 @@ export class ListingService {
    */
   async createAuction(
     seller: Seller,
-    listNftDto: ListNftDto & { nftAvnId: string },
+    listNftDto: ListNftDto,
     isSecondary: boolean
   ): Promise<Auction> {
     // Throw error if currency is invalid
@@ -60,7 +64,8 @@ export class ListingService {
       _id: v4(),
       nft: {
         _id: uuidFrom(listNftDto.nftId),
-        eid: listNftDto.nftAvnId
+        eid: listNftDto.anvNftId,
+        anvNftId: listNftDto.anvNftId
       },
       seller: {
         _id: uuidFrom(seller.id),
@@ -202,5 +207,138 @@ export class ListingService {
         }
       })
     }
+  }
+
+  /**
+   * Get auction by ID
+   * @param auctionId Auction ID
+   */
+  async getAuctionById(auctionId: MUUID): Promise<Auction> {
+    return this.auctionModel.findOne({
+      _id: auctionId
+    })
+  }
+
+  /**
+   * Update auction status
+   * @param auctionId Auction ID
+   * @param status Status
+   */
+  async updateAuctionStatus(
+    auctionId: MUUID,
+    status: AuctionStatus
+  ): Promise<Auction> {
+    return this.auctionModel.findOneAndUpdate(
+      { _id: auctionId },
+      { status },
+      { new: true }
+    )
+  }
+
+  /**
+   * Cancel Auction that is part of an Edition listing and in USD.
+   * No AvN cancelation is needed.
+   * PS: To be used when Edition (cancel) listing is added.
+   * @param auction Auction
+   */
+  async cancelUsdEditionAuction(auction: Auction): Promise<Auction> {
+    // Set all other auctions in the same edition listing to withdraw
+    await this.auctionModel.updateMany(
+      {
+        editionListingId: auction.editionListingId,
+        status: { $in: [AuctionStatus.open, AuctionStatus.unconfirmed] }
+      },
+      { status: AuctionStatus.withdraw }
+    )
+
+    // Set this auction to withdraw
+    const updatedAuction = await this.updateAuctionStatus(
+      uuidFrom(auction._id),
+      AuctionStatus.withdraw
+    )
+
+    // Set NFT status to minted
+    await this.setNftStatus(
+      uuidFrom(auction.nft._id).toString(),
+      NftStatus.minted
+    )
+
+    return updatedAuction
+  }
+
+  /**
+   * Cancel Auction that is in ETH.
+   * This is called once the event is processed,
+   * so this is supposed to be the final stage.
+   * @param auction Auction
+   * @param user User
+   */
+  async cancelNoneUsdAuction(auction: Auction, user: User): Promise<Auction> {
+    // Set NFT status to owned or minted
+    await this.setNftStatus(
+      uuidFrom(auction.nft._id).toString(),
+      auction.isSecondary ? NftStatus.owned : NftStatus.minted
+    )
+
+    // Add history item to NFT
+    await this.addAuctionCancelationNftHistory(auction, user)
+
+    // Set Auction status to withdraw
+    return await this.updateAuctionStatus(auction._id, AuctionStatus.withdraw)
+  }
+
+  /**
+   * Add NFT history after canceling an auction
+   * @param auction Auction
+   * @param user User
+   */
+  private async addAuctionCancelationNftHistory(
+    auction: Auction,
+    user: User
+  ): Promise<NftHistory> {
+    const historyEntry: CreateNftHistoryDto = {
+      auctionId: auction._id,
+      nftId: uuidFrom(auction.nft._id).toJSON(),
+      userAddress: `${user.avnPubKey}`,
+      type: HistoryType.cancelled,
+      currency: auction.currency,
+      amount: auction.reservePrice
+    }
+
+    const addedNftHistory = await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator('nft', 'addHistory'),
+        historyEntry
+      )
+    )
+
+    this.log.debug(
+      `[ListingService.addAuctionCancelationNftHistory] NFT history added/updated ${addedNftHistory._id}`
+    )
+
+    return addedNftHistory
+  }
+
+  /**
+   * Set NFT status
+   * @param nftId NFT ID
+   * @param nftStatus NFT status
+   */
+  private async setNftStatus(
+    nftId: string,
+    nftStatus: NftStatus
+  ): Promise<Nft> {
+    const res = await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('nft', 'setStatusToNft'), {
+        nftId,
+        nftStatus
+      })
+    )
+
+    this.log.debug(
+      `[ListingService.setNftStatus] NFT status updated to ${res?.status}`
+    )
+
+    return res
   }
 }

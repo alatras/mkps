@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { ConfigService } from '@nestjs/config'
+import { getQueueToken } from '@nestjs/bull'
 import { getModelToken } from '@nestjs/mongoose'
 import { NftService } from '../services/nft.service'
 import { AssetType, Nft } from '../schemas/nft.schema'
@@ -31,14 +32,26 @@ import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/
 import { PaymentService } from '../../payment/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Auction } from '../../listing/schemas/auction.schema'
+import {
+  BullMqService,
+  MAIN_BULL_QUEUE_NAME
+} from '../../bull-mq/bull-mq.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
   send: jest.fn()
 })
 
+jest.mock('../../utils/get-royalties', () => ({
+  getNftRoyalties: jest.fn()
+}))
+
 describe('NftService', () => {
   let service: NftService
+
+  const mockQueue = {
+    add: jest.fn()
+  }
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -52,6 +65,11 @@ describe('NftService', () => {
         LogService,
         PaymentService,
         ListingService,
+        BullMqService,
+        {
+          provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
+          useValue: mockQueue
+        },
         {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
@@ -184,13 +202,13 @@ describe('NftService', () => {
 
       await service.handleNftMinted(
         uuidFrom(mockNft._id).toString(),
-        mockNft.eid
+        mockNft.anvNftId
       )
 
       expect(service.updateOneById).toBeCalledWith(
         uuidFrom(mockNft._id).toString(),
         {
-          eid: mockNft.eid,
+          avnNftId: mockNft.anvNftId,
           status: NftStatus.minted
         }
       )
@@ -198,7 +216,7 @@ describe('NftService', () => {
       expect(service.updateOneById).toBeCalledWith(
         uuidFrom(mockNft._id).toString(),
         {
-          eid: mockNft.eid,
+          avnNftId: mockNft.anvNftId,
           status: NftStatus.minted
         }
       )

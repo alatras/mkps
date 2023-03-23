@@ -14,7 +14,6 @@ import {
   AvnNftTransaction,
   AvnEditionTransaction
 } from '../schemas/avn-transaction.schema'
-import { LogService } from '../../log/log.service'
 import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { ClientProxy } from '@nestjs/microservices'
@@ -31,7 +30,6 @@ export class AvnTransactionChangeStreamService
   constructor(
     @InjectModel(AvnNftTransaction.name)
     private avnTransactionModel: Model<AvnNftTransaction>,
-    private logService: LogService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.options = { fullDocument: 'updateLookup' }
@@ -74,7 +72,7 @@ export class AvnTransactionChangeStreamService
         )
         this.listen()
       } else {
-        this.logger.error('[listen] failed: ' + error)
+        this.logger.error('listening failed: ' + error)
         throw new InternalServerErrorException(error.message)
       }
     }
@@ -129,8 +127,7 @@ export class AvnTransactionChangeStreamService
     const editionId = transaction?.request_id?.split(':')[1]
 
     const logString =
-      '[handleMintingEdition] AVN trx to mint Edition ID ' +
-      `${editionId}, type ${transaction.type}`
+      'AVN trx to mint Edition ID ' + `${editionId}, type ${transaction.type}`
 
     const history = transaction.history.find(
       history => history.state === AvnTransactionState.PROCESSING_COMPLETE
@@ -164,7 +161,7 @@ export class AvnTransactionChangeStreamService
    */
   private async handleMintingNft(transaction: AvnNftTransaction) {
     const logString =
-      '[handleMintingNft] AVN trx on NFT id ' +
+      'AVN trx on NFT id ' +
       `${transaction.data['unique_external_ref']} type ${transaction.type}`
 
     const nftId = transaction.data['unique_external_ref']

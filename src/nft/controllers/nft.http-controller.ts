@@ -24,6 +24,7 @@ import { Permissions } from '../../auth/decorators/permissions.decorator'
 import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-class-serializer.interceptor'
 import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
 import { DataWrapper } from '../../common/dataWrapper'
+import { CancelListingDto } from '../dto/cancel-listing-of-nft.dto'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
@@ -49,12 +50,17 @@ export class NftHttpController {
     @Request() req: Express.Request,
     @Body() createNftDto: CreateNftDto
   ): Promise<DataWrapper<NftResponseDto>> {
-    const mintResult = await this.nftService.mint(
-      req.user as User,
-      createNftDto
-    )
-    this.logger.debug('mint NFT succeeded:', mintResult)
-    return { data: mintResult }
+    try {
+      const mintResult = await this.nftService.mint(
+        req.user as User,
+        createNftDto
+      )
+      this.logger.debug('mint NFT succeed:', mintResult)
+      return { data: mintResult }
+    } catch (err) {
+      this.logger.error('cannot mint NFT:', JSON.stringify(err))
+      throw err
+    }
   }
 
   /**
@@ -79,6 +85,36 @@ export class NftHttpController {
       return mintRes
     } catch (err) {
       this.logger.error('cannot list NFT:', JSON.stringify(err))
+      throw err
+    }
+  }
+
+  /**
+   * Cancel an NFT listing
+   * @param listNftDto cancel listing DTO: { auctionId }
+   */
+  @ApiCreatedResponse({
+    description:
+      'Cancel an NFT listing. This withdraws the auction, ' +
+      'cancels the listing in AvN Network, and returns cancelled Auction.',
+    type: ListNftResponseDto
+  })
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('write:nfts')
+  @Post('cancel-listing')
+  async cancelListing(
+    @Request() req: Express.Request,
+    @Body() cancelListingDto: CancelListingDto
+  ): Promise<ListNftResponseDto> {
+    try {
+      const mintRes = await this.nftService.cancelListing(
+        req.user as User,
+        cancelListingDto
+      )
+      this.logger.log('cancel NFT succeed:', mintRes)
+      return mintRes
+    } catch (err) {
+      this.logger.error('cannot cancel NFT:', JSON.stringify(err))
       throw err
     }
   }

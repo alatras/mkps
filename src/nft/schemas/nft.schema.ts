@@ -92,6 +92,9 @@ export class Nft {
   editionId?: MUUID
 
   @Prop()
+  anvNftId?: string
+
+  @Prop()
   eid?: string
 
   @Prop()
@@ -128,6 +131,9 @@ export class Nft {
 
   @Prop({ required: false })
   avnNftId?: string
+
+  @Prop({ required: false })
+  royalties?: number
 }
 
 export const NftSchema = SchemaFactory.createForClass(Nft)

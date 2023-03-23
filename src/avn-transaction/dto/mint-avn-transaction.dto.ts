@@ -7,14 +7,16 @@ import {
   IsString,
   IsOptional
 } from 'class-validator'
-import { Nft } from '../../nft/schemas/nft.schema'
 import { MUUID } from 'uuid-mongodb'
 import {
   AvnTransactionState,
   AvnTransactionType,
   Market
 } from '../../shared/enum'
-import { AvnTransactionHistoryBase } from '../schemas/avn-transaction.schema'
+import {
+  AvnCancelFiatListingHistory,
+  AvnTransactionHistoryBase
+} from '../schemas/avn-transaction.schema'
 
 export class MintAvnTransactionDto {
   @IsString()
@@ -23,10 +25,6 @@ export class MintAvnTransactionDto {
 }
 
 class AvnOpenForSaleTransactionData {
-  // Nft id from Ethereum
-  @IsString()
-  nft_id: Nft['eid']
-
   @Prop({
     type: 'object',
     value: { type: 'Buffer' }
@@ -37,7 +35,7 @@ class AvnOpenForSaleTransactionData {
   @IsEnum(Market)
   market: Market
 
-  // ETH Address of the Seller (only that address can use the proof)
+  // ETH address signed by user in Metamask client. The only proof.
   @IsString()
   ethereumAddress: string
 
@@ -59,9 +57,33 @@ class AvnOpenForSaleTransactionData {
   nftId?: string
 }
 
+class AvnCancelFiatSaleTransactionData {
+  @Prop({
+    type: 'object',
+    value: { type: 'Buffer' }
+  })
+  userId: MUUID
+
+  // ETH address signed by user in Metamask client. The only proof.
+  @IsString()
+  ethereumAddress: string
+
+  // NFT ID in local database
+  @IsString()
+  @IsOptional()
+  nftId?: string
+
+  @IsString()
+  @IsOptional()
+  avnNftId?: string
+}
+
 export class ListAvnTransactionDto {
   @IsString()
   request_id: string
+
+  @IsString()
+  nftId?: string
 
   @Prop({ type: AvnTransactionType })
   type: AvnTransactionType
@@ -74,4 +96,29 @@ export class ListAvnTransactionDto {
 
   @Prop({ type: Array<AvnTransactionHistoryBase> })
   history: AvnTransactionHistoryBase[]
+}
+
+export class CancelListingAvnTransactionDto {
+  @Prop()
+  @IsString()
+  request_id: string
+
+  @IsString()
+  nftId?: string
+
+  @Prop()
+  @IsString()
+  auctionId: string
+
+  @Prop({ type: AvnTransactionType })
+  type: AvnTransactionType
+
+  @Prop({ type: AvnOpenForSaleTransactionData })
+  data: AvnCancelFiatSaleTransactionData
+
+  @Prop({ type: AvnTransactionState })
+  state: AvnTransactionState
+
+  @Prop({ type: Array<AvnTransactionHistoryBase> })
+  history: AvnCancelFiatListingHistory[]
 }

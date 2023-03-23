@@ -2,6 +2,7 @@ import { getModelToken } from '@nestjs/mongoose'
 import { Test, TestingModule } from '@nestjs/testing'
 import { User } from '../../user/schemas/user.schema'
 import { getMockUser } from '../../user/test/mocks'
+import { getQueueToken } from '@nestjs/bull'
 import { NftService } from '../../nft/services/nft.service'
 import { UserService } from '../../user/user.service'
 import { AvnTransactionHttpController } from '../controllers/avn-transaction.http-controller'
@@ -30,6 +31,10 @@ import { AvnTransactionApiGatewayService } from '../services/avn-transaction-api
 import { PaymentService } from '../../payment/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Auction } from '../../listing/schemas/auction.schema'
+import {
+  BullMqService,
+  MAIN_BULL_QUEUE_NAME
+} from '../../bull-mq/bull-mq.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -38,6 +43,10 @@ const ClientProxyMock = () => ({
 
 describe('AvnTransactionController', () => {
   let controller: AvnTransactionHttpController
+
+  const mockQueue = {
+    add: jest.fn()
+  }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -52,6 +61,11 @@ describe('AvnTransactionController', () => {
         EditionListingService,
         PaymentService,
         ListingService,
+        BullMqService,
+        {
+          provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
+          useValue: mockQueue
+        },
         {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()

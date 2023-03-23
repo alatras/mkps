@@ -1,3 +1,4 @@
+import { BullModule } from '@nestjs/bull'
 import { Logger, Module } from '@nestjs/common'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
@@ -26,6 +27,20 @@ const GENERAL_IMPORTS = [
         dbName: new ConfigService().get<string>('MONGODB_NAME')
       }
     }
+  }),
+  BullModule.forRootAsync({
+    useFactory: async (configService: ConfigService) => ({
+      redis: {
+        host: configService.get<string>('app.redis.host') || 'localhost',
+        port: Number(configService.get<string>('app.redis.port')) || 6379
+      },
+      defaultJobOptions: {
+        removeOnComplete: true,
+        removeOnFail: true
+      },
+      prefix: `{${configService.get<string>('app.environment')}}`
+    }),
+    inject: [ConfigService]
   })
 ]
 

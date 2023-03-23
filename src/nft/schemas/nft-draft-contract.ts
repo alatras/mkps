@@ -50,6 +50,9 @@ export class NftDraftContract {
   editionId?: MUUID.MUUID
 
   @Prop()
+  avnNftId?: string
+
+  @Prop()
   eid?: string
 
   @Prop()

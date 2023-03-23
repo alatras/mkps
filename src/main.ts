@@ -9,9 +9,8 @@ import { getRedisOptions } from './utils/get-redis-options'
 
 async function bootstrap() {
   const logger = new LogService().getLogger()
-  const app = await NestFactory.create(AppModule, {
-    logger
-  })
+
+  const app = await NestFactory.create(AppModule, { logger })
 
   app.enableCors()
   app.useGlobalFilters(new GeneralExceptionsFilter())

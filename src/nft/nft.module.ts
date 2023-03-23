@@ -25,6 +25,7 @@ import {
   AvnNftTransaction,
   AvnNftTransactionSchema
 } from '../avn-transaction/schemas/avn-transaction.schema'
+import { AvnTransactionService } from '../avn-transaction/services/avn-transaction.service'
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import {
   providers: [
     NftService,
     PaymentService,
+    AvnTransactionService,
     ListingService,
     {
       provide: 'TRANSPORT_CLIENT',

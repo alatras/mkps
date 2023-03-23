@@ -9,6 +9,7 @@ class AvnTransactionMintResponseData {
 export class AvnTransactionMintResponse {
   _id?: object
   request_id: string
+  nftId?: string
   type: string
   data: AvnTransactionMintResponseData
   history: AvnMintHistory[]

@@ -29,7 +29,7 @@ import { v4 } from 'uuid-mongodb'
 import { User } from '../user/schemas/user.schema'
 import { DataWrapper } from '../common/dataWrapper'
 import { MessagePatternGenerator } from '../utils/message-pattern-generator'
-import { getRoyalties } from '../utils/get-royalties'
+import { getDefaultRoyalties } from '../utils/get-royalties'
 import {
   AvnCreateBatchTransaction,
   AvnEditionTransaction
@@ -165,7 +165,10 @@ export class EditionService {
       editionDoc
     )
     if (!createdEdition) {
-      this.logger.error('failed to create Edition:', createEditionDto.name)
+      this.logger.error(
+        'creating Edition failed to create Edition:',
+        createEditionDto.name
+      )
       throw new InternalServerErrorException('cannot create Edition')
     }
 
@@ -186,7 +189,7 @@ export class EditionService {
       data: {
         totalSupply: edition.quantity,
         userId: minter._id,
-        royalties: getRoyalties()
+        royalties: getDefaultRoyalties()
       },
       state: AvnTransactionState.NEW,
       history: []

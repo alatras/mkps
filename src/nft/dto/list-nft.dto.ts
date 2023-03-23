@@ -34,6 +34,11 @@ export class ListNftDto {
   @ApiProperty({ required: true })
   nftId: string
 
+  @Prop()
+  @IsString()
+  @IsOptional()
+  anvNftId?: string
+
   @ValidateNested()
   @Type(() => Seller)
   @ApiProperty({ required: true })

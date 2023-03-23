@@ -18,6 +18,8 @@ import {
 } from '@nestjs/microservices'
 import { getRedisOptions } from '../utils/get-redis-options'
 import { HttpModule } from '@nestjs/axios'
+import { Auction, AuctionSchema } from '../listing/schemas/auction.schema'
+import { BullMqModule } from '../bull-mq/bull-mq.module'
 
 @Module({
   imports: [
@@ -27,9 +29,15 @@ import { HttpModule } from '@nestjs/axios'
         name: AvnNftTransaction.name,
         schema: AvnNftTransactionSchema,
         collection: DbCollections.AvnTransactions
+      },
+      {
+        name: Auction.name,
+        schema: AuctionSchema,
+        collection: DbCollections.Auctions
       }
     ]),
-    HttpModule
+    HttpModule,
+    BullMqModule
   ],
   providers: [
     AvnTransactionService,

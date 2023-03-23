@@ -9,16 +9,22 @@ import {
 import { Transform } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { Owner } from '../../shared/sub-schemas/owner.schema'
-import { IsDate, IsString } from 'class-validator'
+import { IsDate, IsOptional, IsString } from 'class-validator'
 
 export type AuctionDocument = Auction & Document
 
 class AuctionNft {
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({ type: 'object', required: true })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop()
+  @IsString()
+  @IsOptional()
+  anvNftId?: string
+
+  @Prop()
+  @IsString()
   eid: string
 
   @Transform(({ value }) => MUUID.from(value).toString())
@@ -29,7 +35,7 @@ class AuctionNft {
 class AuctionUser {
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({ type: 'object', required: false })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop({ required: false })
   avnPubKey: string
@@ -103,7 +109,7 @@ export class Auction {
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop({ type: AuctionNft })
   nft: AuctionNft

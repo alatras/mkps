@@ -4,7 +4,7 @@ import {
   RoyaltyRate
 } from '../avn-transaction/schemas/avn-transaction.schema'
 
-export function getRoyalties(): Royalties[] {
+export function getDefaultRoyalties(): Royalties[] {
   try {
     const decodedRoyalties = Buffer.from(
       process.env.ROYALTIES ?? '',
@@ -38,4 +38,25 @@ export function getRoyalties(): Royalties[] {
       `avn-service - invalid ROYALTIES value specified in config: ${e.toString()}`
     )
   }
+}
+
+/**
+ * Get NFT Royalties.
+ * This starts with the default royalties and updates
+ * them if the NFT has royalties.
+ * @param nft NFT
+ */
+export function getNftRoyalties(nftRoyaltiesNumber: number): Royalties[] {
+  const royalties: Royalties[] = getDefaultRoyalties()
+  if (!nftRoyaltiesNumber) {
+    return royalties
+  }
+
+  royalties.forEach(royalty => {
+    if (nftRoyaltiesNumber >= 0) {
+      royalty.rate.parts_per_million = nftRoyaltiesNumber * 10000
+    }
+  })
+
+  return royalties
 }

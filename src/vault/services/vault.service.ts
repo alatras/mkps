@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import { ConfigService } from '@nestjs/config'
 import { firstValueFrom } from 'rxjs'
-import { LogService } from '../../log/log.service'
 
 interface VaultConfig {
   baseUrl: string
@@ -32,14 +31,14 @@ export class VaultService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-    private logService: LogService
+    private readonly configService: ConfigService
   ) {
     // create VaultOptions object
     const vaultConfig = this.configService.get<VaultConfig>('app.vault')
 
     // loop through vaultConfig object and check if any values are undefined or null - if so, throw error
     if (!vaultConfig) {
+      this.logger.error('constructor: vaultConfig is undefined')
       throw new Error('VaultService.constructor: vaultConfig is undefined')
     }
 
@@ -50,6 +49,7 @@ export class VaultService {
     }
 
     this.config = vaultConfig
+
     // this.setAuthority().then(r =>
     //   this.logger.log(`Authority set - address: ${r}`)
     // )
@@ -61,6 +61,7 @@ export class VaultService {
 
   private async get(url: string, token: string): Promise<any> {
     try {
+      this.logger.debug(`get data for URL: ${url}`)
       const res = await firstValueFrom(
         this.httpService.get(`${this.config.baseUrl}/${url}`, {
           headers: {
@@ -71,6 +72,7 @@ export class VaultService {
 
       return res.data.data
     } catch (error) {
+      this.logger.error(`get data error: ${error.message}`)
       if (error.response) {
         if (
           error.response.status === 404 ||
@@ -93,6 +95,7 @@ export class VaultService {
   ): Promise<string | any> {
     const defaultHeaders = { 'Content-Type': 'application/json' }
     try {
+      this.logger.debug(`post data for URL: ${url}`)
       const response = await firstValueFrom(
         this.httpService.post(`${this.config.baseUrl}/${url}`, data, {
           ...defaultHeaders,
@@ -102,6 +105,7 @@ export class VaultService {
 
       return response.data
     } catch (e) {
+      this.logger.error(`post data error: ${e.message}`)
       if (e.response) {
         throw new Error(`VaultService.post: ${e.response.data.errors}`)
       } else {

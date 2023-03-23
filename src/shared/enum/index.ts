@@ -16,7 +16,9 @@ export enum AvnTransactionType {
   AvnTransferTo = 'AvnTransferTo',
   AvnMintTo = 'AvnMintTo',
   // Transactions sent to API Gateway
-  MintSingleNftApiGateway = 'MintSingleNftApiGateway'
+  MintSingleNftApiGateway = 'MintSingleNftApiGateway',
+  ListSingleNftListingApiGateway = 'ListSingleNftApiGateway',
+  CancelListingSingleNftApiGateway = 'CancelListingSingleNftApiGateway'
 }
 
 export enum AvnTransactionState {
@@ -140,5 +142,12 @@ export enum SecondarySaleMode {
 
 export enum ApiGateWayPollingOption {
   mintSingleNft = 'mintSingleNft',
-  listSingleNft = 'listSingleNft'
+  listSingleNft = 'listSingleNft',
+  cancelListingSingleNft = 'cancelListingSingleNft'
+}
+
+export enum BidStatus {
+  processing = 'Processing',
+  success = 'Success',
+  failed = 'Failed'
 }

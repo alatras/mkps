@@ -62,4 +62,7 @@ export class NftDraftModel {
 
   @Prop()
   editionNumber?: number
+
+  @Prop()
+  royalties?: number
 }

@@ -4,9 +4,10 @@ import { Model } from 'mongoose'
 import { firstValueFrom } from 'rxjs'
 import { ClientProxy } from '@nestjs/microservices'
 import { InjectModel } from '@nestjs/mongoose'
-import { AvnNftTransaction } from '../schemas/avn-transaction.schema'
+import { AvnNftTransaction, Royalties } from '../schemas/avn-transaction.schema'
 import {
   ApiGateWayPollingOption,
+  AuctionStatus,
   AvnTransactionState,
   PollingTransactionStatus
 } from '../../shared/enum'
@@ -14,31 +15,56 @@ import { AvnApi, AvnPolState } from '../schemas/avn-api'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { NftStatus } from '../../shared/enum'
 import { Nft } from '../../nft/schemas/nft.schema'
+import { uuidFrom } from '../../utils'
+import { CancelListingAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
+import { Auction } from '../../listing/schemas/auction.schema'
+import { BullMqService } from '../../bull-mq/bull-mq.service'
 
 @Injectable()
 export class AvnTransactionApiGatewayService {
   private avnApi: AvnApi
+  private avnPollingInterval: number
+  private avnPollingTimeout: number
+  private pollingLoops: number
   private readonly logger = new Logger(AvnTransactionApiGatewayService.name)
+
   constructor(
     private configService: ConfigService,
+    private bullMqService: BullMqService,
     @InjectModel(AvnNftTransaction.name)
     private avnTransactionModel: Model<AvnNftTransaction>,
+    @InjectModel(Auction.name)
+    private auctionModel: Model<Auction>,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.configService = configService
     this.initTheApi()
+
+    this.avnPollingInterval =
+      this.configService.get<number>('app.avn.pollingInterval') || 5000 // 5 seconds
+
+    this.avnPollingTimeout =
+      this.configService.get<number>('app.avn.avnPollingTimeout') || 180000 // 3 minutes
+
+    this.pollingLoops = Math.floor(
+      this.avnPollingTimeout / this.avnPollingInterval
+    )
   }
 
   /**
    * Mint a single NFT with API Gateway
    * @param nftId NFT ID
    * @param localRequestId request ID returned to this BE consumer
+   * @param royalties Royalties
    */
-  async mintSingleNft(nftId: string, localRequestId: string): Promise<void> {
+  async mintSingleNft(
+    nftId: string,
+    localRequestId: string,
+    royalties: Royalties[]
+  ): Promise<void> {
     try {
       const avnRelayer = this.configService.get<string>('app.avn.relayer')
       const externalRef = this.createExternalRef(nftId)
-      const royalties = []
       const avnAuthority = this.configService.get<string>(
         'app.avn.avnAuthority'
       )
@@ -52,11 +78,12 @@ export class AvnTransactionApiGatewayService {
 
       this.logger.debug(`Mint NFT result from API Gateway: ${mintResult}`)
 
-      this.getConfirmation(
+      this.getConfirmationOnMintingOrListing(
         mintResult,
         nftId,
         ApiGateWayPollingOption.mintSingleNft,
         localRequestId,
+        null,
         externalRef
       )
     } catch (e) {
@@ -94,26 +121,23 @@ export class AvnTransactionApiGatewayService {
    * @param localRequestId request ID returned to this BE consumer
    * @param externalRef external reference of NFT
    */
-  private getConfirmation(
+  private getConfirmationOnMintingOrListing(
     avnRequestId: string,
     nftId: string,
     pollingOperation: ApiGateWayPollingOption,
     localRequestId: string,
+    auction?: Auction,
     externalRef?: string
   ): void {
     ;(async () => {
-      const avnPollingInterval: number =
-        this.configService.get<number>('app.avn.pollingInterval') || 5000 // 5 seconds
-      const avnPollingTimeout: number =
-        this.configService.get<number>('app.avn.avnPollingTimeout') || 180000 // 3 minutes
-      const loops: number = Math.floor(avnPollingTimeout / avnPollingInterval)
-
       let transactionCommitted = false
       let polledState: AvnPolState = null
 
       // Polling
-      for (let i = 0; i < loops; i++) {
-        await new Promise(resolve => setTimeout(resolve, avnPollingInterval))
+      for (let i = 0; i < this.pollingLoops; i++) {
+        await new Promise(resolve =>
+          setTimeout(resolve, this.avnPollingInterval)
+        )
         polledState = await this.avnApi.poll.requestState(avnRequestId)
 
         this.logger.debug(
@@ -121,7 +145,11 @@ export class AvnTransactionApiGatewayService {
             `Transaction status: ${polledState.status}`
         )
 
-        this.updateNftStatus(nftId, polledState.status, pollingOperation)
+        this.updateNftStatusForMintingAndListing(
+          nftId,
+          polledState.status,
+          pollingOperation
+        )
 
         // If transaction is committed stop polling
         if (this.transactionIsCommitted(polledState)) {
@@ -154,7 +182,7 @@ export class AvnTransactionApiGatewayService {
         polledState.status === PollingTransactionStatus.processed
       ) {
         this.logger.debug(`Updating NFT ${nftId} status to listed...`)
-        this.updateNftListingStatus(nftId, NftStatus.forSale)
+        await this.updateNftStatus(nftId, NftStatus.forSale)
       }
 
       // If transaction is not committed, log error
@@ -164,7 +192,101 @@ export class AvnTransactionApiGatewayService {
             `of request ID ${localRequestId}, AVN request ID ${avnRequestId}, ` +
             ` has timed out with status: ${polledState.status} `
         )
+
+        // Set auction status to error
+        if (pollingOperation === ApiGateWayPollingOption.listSingleNft) {
+          await this.auctionModel.findOneAndUpdate(
+            { _id: auction._id },
+            { status: AuctionStatus.error }
+          )
+        }
+
+        // Set NFT status to draft
+        else if (pollingOperation === ApiGateWayPollingOption.mintSingleNft) {
+          await this.updateNftStatus(nftId, NftStatus.draft)
+        }
       }
+
+      await this.addUpdateCachedItemTask(nftId)
+    })()
+  }
+
+  /**
+   * Get and store confirmations of AvN transaction.
+   * This is used by cancelling listing.
+   * This should not be waited for. It runs in the background.
+   * It resolves when:
+   * 1- The transaction is committed with 'processed', 'rejected', or 'failed'.
+   * 2- When it completes its tasks:
+   *    a- Checking for transaction to commit
+   *    b- Updating relevant docs in DB while / after polling
+   *    c- Logging any errors
+   * @param avnRequestId request ID returned by API Gateway
+   * @param auctionId Auction ID
+   * @param pollingOperation operation to be polled
+   * @param localRequestId request ID returned to this BE consumer
+   * @param nft NFT to be cancelled
+   *
+   */
+  private getConfirmationOnCancellingListing(
+    avnRequestId: string,
+    auctionId: string,
+    pollingOperation: ApiGateWayPollingOption.cancelListingSingleNft,
+    localRequestId: string,
+    nft: Nft
+  ): void {
+    ;(async () => {
+      let transactionCommitted = false
+      let polledState: AvnPolState = null
+
+      // Polling
+      for (let i = 0; i < this.pollingLoops; i++) {
+        await new Promise(resolve =>
+          setTimeout(resolve, this.avnPollingInterval)
+        )
+        polledState = await this.avnApi.poll.requestState(avnRequestId)
+
+        this.logger.debug(
+          `Polling for ${pollingOperation}. ` +
+            `Transaction status: ${polledState.status}`
+        )
+
+        await this.updateAuctionStatusForCancelListing(
+          auctionId,
+          polledState.status
+        )
+
+        // If transaction is committed stop polling
+        if (this.transactionIsCommitted(polledState)) {
+          transactionCommitted = true
+          this.logger.log(
+            `${pollingOperation} transaction ` +
+              `of local request ID ${localRequestId}, AVN request ID ${avnRequestId}, ` +
+              `is committed with status ${polledState.status}`
+          )
+          break
+        }
+      }
+
+      // Update NFT status after polling
+      this.updateNFTStatusForCancelListing(
+        nft._id.toString(),
+        polledState.status
+      )
+
+      // Update transaction history for cancelling listing
+      await this.updateTransactionHistory(localRequestId, polledState)
+
+      // If transaction is not committed, log error
+      if (!transactionCommitted) {
+        this.logger.error(
+          `${pollingOperation} transaction` +
+            `of request ID ${localRequestId}, AVN request ID ${avnRequestId}, ` +
+            ` has timed out with status: ${polledState.status} `
+        )
+      }
+
+      await this.addUpdateCachedItemTask(nft._id.toString())
     })()
   }
 
@@ -233,16 +355,19 @@ export class AvnTransactionApiGatewayService {
       }
     )
 
-    this.logger.debug(`Transaction history updated to: ${state}`)
+    this.logger.debug(
+      `Transaction ${localRequestId} history updated to: ${state}`
+    )
   }
 
   /**
-   * Update NFT status to adapted status from API Gateway polling
+   * Update NFT status to adapted status from API Gateway polling.
+   * This is for minting and listing.
    * @param nftId NFT ID
    * @param avnPolState AVN polling state
    * @param pollingOperation Polling operation
    */
-  private updateNftStatus(
+  private updateNftStatusForMintingAndListing(
     nftId: string,
     avnPolState: string,
     pollingOperation: ApiGateWayPollingOption
@@ -272,17 +397,78 @@ export class AvnTransactionApiGatewayService {
     }
 
     this.logger.debug(
-      `Updating NFT ${nftId} status to ${nftStatus} according to AvN poll status ${avnPolState}`
+      `Updating NFT ${nftId} status to ${nftStatus} ` +
+        `according to AvN poll status ${avnPolState}`
     )
 
-    firstValueFrom(
-      this.clientProxy.send(MessagePatternGenerator('nft', 'setStatusToNft'), {
-        nftId,
-        nftStatus
-      })
-    ).then((res: Nft) => {
-      this.logger.debug(`NFT status updated ${res?.status}`)
-    })
+    this.updateNftStatus(nftId, nftStatus)
+  }
+
+  /**
+   * Update Auction status to adapted status from API Gateway polling
+   * @param auctionId Auction ID
+   * @param avnPolState AVN polling state
+   */
+  private async updateAuctionStatusForCancelListing(
+    auctionId: string,
+    avnPolState: string
+  ): Promise<void> {
+    let auctionStatus: AuctionStatus
+    switch (avnPolState) {
+      case PollingTransactionStatus.pending:
+        auctionStatus = AuctionStatus.closing
+        break
+      case PollingTransactionStatus.processed:
+        auctionStatus = AuctionStatus.withdraw
+        break
+      case PollingTransactionStatus.rejected:
+        auctionStatus = AuctionStatus.open
+        break
+      default:
+        auctionStatus = AuctionStatus.error
+    }
+
+    this.logger.debug(
+      `Updating Auction ${auctionId} status to ${auctionStatus} ` +
+        `according to AvN poll status ${avnPolState}`
+    )
+
+    // Update auction status
+    await this.auctionModel.findOneAndUpdate(
+      { _id: uuidFrom(auctionId) },
+      { status: auctionStatus }
+    )
+  }
+
+  /**
+   * Update NFT status to adapted status from API Gateway polling.
+   * This is for cancel listing.
+   * @param nftId NFT ID
+   * @param avnPolState AVN polling state
+   */
+  private async updateNFTStatusForCancelListing(
+    nftId: string,
+    avnPolState: string
+  ): Promise<void> {
+    let nftStatus: NftStatus
+    switch (avnPolState) {
+      case PollingTransactionStatus.pending:
+        nftStatus = NftStatus.saleClosing
+        break
+      case PollingTransactionStatus.processed:
+        nftStatus = NftStatus.minted
+        break
+      case PollingTransactionStatus.rejected:
+        nftStatus = NftStatus.forSale
+        break
+    }
+
+    this.logger.debug(
+      `Updating NFT ${nftId} status to ${nftStatus} ` +
+        `according to AvN poll status ${avnPolState}`
+    )
+
+    await this.updateNftStatus(nftId, nftStatus)
   }
 
   /**
@@ -290,9 +476,12 @@ export class AvnTransactionApiGatewayService {
    * @param nftId NFT ID
    * @param nftStatus NFT status
    */
-  private updateNftListingStatus(nftId: string, nftStatus: NftStatus): void {
+  private async updateNftStatus(
+    nftId: string,
+    nftStatus: NftStatus
+  ): Promise<void> {
     this.logger.debug(`Updating NFT ${nftId} status...`)
-    firstValueFrom(
+    await firstValueFrom(
       this.clientProxy.send(MessagePatternGenerator('nft', 'setStatusToNft'), {
         nftId,
         nftStatus
@@ -361,7 +550,8 @@ export class AvnTransactionApiGatewayService {
   async listSingleNft(
     nftId: string,
     avnNftId: string,
-    localRequestId: string
+    localRequestId: string,
+    auction: Auction
   ): Promise<void> {
     try {
       const avnRelayer = this.configService.get<string>('app.avn.relayer')
@@ -373,15 +563,70 @@ export class AvnTransactionApiGatewayService {
 
       this.logger.debug(`List NFT result via API Gateway: ${avnRequestId}`)
 
-      this.getConfirmation(
+      this.getConfirmationOnMintingOrListing(
         avnRequestId,
         nftId,
         ApiGateWayPollingOption.listSingleNft,
-        localRequestId
+        localRequestId,
+        auction
       )
     } catch (error) {
       this.logger.error(`Error listing NFT via API Gateway: ${nftId}`)
       throw error
     }
+  }
+
+  /**
+   * Cancel single NFT listing via API Gateway
+   * @param cancelListAvnTransaction cancel listing AvN transaction DTO
+   * @param nft NFT object model
+   */
+  async cancelFiatNftListing(
+    cancelListAvnTransaction: CancelListingAvnTransactionDto,
+    nft: Nft
+  ): Promise<void> {
+    try {
+      const avnRelayer = this.configService.get<string>('app.avn.relayer')
+
+      const avnRequestId = await this.avnApi.send.cancelFiatNftListing(
+        avnRelayer,
+        cancelListAvnTransaction.data.avnNftId
+      )
+
+      this.logger.debug(
+        `Cancel NFT listing request ID from API Gateway: ${avnRequestId}`
+      )
+
+      this.getConfirmationOnCancellingListing(
+        avnRequestId,
+        cancelListAvnTransaction.auctionId,
+        ApiGateWayPollingOption.cancelListingSingleNft,
+        cancelListAvnTransaction.request_id,
+        nft
+      )
+    } catch (error) {
+      this.logger.error(
+        `Error cancelling fiat listing of NFT ${nft._id} via API Gateway: ` +
+          JSON.stringify(error)
+      )
+
+      throw error
+    }
+  }
+
+  /**
+   * Updated ached item via Bull MQ queue
+   * @param nftId NFT ID
+   */
+  private async addUpdateCachedItemTask(id: string): Promise<void> {
+    this.logger.debug(`Updating cached item ${id}...`)
+    await this.bullMqService.addToQueue(
+      'updateCachedItem',
+      { id, type: 'NFT' },
+      {
+        jobId: `updateCachedItem:NFT:${id}`,
+        delay: 2000
+      }
+    )
   }
 }

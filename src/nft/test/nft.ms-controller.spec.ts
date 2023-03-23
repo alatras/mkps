@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { ConfigService } from '@nestjs/config'
+import { getQueueToken } from '@nestjs/bull'
 import { NftService } from '../services/nft.service'
 import { Nft } from '../schemas/nft.schema'
 import {
@@ -26,6 +27,10 @@ import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/
 import { PaymentService } from '../../payment/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Auction } from '../../listing/schemas/auction.schema'
+import {
+  BullMqService,
+  MAIN_BULL_QUEUE_NAME
+} from '../../bull-mq/bull-mq.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -35,6 +40,10 @@ const ClientProxyMock = () => ({
 describe('NftMsController', () => {
   let controller: NftMsController
   let service: NftService
+
+  const mockQueue = {
+    add: jest.fn()
+  }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -49,6 +58,11 @@ describe('NftMsController', () => {
         PaymentService,
         LogService,
         ListingService,
+        BullMqService,
+        {
+          provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
+          useValue: mockQueue
+        },
         {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
@@ -87,7 +101,7 @@ describe('NftMsController', () => {
 
   describe('handleNftMinted', () => {
     it('should call the correct service function with the correct data', async () => {
-      const testData = { nftId: '', eid: '' }
+      const testData = { nftId: '', anvNftId: '' }
 
       jest
         .spyOn(service, 'handleNftMinted')
@@ -97,7 +111,7 @@ describe('NftMsController', () => {
 
       expect(service.handleNftMinted).toBeCalledWith(
         testData.nftId,
-        testData.eid
+        testData.anvNftId
       )
     })
   })

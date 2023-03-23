@@ -2,12 +2,12 @@ import {
   Body,
   Controller,
   Get,
-  Logger,
   Patch,
   Request,
   UnauthorizedException,
   UseGuards,
-  UseInterceptors
+  UseInterceptors,
+  Logger
 } from '@nestjs/common'
 import { UserService } from '../user.service'
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
@@ -101,7 +101,7 @@ export class UserHttpController {
 
       return new UserResponseDto(updated)
     } catch (err) {
-      this.logger.error(`cannot update Auth0 email: ${dto.email}`, err)
+      this.logger.error(`cannot update Auth0 email ` + dto.email, err)
       errorResponseGenerator(err)
     }
   }

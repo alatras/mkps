@@ -6,23 +6,17 @@ import {
   UnauthorizedException,
   ConflictException,
   UnprocessableEntityException,
+  NotFoundException,
   Logger
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import { ClientProxy } from '@nestjs/microservices'
 import { CreateNftDto, CreateNftResponseDto } from '../dto/nft.dto'
 import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftHistory } from '../schemas/nft-history.schema'
-import {
-  AuctionStatus,
-  AuctionType,
-  AvnTransactionState,
-  AvnTransactionType,
-  Currency,
-  HistoryType,
-  Market
-} from '../../shared/enum'
+import { AuctionStatus, Currency, HistoryType } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
@@ -31,17 +25,21 @@ import { NftDraftContract } from '../schemas/nft-draft-contract'
 import { User } from '../../user/schemas/user.schema'
 import { NftDraftModel } from '../schemas/nft-draft-model'
 import { ImagesSet } from '../schemas/asset.schema'
+import { getNftRoyalties } from '../../utils/get-royalties'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { firstValueFrom } from 'rxjs'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
-import { ClientProxy } from '@nestjs/microservices'
 import { InvalidDataError } from '../../core/errors'
 import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
 import { validateListingPrice } from '../../utils/validateListingPrice'
 import { PaymentService } from '../../payment/payment.service'
 import { ListingService } from '../../listing/listing.service'
-import { ListAvnTransactionDto } from '../../avn-transaction/dto/mint-avn-transaction.dto'
-import { AvnNftTransaction } from '../../avn-transaction/schemas/avn-transaction.schema'
+import { Royalties } from '../../avn-transaction/schemas/avn-transaction.schema'
+import {
+  CancelListingDto,
+  CancelListingNftResponseDto,
+  cancelListingResponseAuctionFactory
+} from '../dto/cancel-listing-of-nft.dto'
 
 @Injectable()
 export class NftService {
@@ -50,9 +48,7 @@ export class NftService {
   constructor(
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
     @InjectModel(NftHistory.name) private nftHistoryModel: Model<NftHistory>,
-    @InjectModel(AvnNftTransaction.name)
-    private avnNftTransactionModel: Model<AvnNftTransaction>,
-    private readonly avnTransactionService: AvnTransactionService,
+    private avnTransactionService: AvnTransactionService,
     @Inject(forwardRef(() => EditionService))
     private editionService: EditionService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
@@ -75,6 +71,13 @@ export class NftService {
     const fullUserObject = await this.getUser(user._id)
     if (!fullUserObject.avnPubKey) {
       throw new InvalidDataError('AvV public key is not set for user')
+    }
+
+    if (
+      createNftDto.unlockableContent?.quantity &&
+      createNftDto.unlockableContent?.quantity < 0
+    ) {
+      throw new BadRequestException('negativeUnlockableContentQuantity')
     }
 
     const newNft: NftDraftModel = {
@@ -101,9 +104,12 @@ export class NftService {
 
     const nft = await this.createNft(newNft, NftStatus.minting)
 
+    const royalties: Royalties[] = getNftRoyalties(nft.royalties)
+
     const mint = await this.avnTransactionService.mintNft(
       nft._id.toString(),
-      fullUserObject
+      fullUserObject,
+      royalties
     )
 
     return { requestId: mint.request_id, id: nft._id.toString() }
@@ -133,13 +139,13 @@ export class NftService {
     const nftUUId = uuidFrom(listNftDto.nftId)
     const nft = await this.findOneById(nftUUId)
     if (!nft) {
-      this.logger.debug(`[NftService.list] NFT ${nftUUId} not found to list`)
+      this.logger.debug(`NFT ${nftUUId} not found to list`)
       throw new BadRequestException('NFT not found')
     }
 
     // Throw if NFT has no AvN ID
     if (!nft.avnNftId) {
-      this.logger.debug(`[NftService.list] NFT ${nftUUId} has no AvN ID`)
+      this.logger.debug(`NFT ${nftUUId} has no AvN ID`)
       throw new BadRequestException('NFT has no AvN ID')
     }
 
@@ -211,11 +217,10 @@ export class NftService {
 
     // Set auction status
     if (!listNftDto.status) {
-      listNftDto.status = [Currency.USD, Currency.ADA].includes(
-        listNftDto.currency
-      )
-        ? AuctionStatus.open
-        : AuctionStatus.unconfirmed
+      listNftDto.status =
+        listNftDto.currency === Currency.USD
+          ? AuctionStatus.open
+          : AuctionStatus.unconfirmed
     }
 
     // Set NFT status to 'Sale opening'
@@ -228,7 +233,7 @@ export class NftService {
         avnPubKey: fullUserObject.avnPubKey,
         username: fullUserObject.username
       },
-      { nftAvnId: nft.eid, ...listNftDto },
+      { anvNftId: nft.anvNftId, ...listNftDto },
       isSecondarySale
     )
 
@@ -244,27 +249,138 @@ export class NftService {
     }
     await this.addHistory(nftHistoryEntry)
 
-    // Add listing to AVN transactions in DB
-    const listAvnTransaction: ListAvnTransactionDto = {
-      request_id: v4().toString(),
-      type: AvnTransactionType.OpenSingleNftListing,
-      data: {
-        nft_id: nft.eid,
-        market: Market.Fiat,
-        userId: uuidFrom(listNftDto.seller.id),
-        ethereumAddress: '', // This is only used for FIAT so it is unused
-        isFixedPrice: listNftDto.type === AuctionType.fixedPrice,
-        endTime: new Date(listNftDto.endTime).getTime() / 1000, // Convert to Unix timestamp (secs)
-        avnNftId: nft.avnNftId,
-        nftId: nft._id.toString()
-      },
-      state: AvnTransactionState.NEW,
-      history: []
+    // List NFT with AvN trx service
+    await this.avnTransactionService.listNft(listNftDto, auction, nft)
+
+    // Formulate response
+    const responseAuction = cancelListingResponseAuctionFactory(auction)
+    const cancelAuctionResponse: CancelListingNftResponseDto = {
+      data: responseAuction,
+      message: 'auctionCreated'
     }
 
-    await this.avnTransactionService.listNft(listAvnTransaction)
+    return cancelAuctionResponse
+  }
 
-    return { data: auction, message: 'auctionCreated' }
+  /**
+   * Cancel listing of NFT.
+   * This reverses the steps of the listing process.
+   * It does the following:
+   *  - Sets the NFT status to 'Sale closing'
+   *  - sets Auction status to 'Closing'
+   *  - cancels listing with AvN
+   *  - sets NFT to its original status
+   *  - sets the Auction to 'Withdraw'
+   * @param user User
+   * @param cancelListingDto Cancel listing DTO
+   */
+  async cancelListing(
+    user: User,
+    cancelListingDto: CancelListingDto
+  ): Promise<CancelListingNftResponseDto> {
+    const fullUserObject = await this.getUser(user._id)
+    if (!fullUserObject.avnPubKey) {
+      throw new InvalidDataError('AvV public key is not set for user')
+    }
+
+    const auction = await this.listingService.getAuctionById(
+      uuidFrom(cancelListingDto.auctionId)
+    )
+    if (!auction) {
+      this.logger.debug(` Auction ${cancelListingDto.auctionId} not found`)
+      throw new NotFoundException('auctionNotFound')
+    }
+
+    // Throw if user is not the seller
+    if (fullUserObject.avnPubKey !== auction.seller.avnPubKey) {
+      this.logger.debug(
+        `User ${fullUserObject._id} is not the seller of auction ${cancelListingDto.auctionId}`
+      )
+      throw new UnauthorizedException('notAuthorized')
+    }
+
+    // Throw if Auction is withdrawn
+    if (auction.status === AuctionStatus.withdraw) {
+      this.logger.debug(
+        `Auction ${cancelListingDto.auctionId} is already withdrawn`
+      )
+      throw new ConflictException('auctionAlreadyWithdrawn')
+    }
+
+    // Throw if Auction is already closed
+    if (auction.status === AuctionStatus.closing) {
+      this.logger.debug(
+        `Auction ${cancelListingDto.auctionId} is already closing`
+      )
+      throw new ConflictException('auctionAlreadyClosing')
+    }
+
+    // Throw if Auction is not open
+    if (auction.status !== AuctionStatus.open) {
+      this.logger.debug(`Auction ${cancelListingDto.auctionId} is not open`)
+      throw new ConflictException('expiredAuction')
+    }
+
+    // Throw if NFT is not found
+    const nft = await this.findOneById(uuidFrom(auction.nft._id))
+    if (!nft) {
+      this.logger.debug(`NFT ${auction.nft._id} not found`)
+      throw new NotFoundException('nftNotFound')
+    }
+
+    // Throw if NFT is an Edition
+    if (nft.status === NftStatus.minted && nft.editionId) {
+      this.logger.debug(`NFT ${auction.nft._id} is an edition`)
+      throw new ConflictException('editionCannotBeListed')
+    }
+
+    // Update Auction status to 'Closing'
+    await this.listingService.updateAuctionStatus(
+      auction._id,
+      AuctionStatus.closing
+    )
+
+    // Set NFT status to 'Sale closing'
+    await this.setStatusToNft(nft._id, NftStatus.saleClosing)
+
+    // Cancel USD Auction
+    if (auction.currency === Currency.USD) {
+      // Cancel Auction with AvN Network
+      await this.avnTransactionService.cancelFiatNftListing(
+        nft,
+        fullUserObject,
+        auction
+      )
+
+      // Add NFT history
+      const historyEntry: CreateNftHistoryDto = {
+        auctionId: auction._id,
+        nftId: uuidFrom(auction.nft._id).toJSON(),
+        userAddress: `${user.avnPubKey}`,
+        type: HistoryType.cancelled,
+        currency: auction.currency,
+        amount: auction.reservePrice
+      }
+      const nftHistory = await firstValueFrom(
+        this.clientProxy.send(
+          MessagePatternGenerator('nft', 'addHistory'),
+          historyEntry
+        )
+      )
+      this.logger.debug(`NFT history added/updated ${nftHistory._id}`)
+    } else {
+      // Cancel non USD Auction. For now all non USD Auctions handles the same way.
+      await this.listingService.cancelNoneUsdAuction(auction, user)
+    }
+
+    // Formulate response
+    const responseAuction = cancelListingResponseAuctionFactory(auction)
+    const cancelAuctionResponse: CancelListingNftResponseDto = {
+      data: responseAuction,
+      message: 'auctionClosing'
+    }
+
+    return cancelAuctionResponse
   }
 
   /**
@@ -338,9 +454,15 @@ export class NftService {
     )
   }
 
-  async handleNftMinted(nftId: string, eid: string) {
+  /**
+   * Handle status of NFT after minting by adding history
+   * @param nftId NFT ID
+   * @param avnNftId NFT ID on AvN Network
+   */
+  async handleNftMinted(nftId: string, avnNftId: string) {
     const nft: Nft = await this.updateOneById(nftId, {
-      eid,
+      avnNftId,
+      eid: avnNftId,
       status: NftStatus.minted
     })
 
@@ -386,6 +508,12 @@ export class NftService {
     }
   }
 
+  /**
+   * Create NFT and insert it into DB
+   * Used by NFT Service and Edition Service
+   * @param nftDraft NFT draft
+   * @param nftStatus NFT status
+   */
   async createNft(
     nftDraft: NftDraftModel,
     nftStatus?: NftStatus
@@ -434,6 +562,7 @@ export class NftService {
       {
         $set: {
           avnNftId,
+          eid: avnNftId,
           updatedAt: new Date()
         }
       },
