@@ -310,7 +310,7 @@ export class AvnTransactionApiGatewayService {
     const AvnApi = require('avn-api')
     const avnGatewayUrl = this.configService.get<string>('app.avn.gatewayUrl')
     const suri = this.configService.get<string>('app.avn.suri')
-    const options = { suri }
+    const options = { suri, hasPayer: true }
 
     const API = new AvnApi(avnGatewayUrl, options)
     await API.init()

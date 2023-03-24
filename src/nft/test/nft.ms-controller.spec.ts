@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { ConfigService } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import config from '../../config/app.config'
 import { getQueueToken } from '@nestjs/bull'
 import { NftService } from '../services/nft.service'
 import { Nft } from '../schemas/nft.schema'
@@ -89,7 +90,8 @@ describe('NftMsController', () => {
           provide: getModelToken(EditionListing.name),
           useValue: getEditionListing()
         }
-      ]
+      ],
+      imports: [ConfigModule.forRoot({ load: [config] })]
     }).compile()
     controller = module.get<NftMsController>(NftMsController)
     service = module.get<NftService>(NftService)

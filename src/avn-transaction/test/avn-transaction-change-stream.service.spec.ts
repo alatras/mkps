@@ -31,6 +31,8 @@ import { AvnTransactionApiGatewayService } from '../services/avn-transaction-api
 import { PaymentService } from '../../payment/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Auction } from '../../listing/schemas/auction.schema'
+import { ConfigModule } from '@nestjs/config'
+import config from '../../config/app.config'
 import {
   BullMqService,
   MAIN_BULL_QUEUE_NAME
@@ -99,7 +101,8 @@ describe('AvnTransactionChangeStreamService', () => {
           provide: getModelToken(EditionListing.name),
           useValue: getEditionListing()
         }
-      ]
+      ],
+      imports: [ConfigModule.forRoot({ load: [config] })]
     }).compile()
 
     testClientProxy = await module.get('TRANSPORT_CLIENT')

@@ -20,7 +20,8 @@ import {
   getNftEdition,
   NftMock
 } from '../../nft/test/mocks'
-import { ConfigService } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import config from '../../config/app.config'
 import { NftHistory } from '../../nft/schemas/nft-history.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftEdition } from '../../edition/schemas/edition.schema'
@@ -97,6 +98,7 @@ describe('AvnTransactionController', () => {
           useValue: getEditionListing()
         }
       ],
+      imports: [ConfigModule.forRoot({ load: [config] })],
       controllers: [AvnTransactionHttpController]
     }).compile()
 

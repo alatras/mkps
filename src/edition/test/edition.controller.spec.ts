@@ -1,5 +1,6 @@
 import { getModelToken } from '@nestjs/mongoose'
-import { ConfigService } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import config from '../../config/app.config'
 import { getQueueToken } from '@nestjs/bull'
 import { Test, TestingModule } from '@nestjs/testing'
 import {
@@ -88,7 +89,8 @@ describe('EditionController', () => {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
         }
-      ]
+      ],
+      imports: [ConfigModule.forRoot({ load: [config] })]
     }).compile()
 
     controller = module.get<EditionController>(EditionController)
