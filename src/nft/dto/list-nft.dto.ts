@@ -20,8 +20,9 @@ export class Seller {
   avnPubKey: string
 
   @IsString()
-  @ApiProperty({ required: true })
-  username: string
+  @ApiProperty({ required: false })
+  @IsOptional()
+  username?: string
 
   @IsString()
   @ApiProperty({ required: false })
