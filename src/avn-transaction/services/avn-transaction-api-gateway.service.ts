@@ -63,14 +63,12 @@ export class AvnTransactionApiGatewayService {
     royalties: Royalties[]
   ): Promise<void> {
     try {
-      const avnRelayer = this.configService.get<string>('app.avn.relayer')
       const externalRef = this.createExternalRef(nftId)
       const avnAuthority = this.configService.get<string>(
         'app.avn.avnAuthority'
       )
 
       const mintResult = await this.avnApi.send.mintSingleNft(
-        avnRelayer,
         externalRef,
         royalties,
         avnAuthority
@@ -309,8 +307,9 @@ export class AvnTransactionApiGatewayService {
     /* eslint @typescript-eslint/no-var-requires: "off" */
     const AvnApi = require('avn-api')
     const avnGatewayUrl = this.configService.get<string>('app.avn.gatewayUrl')
+    const avnRelayer = this.configService.get<string>('app.avn.relayer')
     const suri = this.configService.get<string>('app.avn.suri')
-    const options = { suri, hasPayer: true }
+    const options = { suri, relayer: avnRelayer, hasPayer: true }
 
     const API = new AvnApi(avnGatewayUrl, options)
     await API.init()
@@ -554,12 +553,7 @@ export class AvnTransactionApiGatewayService {
     auction: Auction
   ): Promise<void> {
     try {
-      const avnRelayer = this.configService.get<string>('app.avn.relayer')
-
-      const avnRequestId = await this.avnApi.send.listFiatNftForSale(
-        avnRelayer,
-        avnNftId
-      )
+      const avnRequestId = await this.avnApi.send.listFiatNftForSale(avnNftId)
 
       this.logger.debug(`List NFT result via API Gateway: ${avnRequestId}`)
 
@@ -586,10 +580,7 @@ export class AvnTransactionApiGatewayService {
     nft: Nft
   ): Promise<void> {
     try {
-      const avnRelayer = this.configService.get<string>('app.avn.relayer')
-
       const avnRequestId = await this.avnApi.send.cancelFiatNftListing(
-        avnRelayer,
         cancelListAvnTransaction.data.avnNftId
       )
 
