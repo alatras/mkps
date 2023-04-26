@@ -25,6 +25,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "dev:hosted": "ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,LISTING_SERVICE concurrently \"npm run ssh:mongo\" \"npm run ssh:redis\" \"npm run dev\" --kill-others",
+    "dev:local": "ACTIVE_SERVICES=NFT_SERVICE,AVN_SERVICE,LISTING_SERVICE concurrently \"MONGODB_URI=mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.8.0 npm run dev\" --kill-others",
     "ssh:mongo": "ssh -i ~/.ssh/id_rsa -L 27017:10.150.4.35:27017 ubuntu@3.143.142.127 -N",
     "ssh:redis": "ssh -i ~/.ssh/id_rsa -L 6379:10.150.4.219:6379 ubuntu@3.143.142.127 -N",
     "migrate:create": "sh -c 'ts-node node_modules/.bin/migrate-mongo create $0 -f migrate-mongo-config.ts' ",
