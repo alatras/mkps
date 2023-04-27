@@ -84,12 +84,9 @@ pipeline {
         stage('Initialize') {
             steps {
                 script {
-                    if ("${params.environment}" == "dev" || "${params.environment}" == "qa") {
+                    if ("${params.environment}" == "dev") {
                         properties([pipelineTriggers([pollSCM('H/10 * * * *')])])
                     }
-                    else if ("${params.environment}" == "uat" && "${params.account_name}" != "test") {
-                        properties([pipelineTriggers([pollSCM('H/10 * * * *')])])                    
-                    }                    
                 }
             }
         }
