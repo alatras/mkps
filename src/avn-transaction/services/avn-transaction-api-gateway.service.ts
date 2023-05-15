@@ -18,7 +18,7 @@ import { Nft } from '../../nft/schemas/nft.schema'
 import { uuidFrom } from '../../utils'
 import { CancelListingAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 import { Auction } from '../../listing/schemas/auction.schema'
-import { BullMqService } from '../../bull-mq/bull-mq.service'
+import { BullMqService, Queues } from '../../bull-mq/bull-mq.service'
 
 @Injectable()
 export class AvnTransactionApiGatewayService {
@@ -612,6 +612,7 @@ export class AvnTransactionApiGatewayService {
   private async addUpdateCachedItemTask(id: string): Promise<void> {
     this.logger.debug(`Updating cached item ${id}...`)
     await this.bullMqService.addToQueue(
+      Queues.task,
       'updateCachedItem',
       { id, type: 'NFT' },
       {

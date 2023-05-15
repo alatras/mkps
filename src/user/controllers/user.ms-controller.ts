@@ -19,4 +19,15 @@ export class UserMsController {
   async getUserById(@Payload('userId') userId: string): Promise<User> {
     return await this.userService.findOneById(this.mUUID.from(userId))
   }
+
+  @Permissions('read:users, write:users')
+  @MessagePattern(MessagePatternGenerator('user', 'updateUserById'))
+  async updateUserById(
+    @Payload() payload: { userId: string; data: Record<string, any> }
+  ): Promise<User> {
+    return await this.userService.updateUserById(
+      this.mUUID.from(payload.userId),
+      payload.data
+    )
+  }
 }

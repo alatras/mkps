@@ -6,6 +6,7 @@ import { getAvnTransaction } from '../avn-transaction/test/mocks'
 import { ListingService } from './listing.service'
 import { Auction } from './schemas/auction.schema'
 import { LogService } from '../log/log.service'
+import { Bid } from '../payment/schemas/bid.dto'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -23,6 +24,10 @@ describe('ListingService', () => {
         LogService,
         {
           provide: getModelToken(Auction.name),
+          useValue: getAvnTransaction()
+        },
+        {
+          provide: getModelToken(Bid.name),
           useValue: getAvnTransaction()
         },
         {

@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger'
 import { DataWrapper } from '../../common/dataWrapper'
 import { Auction } from '../../listing/schemas/auction.schema'
 import { AuctionStatus, AuctionType, Currency } from '../../shared/enum'
-import { Bid } from './bid.dto'
+import { Bid } from '../../payment/schemas/bid.dto'
 import { uuidFrom } from '../../utils'
 import { formatCurrencyWithSymbol } from '../../utils/format-currency'
 

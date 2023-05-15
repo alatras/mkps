@@ -7,7 +7,8 @@ import {
   ConflictException,
   UnprocessableEntityException,
   NotFoundException,
-  Logger
+  Logger,
+  InternalServerErrorException
 } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
@@ -16,7 +17,12 @@ import { CreateNftDto, CreateNftResponseDto } from '../dto/nft.dto'
 import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftHistory } from '../schemas/nft-history.schema'
-import { AuctionStatus, Currency, HistoryType } from '../../shared/enum'
+import {
+  AuctionStatus,
+  AuctionType,
+  Currency,
+  HistoryType
+} from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
@@ -32,7 +38,7 @@ import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { InvalidDataError } from '../../core/errors'
 import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
 import { validateListingPrice } from '../../utils/validateListingPrice'
-import { PaymentService } from '../../payment/payment.service'
+import { PaymentService } from '../../payment/services/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Royalties } from '../../avn-transaction/schemas/avn-transaction.schema'
 import {
@@ -40,6 +46,13 @@ import {
   CancelListingNftResponseDto,
   cancelListingResponseAuctionFactory
 } from '../dto/cancel-listing-of-nft.dto'
+import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
+import { Auction } from '../../listing/schemas/auction.schema'
+import { S3Service } from '../../common/s3/s3.service'
+import { getDateEmailFormat } from '../../utils/date'
+import { formatCurrencyWithSymbol } from '../../utils/currency'
+import { FirstBidNotificationEmailData } from '../../common/email/email-data'
+import { NftEdition } from 'src/edition/schemas/edition.schema'
 
 @Injectable()
 export class NftService {
@@ -53,7 +66,8 @@ export class NftService {
     private editionService: EditionService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
     private paymentService: PaymentService,
-    private listingService: ListingService
+    private listingService: ListingService,
+    private s3Service: S3Service
   ) {}
 
   /**
@@ -578,5 +592,147 @@ export class NftService {
         userId: userId.toString()
       })
     )
+  }
+
+  /**
+   * Get data for email related to an NFT
+   * @param {Nft} nft - The NFT object to get data for
+   * @param {Auction | EditionListing} listing - The auction or edition listing object for the NFT
+   * @param {string} [bidValue] - Optional value for the bid
+   * @returns {Promise<Object>} - Promise object representing the email data object
+   * @throws {NotFoundException} - If the highest bid is not found or the listing is invalid
+   * @throws {InternalServerErrorException} - If the highest bid is not set
+   */
+  async getNftEmailData(
+    nft: Nft,
+    listing: Auction | EditionListing,
+    bidValue?: string
+  ): Promise<FirstBidNotificationEmailData> {
+    // Get the highest bid for the NFT
+    const price: string = await this.getBidPriceForNotificationEmail(
+      listing,
+      bidValue
+    )
+
+    // Get the edition if the NFT is an edition
+    const edition = nft.editionId
+      ? await this.editionService.getEditionById(nft.editionId)
+      : undefined
+
+    // Get the image key for the NFT
+    let imageKey = nft.image.small.key
+    if (edition) {
+      imageKey = await this.getImageKeyForEdition(edition)
+    }
+
+    // Factor the email data
+    const emailData: FirstBidNotificationEmailData = {
+      name: nft.name || edition?.name,
+      url: `${process.env.WEB_APP_URL}/${
+        edition ? 'edition' : 'nft'
+      }/${uuidFrom(edition ? edition?._id : nft._id).toString()}`,
+      imgUrl: this.s3Service.mapDistributionUrl(imageKey),
+      editionNumber: nft.editionNumber,
+      editionQuantity: edition?.quantity,
+      isEthereum: listing.currency === Currency.ETH,
+      date: getDateEmailFormat(new Date()), // listing.endTime),
+      price: price
+        ? formatCurrencyWithSymbol(price, listing.currency)
+        : undefined,
+      listingId: listing._id.toString()
+    }
+
+    return emailData
+  }
+
+  /**
+   * Get price of Auction of type Highest Bid,
+   * @param {Auction | EditionListing} listing - The auction or edition listing object for the NFT
+   * @returns {Promise<string>} - Promise object representing the price of the highest bid
+   */
+  async getBidPriceForNotificationEmail(
+    listing: Auction | EditionListing,
+    bidValue?: string
+  ): Promise<string> {
+    let price: string
+    switch (listing.type) {
+      case AuctionType.highestBid:
+        if (bidValue) {
+          price = bidValue
+          break
+        }
+        price = await this.getHighestBidPriceForNotificationEmail(listing)
+        break
+
+      case AuctionType.fixedPrice:
+        price = listing.reservePrice
+        break
+
+      case AuctionType.airdrop:
+      case AuctionType.freeClaim:
+        price = '0'
+        break
+
+      default:
+        const message = `[getBidPriceForNotificationEmail] Listing invalid for NFT ${JSON.stringify(
+          listing
+        )}`
+        this.logger.error(message)
+        throw new NotFoundException(message)
+    }
+
+    return price
+  }
+
+  /**
+   * Get image key for an edition.
+   * This assumes that the edition has at least one NFT.
+   * @param {NftEdition} edition - The edition object to get image key for
+   */
+  async getImageKeyForEdition(edition: NftEdition): Promise<string> {
+    const firstNft = await this.findOneById(edition.nfts[0])
+    if (!firstNft) {
+      const message = `[getImageKeyForEdition] Could not get first NFT for edition ${uuidFrom(
+        edition.nfts[0]
+      ).toString()}`
+      this.logger.error(message)
+      throw new NotFoundException(message)
+    }
+
+    if (!firstNft.image?.small.key) {
+      throw new BadRequestException('NFT does not have small thumbnail')
+    }
+
+    return firstNft.image.small.key
+  }
+
+  /**
+   * Get price of Auction of type Highest Bid,
+   * This assumes that bidValue is not already given to email data factory function.
+   * @param {Auction} listing - The auction object to get price for
+   */
+  async getHighestBidPriceForNotificationEmail(
+    listing: Auction
+  ): Promise<string> {
+    // Throw if highest bid is not found
+    const bid = await this.listingService.getBidById(listing.highestBidId)
+    if (!bid) {
+      const message =
+        `[getHighestBidPriceForNotificationEmail] Cannot send email, ` +
+        `highest bid not found on listing ${uuidFrom(listing._id).toString()}`
+      this.logger.error(message)
+      throw new NotFoundException(message)
+    }
+
+    // Throw if highest bid is not set
+    if (!listing.highestBidId) {
+      const message =
+        `[getHighestBidPriceForNotificationEmail] Cannot send email, ` +
+        `highest bid not set on listing ${uuidFrom(listing._id).toString()}`
+      this.logger.error(message)
+      throw new InternalServerErrorException(message)
+    }
+
+    return bid.value
   }
 }

@@ -22,7 +22,7 @@ export class NftEdition {
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop()
   name: string
@@ -59,7 +59,7 @@ export class NftEdition {
   isHidden: boolean
 
   @Prop()
-  nfts: object[]
+  nfts: MUUID.MUUID[]
 
   @Prop()
   createdAt?: Date

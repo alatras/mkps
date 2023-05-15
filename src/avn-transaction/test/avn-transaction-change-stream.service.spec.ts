@@ -28,7 +28,7 @@ import { AvnTransactionChangeStreamService } from '../services/avn-transaction-c
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import { LogService } from '../../log/log.service'
 import { AvnTransactionApiGatewayService } from '../services/avn-transaction-api-gateway.service'
-import { PaymentService } from '../../payment/payment.service'
+import { PaymentService } from '../../payment/services/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Auction } from '../../listing/schemas/auction.schema'
 import { ConfigModule } from '@nestjs/config'
@@ -37,6 +37,11 @@ import {
   BullMqService,
   MAIN_BULL_QUEUE_NAME
 } from '../../bull-mq/bull-mq.service'
+import { Auth0Service } from '../../user/auth0.service'
+import { StripeService } from '../../payment/stripe/stripe.service'
+import { Bid } from '../../payment/schemas/bid.dto'
+import { S3Service } from '../../common/s3/s3.service'
+import { EmailService } from '../../common/email/email.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -63,6 +68,10 @@ describe('AvnTransactionChangeStreamService', () => {
         LogService,
         EditionService,
         ConfigService,
+        EmailService,
+        S3Service,
+        StripeService,
+        Auth0Service,
         EditionListingService,
         PaymentService,
         ListingService,
@@ -78,6 +87,10 @@ describe('AvnTransactionChangeStreamService', () => {
         { provide: getModelToken(User.name), useValue: getMockUser() },
         {
           provide: getModelToken(AvnNftTransaction.name),
+          useValue: getAvnTransaction()
+        },
+        {
+          provide: getModelToken(Bid.name),
           useValue: getAvnTransaction()
         },
         {

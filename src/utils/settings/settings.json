@@ -1,0 +1,6 @@
+{
+  "platformFees": {
+    "stripe": 0.03,
+    "ethereum": 0
+  }
+}

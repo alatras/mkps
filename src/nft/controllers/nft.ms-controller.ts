@@ -7,6 +7,8 @@ import { NftStatus } from '../../shared/enum'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { uuidFrom } from '../../utils'
 import { NftHistory } from '../schemas/nft-history.schema'
+import { Auction } from '../../listing/schemas/auction.schema'
+import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
 
 @Controller()
 export class NftMsController {
@@ -52,6 +54,22 @@ export class NftMsController {
     return await this.nftService.setAvnNftIdToNft(
       payload.nftId,
       payload.avnNftId
+    )
+  }
+
+  @MessagePattern(MessagePatternGenerator('nft', 'getNftEmailData'))
+  async getNftEmailData(
+    @Payload()
+    payload: {
+      nft: Nft
+      listing: Auction | EditionListing
+      bidValue?: string
+    }
+  ) {
+    return await this.nftService.getNftEmailData(
+      payload.nft,
+      payload.listing,
+      payload.bidValue
     )
   }
 }

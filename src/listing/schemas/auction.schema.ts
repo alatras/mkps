@@ -146,7 +146,7 @@ export class Auction {
 
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({ type: 'object', required: false })
-  highestBidId: object
+  highestBidId: MUUID.MUUID
 
   @Prop({ required: false })
   winner: AuctionUser

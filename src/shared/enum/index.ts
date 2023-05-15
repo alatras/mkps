@@ -65,7 +65,8 @@ export enum DbCollections {
   NftHistory = 'nftHistory',
   Editions = 'editions',
   EditionListings = 'editionListings',
-  Auctions = 'auctions'
+  Auctions = 'auctions',
+  Bids = 'bids'
 }
 
 export enum NftStatus {
@@ -150,4 +151,10 @@ export enum BidStatus {
   processing = 'Processing',
   success = 'Success',
   failed = 'Failed'
+}
+
+export enum KycStatus {
+  created = 'created',
+  rejected = 'rejected',
+  verified = 'verified'
 }

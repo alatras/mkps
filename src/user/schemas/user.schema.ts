@@ -6,7 +6,8 @@ import { DbCollections } from '../../shared/enum'
 import { ApiProperty } from '@nestjs/swagger'
 
 export enum Provider {
-  auth0 = 'google-oauth2'
+  auth0 = 'auth0',
+  ethereum = 'oauth2|siwe'
 }
 
 export const Auth0UserMetadata = {

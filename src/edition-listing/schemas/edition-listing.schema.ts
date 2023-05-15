@@ -47,7 +47,7 @@ export class EditionListing {
     value: { type: 'Buffer' },
     default: () => MUUID.v4()
   })
-  _id: object
+  _id: MUUID.MUUID
 
   @Prop()
   edition: Edition

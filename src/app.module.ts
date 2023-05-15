@@ -15,6 +15,7 @@ import { AssetModule } from './asset/asset.module'
 import { PaymentModule } from './payment/payment.module'
 import { ListingModule } from './listing/listing.module'
 import { VaultModule } from './vault/vault.module'
+import { CommonModule } from './common/common.module'
 
 const GENERAL_IMPORTS = [
   AuthModule,
@@ -53,6 +54,7 @@ const imports = [
   PaymentModule,
   ListingModule,
   VaultModule,
+  CommonModule,
   ...getActiveMicroservices()
 ]
 

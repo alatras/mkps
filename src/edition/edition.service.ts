@@ -49,6 +49,10 @@ export class EditionService {
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {}
 
+  async getEditionById(editionId: MUUID.MUUID): Promise<NftEdition> {
+    return await this.nftEditionModel.findOne({ _id: editionId })
+  }
+
   /**
    * Update Edition's available count and owned count
    * after an NFT is minted.
@@ -300,6 +304,11 @@ export class EditionService {
     await this.updateOneById(editionId, { nfts: editionNftIds })
   }
 
+  /**
+   * Generates a UUID using the batchId and editionNumber.
+   * @param {string} batchId - The batchId of the NFT.
+   * @param {number} editionNumber - The edition number of the NFT.
+   */
   private generateNftId(batchId: string, editionNumber: number): MUUID.MUUID {
     const prefix = 'B'
     const encodedData = ethers.utils.defaultAbiCoder.encode(

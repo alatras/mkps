@@ -1,7 +1,8 @@
 import { Prop } from '@nestjs/mongoose'
 import { IsEnum, IsOptional, IsString } from 'class-validator'
-import { Expose } from 'class-transformer'
-import { HistoryType } from '../../shared/enum'
+import { Expose, Transform } from 'class-transformer'
+import * as MUUID from 'uuid-mongodb'
+import { Currency, HistoryType, PaymentStatus } from '../../shared/enum'
 
 export class CreateNftHistoryDto {
   @Expose()
@@ -39,7 +40,7 @@ export class CreateNftHistoryDto {
   @Expose()
   @IsOptional()
   @IsEnum(HistoryType)
-  type: HistoryType
+  type?: HistoryType
 
   @Expose()
   @IsOptional()
@@ -55,4 +56,30 @@ export class CreateNftHistoryDto {
   @IsOptional()
   @IsString()
   amount?: string
+}
+
+export class BidHistoryFailedReason {
+  @IsString()
+  userErrorMessage: string
+
+  @IsString()
+  internalErrorMessage: string
+}
+
+export class NewBidHistoryDto extends CreateNftHistoryDto {
+  @Prop({ type: MUUID })
+  @Transform(({ value }) => MUUID.from(value).toString())
+  bidId: MUUID.MUUID
+
+  @Prop({ type: Currency })
+  currency: Currency
+
+  @IsString()
+  amount: string
+
+  @Prop({ type: PaymentStatus })
+  paymentStatus: PaymentStatus
+
+  @Prop({ type: BidHistoryFailedReason, required: false })
+  failedReason?: BidHistoryFailedReason
 }

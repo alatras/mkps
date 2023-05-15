@@ -5,6 +5,7 @@ import { getMockUser, UserMock } from './mocks'
 import { Provider, User } from '../schemas/user.schema'
 import { UserService } from '../user.service'
 import { LogModule } from '../../log/log.module'
+import { Auth0Service } from '../auth0.service'
 
 describe('NftService', () => {
   let service: UserService
@@ -14,6 +15,7 @@ describe('NftService', () => {
       providers: [
         LogModule,
         ConfigService,
+        Auth0Service,
         UserService,
         {
           provide: getModelToken(User.name),

@@ -1,24 +1,20 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { ManagementClient } from 'auth0'
 import { Provider, User } from './schemas/user.schema'
 import { CreateUserDto } from './dto/user.dto'
 import { Request as ExpressRequest } from 'express'
-import { ConfigService } from '@nestjs/config'
 import { MUUID } from 'uuid-mongodb'
+import { Auth0Service } from './auth0.service'
 
 @Injectable()
 export class UserService {
-  private configService: ConfigService
-  private managementClient: ManagementClient
+  private readonly logger = new Logger(UserService.name)
 
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    configService: ConfigService
-  ) {
-    this.configService = configService
-  }
+    private readonly auth0Service: Auth0Service,
+    @InjectModel(User.name) private userModel: Model<User>
+  ) {}
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().lean()
@@ -41,7 +37,7 @@ export class UserService {
     })
   }
 
-  async updateUser(
+  async updateUserByProvider(
     id: string,
     name: Provider,
     body: ExpressRequest['body']
@@ -59,9 +55,11 @@ export class UserService {
     user: User,
     email: string
   ): Promise<User> {
-    const auth0Id = this.getAuth0UserId(user)
+    this.logger.debug(`Updating Auth0 email for user ${id} to ${email}`)
 
-    const auth0Client = this.getAuth0Client()
+    const auth0Id = this.auth0Service.getAuth0UserId(user)
+
+    const auth0Client = this.auth0Service.getAuth0Client()
     if (!auth0Client) {
       throw new Error('Cannot get Auth0 ManagementClient')
     }
@@ -82,28 +80,10 @@ export class UserService {
       .lean()
   }
 
-  private getAuth0UserId = (user: User): string => {
-    const { name } = user.provider
-    const { id } = user.provider
-    return `${name}|${id}`
-  }
-
-  private getAuth0Client(): ManagementClient {
-    const domain = this.configService.get<string>('AUTH0_CANONICAL_DOMAIN')
-    const clientId = this.configService.get<string>('AUTH0_CLIENT_ID')
-    const clientSecret = this.configService.get<string>('AUTH0_CLIENT_SECRET')
-    if (!domain || !clientId || !clientSecret) {
-      return null
-    }
-
-    if (!this.managementClient) {
-      this.managementClient = new ManagementClient({
-        domain,
-        clientId,
-        clientSecret
-      })
-    }
-
-    return this.managementClient
+  async updateUserById(
+    _id: MUUID,
+    body: ExpressRequest['body']
+  ): Promise<User> {
+    return this.userModel.findOneAndUpdate({ _id }, body, { new: true }).lean()
   }
 }

@@ -25,13 +25,18 @@ import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { EditionController } from '../controllers/edition.http-controller'
 import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/avn-transaction-api-gateway.service'
-import { PaymentService } from '../../payment/payment.service'
+import { PaymentService } from '../../payment/services/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Auction } from '../../listing/schemas/auction.schema'
 import {
   BullMqService,
   MAIN_BULL_QUEUE_NAME
 } from '../../bull-mq/bull-mq.service'
+import { StripeService } from '../../payment/stripe/stripe.service'
+import { Auth0Service } from '../../user/auth0.service'
+import { Bid } from '../../payment/schemas/bid.dto'
+import { EmailService } from '../../common/email/email.service'
+import { S3Service } from '../../common/s3/s3.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -51,9 +56,13 @@ describe('EditionController', () => {
       providers: [
         AvnTransactionApiGatewayService,
         ConfigService,
+        StripeService,
+        Auth0Service,
         AvnTransactionService,
         PaymentService,
         ListingService,
+        EmailService,
+        S3Service,
         BullMqService,
         {
           provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
@@ -68,6 +77,10 @@ describe('EditionController', () => {
         {
           provide: getModelToken(Auction.name),
           useValue: getEditionListing()
+        },
+        {
+          provide: getModelToken(Bid.name),
+          useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(AvnEditionTransaction.name),

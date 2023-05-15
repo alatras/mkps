@@ -2,11 +2,12 @@ import {
   Inject,
   BadRequestException,
   Injectable,
-  UnprocessableEntityException
+  UnprocessableEntityException,
+  Logger,
+  NotFoundException
 } from '@nestjs/common'
 import { FilterQuery, Model } from 'mongoose'
 import { InjectModel } from '@nestjs/mongoose'
-import { LoggerService } from '@nestjs/common'
 import { MUUID, v4 } from 'uuid-mongodb'
 import { ClientProxy } from '@nestjs/microservices'
 import { firstValueFrom } from 'rxjs'
@@ -23,24 +24,25 @@ import { Auction } from './schemas/auction.schema'
 import { ListNftDto, Seller } from '../nft/dto/list-nft.dto'
 import { uuidFrom } from '../utils/uuid'
 import { Nft } from '../nft/schemas/nft.schema'
-import { LogService } from '../log/log.service'
 import { MessagePatternGenerator } from '../utils/message-pattern-generator'
 import { User } from '../user/schemas/user.schema'
 import { CreateNftHistoryDto } from '../nft/dto/nft-history.dto'
 import { NftHistory } from '../nft/schemas/nft-history.schema'
+import { Royalties } from '../avn-transaction/schemas/avn-transaction.schema'
+import { getDefaultRoyalties } from '../utils/get-royalties'
+import { getPlatformFees } from '../utils/settings/getPlatformFees'
+import { Bid } from '../payment/schemas/bid.dto'
 
 @Injectable()
 export class ListingService {
-  private log: LoggerService
+  private logger = new Logger(ListingService.name)
 
   constructor(
     @InjectModel(Auction.name) private auctionModel: Model<Auction>,
-    private configService: ConfigService,
+    @InjectModel(Bid.name) private bidModel: Model<Bid>,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
-    private logService: LogService
-  ) {
-    this.log = this.logService.getLogger()
-  }
+    private configService: ConfigService
+  ) {}
 
   /**
    * Create a new auction
@@ -312,8 +314,8 @@ export class ListingService {
       )
     )
 
-    this.log.debug(
-      `[ListingService.addAuctionCancelationNftHistory] NFT history added/updated ${addedNftHistory._id}`
+    this.logger.debug(
+      `[addAuctionCancelationNftHistory] NFT history added/updated ${addedNftHistory._id}`
     )
 
     return addedNftHistory
@@ -335,10 +337,115 @@ export class ListingService {
       })
     )
 
-    this.log.debug(
-      `[ListingService.setNftStatus] NFT status updated to ${res?.status}`
-    )
+    this.logger.debug(`[setNftStatus] NFT status updated to ${res?.status}`)
 
     return res
+  }
+
+  /**
+   * Calculates the total fees for a transaction based on the value and NFT ID.
+   * @param {string} value - The value of the transaction.
+   * @param {MUUID} nftId - The ID of the NFT being transacted.
+   * @returns {Promise<number>} - The total fees for the transaction.
+   */
+  async calculateFeesTotal(value: string, nftId: MUUID): Promise<number> {
+    const nft = await this.getNftById(nftId)
+    if (!nft) {
+      this.logger.error(`[calculateFeesTotal] NFT not found ${nftId}`)
+      throw new NotFoundException('NFT not found')
+    }
+
+    const defaultRoyaltyFees = this.calculateRoyaltyFees(value, nft?.royalties)
+
+    const nftRoyalties = this.findNftRoyalties(nft?.royalties)
+
+    const platformFees =
+      Number(value) * (getPlatformFees(nftRoyalties)?.stripe ?? 0)
+
+    const feesTotal = Math.ceil(defaultRoyaltyFees + platformFees)
+
+    return feesTotal <= Number(value) ? feesTotal : Number(value)
+  }
+
+  /**
+   * Adds up all royalties in the royalties array and returns the platform fee
+   * to apply to the bid/purchase. The number returned is an integer representing
+   * the smallest currency unit possible, e.g. cents for USD, or Wei for ETH.
+   * For example, the value 100 is $1.00 (USD) or 100 Wei (ETH), the value 1000 is $10.00 (USD) or 1000 Wei (ETH).
+   * @param value The amount as a string, e.g. "1000" is $10.00 (USD) or 1000 Wei (ETH).
+   * @param royalties custom royalties set on an NFT, e.g. "2" represents "2%" of the NFT value.
+   */
+  calculateRoyaltyFees(value: string, royalties?: number): number {
+    // Loop the ROYALTIES array and add up each royalty value
+    // If NFT custom royalties percentage is set use it
+    const defaultRoyalties = getDefaultRoyalties()
+    const royaltiesTotal: number = defaultRoyalties.reduce(
+      (value: number, entry: Royalties) => {
+        value +=
+          royalties !== undefined
+            ? royalties * 10000
+            : entry.rate.parts_per_million
+        return value
+      },
+      0
+    )
+
+    const amount: number = parseInt(value, 10)
+
+    // Example:
+    // amount = 4588
+    // royalties = 10000 (1%)
+    // output should be $0.46 = 46
+
+    return Math.round(amount * (royaltiesTotal / 1000000))
+  }
+
+  /**
+   * Gets NFT by ID from NFT service
+   * @param nftId NFT ID
+   */
+  private async getNftById(nftId: MUUID): Promise<Nft> {
+    return await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator('nft', 'findOneById'),
+        nftId.toString()
+      )
+    )
+  }
+
+  /**
+   * Find royalties of an NFT in right unit or return default
+   * @param royalties Royalties
+   */
+  private findNftRoyalties = (royalties: number | undefined): number => {
+    if (royalties === undefined || royalties === null) {
+      return this.calculateRoyaltyFees('100') / 100
+    }
+    return royalties / 100
+  }
+
+  /**
+   * Update Bid by ID
+   */
+  async updateBidById(_id: MUUID, bidPatch: Partial<Bid>): Promise<Bid> {
+    return await this.bidModel
+      .findOneAndUpdate({ _id }, bidPatch, { new: true })
+      .exec()
+  }
+
+  async getBidById(_id: MUUID): Promise<Bid> {
+    return await this.bidModel.findOne({ _id }).exec()
+  }
+
+  /**
+   * Update Auction by ID
+   */
+  async updateAuctionById(
+    _id: MUUID,
+    auctionPatch: Partial<Auction>
+  ): Promise<Auction> {
+    return await this.auctionModel
+      .findOneAndUpdate({ _id }, auctionPatch, { new: true })
+      .exec()
   }
 }

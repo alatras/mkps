@@ -7,6 +7,7 @@ import { UserHttpController } from './controllers/user.http-controller'
 import { DbCollections } from '../shared/enum'
 import { ConfigModule } from '@nestjs/config'
 import { LogModule } from '../log/log.module'
+import { Auth0Service } from './auth0.service'
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { LogModule } from '../log/log.module'
       }
     ])
   ],
-  providers: [UserService],
+  providers: [UserService, Auth0Service],
   controllers: [UserHttpController, UserMsController],
   exports: [UserService]
 })

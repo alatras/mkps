@@ -37,3 +37,4 @@ data/
 src/utils/nftProperties/tenant.json
 
 dump.rdb
+.hintrc

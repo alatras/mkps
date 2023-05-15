@@ -65,7 +65,7 @@ export class UserHttpController {
     @Body() dto: UpdateUserDto
   ): Promise<UserResponseDto> {
     try {
-      const user = await this.userService.updateUser(
+      const user = await this.userService.updateUserByProvider(
         (req.user as User).provider.id,
         (req.user as User).provider.name,
         dto

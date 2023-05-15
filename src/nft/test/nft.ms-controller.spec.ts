@@ -25,13 +25,18 @@ import { getAvnTransaction } from '../../avn-transaction/test/mocks'
 import { getModelToken } from '@nestjs/mongoose'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
 import { AvnTransactionApiGatewayService } from '../../avn-transaction/services/avn-transaction-api-gateway.service'
-import { PaymentService } from '../../payment/payment.service'
+import { PaymentService } from '../../payment/services/payment.service'
 import { ListingService } from '../../listing/listing.service'
 import { Auction } from '../../listing/schemas/auction.schema'
 import {
   BullMqService,
   MAIN_BULL_QUEUE_NAME
 } from '../../bull-mq/bull-mq.service'
+import { StripeService } from '../../payment/stripe/stripe.service'
+import { Auth0Service } from '../../user/auth0.service'
+import { Bid } from '../../payment/schemas/bid.dto'
+import { S3Service } from '../../common/s3/s3.service'
+import { EmailService } from '../../common/email/email.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -52,11 +57,15 @@ describe('NftMsController', () => {
       providers: [
         NftService,
         EditionService,
+        Auth0Service,
+        StripeService,
         EditionListingService,
         AvnTransactionService,
         AvnTransactionApiGatewayService,
         ConfigService,
         PaymentService,
+        S3Service,
+        EmailService,
         LogService,
         ListingService,
         BullMqService,
@@ -79,6 +88,10 @@ describe('NftMsController', () => {
         {
           provide: getModelToken(Auction.name),
           useValue: getMockNftHistory()
+        },
+        {
+          provide: getModelToken(Bid.name),
+          useValue: getAvnTransaction()
         },
         {
           provide: getModelToken(AvnEditionTransaction.name),

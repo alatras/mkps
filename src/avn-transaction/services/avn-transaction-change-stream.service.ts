@@ -55,10 +55,22 @@ export class AvnTransactionChangeStreamService
    * This listener is constant and will not close.
    */
   private async listen(): Promise<void> {
-    this.changeStream = this.avnTransactionModel.watch(
-      this.pipeline,
-      this.options
-    )
+    try {
+      this.changeStream = await this.avnTransactionModel.watch(
+        this.pipeline,
+        this.options
+      )
+    } catch (err) {
+      this.logger.error('Error initializing changeStream:', err)
+      throw new InternalServerErrorException(err.message)
+    }
+
+    if (!this.changeStream) {
+      this.logger.error('Failed to initialize changeStream.')
+      throw new InternalServerErrorException(
+        'Failed to initialize changeStream.'
+      )
+    }
 
     try {
       while (await this.changeStream.hasNext()) {

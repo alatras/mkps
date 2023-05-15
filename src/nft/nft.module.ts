@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common'
 import { NftService } from './services/nft.service'
+import { BullModule } from '@nestjs/bull'
 import { NftHttpController } from './controllers/nft.http-controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { Nft, NftSchema } from './schemas/nft.schema'
@@ -18,7 +19,7 @@ import { getRedisOptions } from '../utils/get-redis-options'
 import { LogModule } from '../log/log.module'
 import { ListingModule } from '../listing/listing.module'
 import { PaymentModule } from '../payment/payment.module'
-import { PaymentService } from '../payment/payment.service'
+import { PaymentService } from '../payment/services/payment.service'
 import { ListingService } from '../listing/listing.service'
 import { Auction, AuctionSchema } from '../listing/schemas/auction.schema'
 import {
@@ -26,17 +27,33 @@ import {
   AvnNftTransactionSchema
 } from '../avn-transaction/schemas/avn-transaction.schema'
 import { AvnTransactionService } from '../avn-transaction/services/avn-transaction.service'
+import { Bid, BidSchema } from '../payment/schemas/bid.dto'
+import { StripeService } from '../payment/stripe/stripe.service'
+import { Auth0Service } from '../user/auth0.service'
+import { S3Service } from '../common/s3/s3.service'
+import { EmailService } from '../common/email/email.service'
+import { BullMqService, MAIN_BULL_QUEUE_NAME } from '../bull-mq/bull-mq.service'
 
 @Module({
   imports: [
+    PaymentModule,
     LogModule,
+    ListingModule,
     AvnTransactionModule,
+    BullModule.registerQueue({
+      name: MAIN_BULL_QUEUE_NAME
+    }),
     forwardRef(() => EditionModule),
     MongooseModule.forFeature([
       {
         name: Nft.name,
         schema: NftSchema,
         collection: DbCollections.NFTs
+      },
+      {
+        name: Bid.name,
+        schema: BidSchema,
+        collection: DbCollections.Bids
       },
       {
         name: Auction.name,
@@ -60,9 +77,14 @@ import { AvnTransactionService } from '../avn-transaction/services/avn-transacti
   controllers: [NftHttpController, NftMsController],
   providers: [
     NftService,
+    StripeService,
     PaymentService,
+    Auth0Service,
     AvnTransactionService,
     ListingService,
+    S3Service,
+    EmailService,
+    BullMqService,
     {
       provide: 'TRANSPORT_CLIENT',
       useFactory: (): ClientProxy & Closeable => {
