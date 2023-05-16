@@ -428,6 +428,7 @@ export class ListingService {
    * Update Bid by ID
    */
   async updateBidById(_id: MUUID, bidPatch: Partial<Bid>): Promise<Bid> {
+    this.logger.debug(`[updateBidById] ${_id} ${JSON.stringify(bidPatch)}`)
     return await this.bidModel
       .findOneAndUpdate({ _id }, bidPatch, { new: true })
       .exec()

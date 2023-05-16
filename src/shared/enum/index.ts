@@ -158,3 +158,9 @@ export enum KycStatus {
   rejected = 'rejected',
   verified = 'verified'
 }
+
+export enum StripePaymentIntentStatus {
+  requiresCapture = 'requires_capture',
+  requiresAction = 'requires_action',
+  succeeded = 'succeeded'
+}

@@ -18,6 +18,7 @@ import { uuidFrom } from '../../utils'
 import { BigNumber } from '@ethersproject/bignumber'
 import { Bid } from '../schemas/bid.dto'
 import { ListingService } from '../../listing/listing.service'
+import { StripePaymentIntentStatus } from '../../shared/enum'
 
 @Injectable()
 export class StripeService {
@@ -69,7 +70,9 @@ export class StripeService {
       })
     )
     if (!userUpdate) {
-      throw new InternalServerErrorException('User update failed.')
+      throw new InternalServerErrorException(
+        'User update failed after Stripe customer creation.'
+      )
     }
   }
 
@@ -276,21 +279,20 @@ export class StripeService {
   }
 
   async confirmPaymentIntent(paymentIntentId: string) {
-    this.logger.log(
-      `[confirmPaymentIntent] Confirming PaymentIntent for ${paymentIntentId}`
-    )
+    this.logger.debug(`Confirming PaymentIntent for ${paymentIntentId}`)
 
     const confirmedRequest: any = await this.stripe.paymentIntents.confirm(
       paymentIntentId
     )
 
-    // TODO: check on the fact that 'charges' doesn't exist on the type definition for PaymentIntent
-    const confirmed = confirmedRequest.charges.data[0].status === 'succeeded'
+    const confirmed = [
+      StripePaymentIntentStatus.requiresCapture,
+      StripePaymentIntentStatus.requiresAction,
+      StripePaymentIntentStatus.succeeded
+    ].includes(confirmedRequest.status)
 
     if (!confirmed) {
-      this.logger.error(
-        `[confirmPaymentIntent] Could not confirm payment ${paymentIntentId}`
-      )
+      this.logger.error(`Could not confirm payment ${paymentIntentId}`)
       throw new InternalServerErrorException('Could not confirm payment')
     }
   }

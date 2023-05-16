@@ -8,7 +8,7 @@ import {
   ValidationPipe
 } from '@nestjs/common'
 import { Logger } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
+import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger'
 import { PlaceBidResponseDto } from '../dto/placeBidResponse.dto'
 import { PermissionsGuard } from '../../auth/permissions.guard'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
@@ -32,6 +32,10 @@ export class PaymentController {
    * @param placeBidDto Place bid DTO
    * @param req Express request
    */
+  @ApiCreatedResponse({
+    description: 'Bid on an auction.',
+    type: PlaceBidResponseDto
+  })
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('read:nfts')
   @Post('bid')
@@ -40,7 +44,7 @@ export class PaymentController {
     @Request() req: Express.Request,
     @Body() placeBidDto: PlaceBidDto
   ): Promise<DataWrapper<PlaceBidResponseDto>> {
-    this.logger.debug('place Bid DTO:', placeBidDto)
+    this.logger.debug('place Bid DTO:' + JSON.stringify(placeBidDto))
     try {
       const placeBidResponse = await this.paymentService.bid(
         req.user as User,

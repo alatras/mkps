@@ -34,6 +34,7 @@ import { PlaceBidDto } from '../dto/placeBid.dto'
 import { StripeService } from '../stripe/stripe.service'
 import { Auction } from '../../listing/schemas/auction.schema'
 import { EmailService } from '../../common/email/email.service'
+import { Nft } from '../../nft/schemas/nft.schema'
 
 @Injectable()
 export class PaymentService {
@@ -87,7 +88,9 @@ export class PaymentService {
         BigNumber.from(auction.reservePrice)
       )
     ) {
-      throw new BadRequestException('Bid value is too low')
+      throw new BadRequestException(
+        `Bid value is too low. Reserve price is ${auction.reservePrice}.`
+      )
     }
 
     // Throw if bid value is lower than Auction current winning bid
@@ -96,8 +99,17 @@ export class PaymentService {
       if (
         BigNumber.from(createBidDto.value).lt(BigNumber.from(highestBid.value))
       ) {
-        throw new BadRequestException('Bid value is too low')
+        throw new BadRequestException(
+          `Bid value is too low. Current highest bid is ${highestBid.value}.`
+        )
       }
+    }
+
+    // Throw if bid currency is not the same as Auction currency
+    if (createBidDto.currency !== auction.currency) {
+      throw new BadRequestException(
+        `Bid currency is not the same as Auction currency. Auction currency is ${auction.currency}.`
+      )
     }
 
     // Create a bid
@@ -148,49 +160,71 @@ export class PaymentService {
     user: User,
     placeBidDto: PlaceBidDto
   ): Promise<{ hasPaymentMethod: boolean }> {
+    // Throw if no NFT
+    const nft = await this.getNftById(placeBidDto.nftId)
+    if (!nft) {
+      throw new NotFoundException('NFT not found')
+    }
+
+    // Throw if no Auction
+    const auction = await this.listingService.getCurrentAuctionByNftId(
+      uuidFrom(placeBidDto.nftId)
+    )
+    if (!auction) {
+      throw new NotFoundException('Auction not found')
+    }
+
     // Create a Stripe customer if not exists
-    let fullUserObject: User = null
     if (!user.stripeCustomerId) {
       await this.stripeService.createCustomer(user)
-      fullUserObject = await firstValueFrom(
-        this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
-          userId: user._id
-        })
+    }
+
+    // Get full user object
+    const fullUserObject: User = await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('user', 'getUserById'), {
+        userId: user._id
+      })
+    )
+    if (!fullUserObject) {
+      throw new NotFoundException('User object not found.')
+    }
+
+    // Throw if still no Stripe customer ID
+    if (!fullUserObject.stripeCustomerId) {
+      throw new InternalServerErrorException(
+        'Could not create Stripe customer ID.'
       )
-      if (!fullUserObject) {
-        throw new NotFoundException('User object not found.')
-      }
-      if (!fullUserObject.stripeCustomerId) {
-        throw new InternalServerErrorException(
-          'Could not create Stripe customer ID.'
-        )
-      }
     }
 
     // Acquire a lock on the NFT
     const nftId = uuidFrom(placeBidDto.nftId)
     const lock: Lock = await this.stripeService.acquireBidRedlock(nftId)
 
-    try {
-      // Create the bid
-      const auction = await this.listingService.getAuctionById(
-        uuidFrom(placeBidDto.nftId)
-      )
-      const createBidObject: CreateBidDto = {
-        auctionId: MUUID.from(auction._id).toString(),
-        value: String(placeBidDto.amount),
-        currency: Currency.USD
-      }
-      let bid = await this.createBid(user, createBidObject)
+    // Create the bid
+    const createBidObject: CreateBidDto = {
+      auctionId: MUUID.from(auction._id).toString(),
+      value: String(placeBidDto.amount),
+      currency: Currency.USD
+    }
+    let bid = await this.createBid(fullUserObject, createBidObject)
+    if (!bid) {
+      throw new InternalServerErrorException('Could not create bid')
+    }
 
+    // Get the payment method
+    const paymentMethods = await this.stripeService.getPaymentMethods(
+      fullUserObject.stripeCustomerId
+    )
+    if (!paymentMethods) {
+      throw new InternalServerErrorException('Could not get payment methods')
+    }
+    const paymentMethod = paymentMethods[0]
+    if (!paymentMethod) {
+      return { hasPaymentMethod: false }
+    }
+
+    try {
       // Create a payment intent
-      const paymentMethods = await this.stripeService.getPaymentMethods(
-        fullUserObject.stripeCustomerId
-      )
-      const paymentMethod = paymentMethods[0]
-      if (!paymentMethod) {
-        return { hasPaymentMethod: false }
-      }
       const paymentIntent = await this.stripeService.createPaymentIntentForBid(
         bid,
         user.stripeCustomerId,
@@ -211,12 +245,15 @@ export class PaymentService {
       await this.stripeService.confirmPaymentIntent(paymentIntent.id)
       await this.setPaymentMethodOnBid(bid, paymentMethod.id)
 
-      return { hasPaymentMethod: !!paymentMethod }
+      return { hasPaymentMethod: true }
     } catch (err) {
-      this.logger.error('Could not place bid', {
-        user: uuidFrom(user._id).toString(),
-        error: err
-      })
+      this.logger.error(
+        'Could not place bid: ' +
+          JSON.stringify({
+            user: uuidFrom(user._id).toString(),
+            error: err
+          })
+      )
 
       if (
         err.type === 'StripeCardError' ||
@@ -308,6 +345,11 @@ export class PaymentService {
   }
 
   async updateHighestBid(bid: Bid) {
+    this.logger.debug(
+      `[updateHighestBid] Updating HighestBid for ${uuidFrom(
+        bid._id
+      ).toString()}`
+    )
     const auction = await this.listingService.getAuctionById(
       uuidFrom(bid.auctionId)
     )
@@ -315,10 +357,10 @@ export class PaymentService {
       this.logger.error(
         `[updateHighestBid] Auction ${bid.auctionId.toString()} not found`
       )
+      throw new InternalServerErrorException(
+        `Error updating highest bid, auction: ${bid.auctionId.toString()} not found`
+      )
     }
-    throw new InternalServerErrorException(
-      `Error updating highest bid, auction: ${bid.auctionId.toString()} not found`
-    )
 
     let currentHighestBid: Bid | undefined | null
     let currentHighestBidValue = BigNumber.from(0)
@@ -362,5 +404,17 @@ export class PaymentService {
 
   getAccount = async (accountId: string): Promise<Stripe.Account> => {
     return await this.stripeService.getAccount(accountId)
+  }
+
+  /**
+   * Gets NFT by ID from NFT service
+   * @param nftId NFT ID
+   */
+  private async getNftById(nftId: string): Promise<Nft> {
+    return await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
+        nftId
+      })
+    )
   }
 }
