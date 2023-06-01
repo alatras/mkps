@@ -11,10 +11,12 @@ import { EmailService } from './email/email.service'
 import { S3Service } from './s3/s3.service'
 import { BullMqModule } from '../bull-mq/bull-mq.module'
 import { BullMqService, MAIN_BULL_QUEUE_NAME } from '../bull-mq/bull-mq.service'
+import { ConfigModule } from '@nestjs/config'
 
 @Module({
   imports: [
     BullMqModule,
+    ConfigModule,
     BullModule.registerQueue({
       name: MAIN_BULL_QUEUE_NAME
     })
@@ -32,6 +34,7 @@ import { BullMqService, MAIN_BULL_QUEUE_NAME } from '../bull-mq/bull-mq.service'
         })
       }
     }
-  ]
+  ],
+  exports: [EmailService, S3Service, BullMqService]
 })
 export class CommonModule {}

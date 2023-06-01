@@ -25,6 +25,7 @@ import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-clas
 import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
 import { DataWrapper } from '../../common/dataWrapper'
 import { CancelListingDto } from '../dto/cancel-listing-of-nft.dto'
+import { BuyNftDto, BuyNftResponseDto } from '../dto/buy-nft.dto'
 
 @UsePipes(new ErrorValidationPipe())
 @Controller('nft')
@@ -115,6 +116,32 @@ export class NftHttpController {
       return mintRes
     } catch (err) {
       this.logger.error('cannot cancel NFT:', JSON.stringify(err))
+      throw err
+    }
+  }
+
+  /**
+   * Buy an NFT
+   * @param buyNftDto Buy NFT DTO
+   * @returns Buy NFT Response DTO
+   */
+  @ApiCreatedResponse({
+    description: 'Buy an NFT. This buys an NFT and returns the transaction.',
+    type: NftResponseDto
+  })
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('write:nfts')
+  @Post('buy')
+  async buy(
+    @Request() req: Express.Request,
+    @Body() buyNftDto: BuyNftDto
+  ): Promise<BuyNftResponseDto> {
+    try {
+      const buyRes = await this.nftService.buyNft(req.user as User, buyNftDto)
+      this.logger.debug('buy NFT succeed:' + buyRes)
+      return buyRes
+    } catch (err) {
+      this.logger.error('cannot buy NFT:' + JSON.stringify(err))
       throw err
     }
   }

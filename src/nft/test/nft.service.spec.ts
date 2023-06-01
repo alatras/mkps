@@ -42,6 +42,7 @@ import { Auth0Service } from '../../user/auth0.service'
 import { Bid } from '../../payment/schemas/bid.dto'
 import { S3Service } from '../../common/s3/s3.service'
 import { EmailService } from '../../common/email/email.service'
+import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -51,6 +52,11 @@ const ClientProxyMock = () => ({
 jest.mock('../../utils/get-royalties', () => ({
   getNftRoyalties: jest.fn()
 }))
+
+const bullMqServiceMock = () => ({
+  addToQueue: jest.fn(),
+  addSendEmailJob: jest.fn()
+})
 
 describe('NftService', () => {
   let service: NftService
@@ -75,7 +81,8 @@ describe('NftService', () => {
         EmailService,
         PaymentService,
         ListingService,
-        BullMqService,
+        { provide: BullMqService, useFactory: bullMqServiceMock },
+        FixedPriceService,
         {
           provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
           useValue: mockQueue
@@ -217,13 +224,13 @@ describe('NftService', () => {
 
       await service.handleNftMinted(
         uuidFrom(mockNft._id).toString(),
-        mockNft.anvNftId
+        mockNft.avnNftId
       )
 
       expect(service.updateOneById).toBeCalledWith(
         uuidFrom(mockNft._id).toString(),
         {
-          avnNftId: mockNft.anvNftId,
+          avnNftId: mockNft.avnNftId,
           status: NftStatus.minted
         }
       )
@@ -231,7 +238,7 @@ describe('NftService', () => {
       expect(service.updateOneById).toBeCalledWith(
         uuidFrom(mockNft._id).toString(),
         {
-          avnNftId: mockNft.anvNftId,
+          avnNftId: mockNft.avnNftId,
           status: NftStatus.minted
         }
       )
@@ -242,5 +249,9 @@ describe('NftService', () => {
         type: HistoryType.minted
       })
     })
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 })

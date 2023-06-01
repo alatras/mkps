@@ -91,6 +91,9 @@ export class User {
   @Prop({ required: false, default: null })
   email?: string
 
+  @Prop({ required: false, default: null })
+  avnAddress?: string
+
   @Prop()
   createdAt?: Date
 

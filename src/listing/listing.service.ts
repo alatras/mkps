@@ -4,7 +4,9 @@ import {
   Injectable,
   UnprocessableEntityException,
   Logger,
-  NotFoundException
+  NotFoundException,
+  InternalServerErrorException,
+  forwardRef
 } from '@nestjs/common'
 import { FilterQuery, Model } from 'mongoose'
 import { InjectModel } from '@nestjs/mongoose'
@@ -32,6 +34,10 @@ import { Royalties } from '../avn-transaction/schemas/avn-transaction.schema'
 import { getDefaultRoyalties } from '../utils/get-royalties'
 import { getPlatformFees } from '../utils/settings/getPlatformFees'
 import { Bid } from '../payment/schemas/bid.dto'
+import Stripe from 'stripe'
+import { AvnTransactionService } from '../avn-transaction/services/avn-transaction.service'
+import { EmailService } from '../common/email/email.service'
+import { EditionListingService } from '../edition-listing/services/edition-listing.service'
 
 @Injectable()
 export class ListingService {
@@ -41,7 +47,11 @@ export class ListingService {
     @InjectModel(Auction.name) private auctionModel: Model<Auction>,
     @InjectModel(Bid.name) private bidModel: Model<Bid>,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private emailService: EmailService,
+    private editionListingService: EditionListingService,
+    @Inject(forwardRef(() => AvnTransactionService))
+    private avnTransactionService: AvnTransactionService
   ) {}
 
   /**
@@ -66,8 +76,8 @@ export class ListingService {
       _id: v4(),
       nft: {
         _id: uuidFrom(listNftDto.nftId),
-        eid: listNftDto.anvNftId,
-        anvNftId: listNftDto.anvNftId
+        eid: listNftDto.avnNftId,
+        avnNftId: listNftDto.avnNftId
       },
       seller: {
         _id: uuidFrom(seller.id),
@@ -406,10 +416,9 @@ export class ListingService {
    */
   private async getNftById(nftId: MUUID): Promise<Nft> {
     return await firstValueFrom(
-      this.clientProxy.send(
-        MessagePatternGenerator('nft', 'findOneById'),
-        nftId.toString()
-      )
+      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
+        nftId: uuidFrom(nftId).toString()
+      })
     )
   }
 
@@ -448,5 +457,216 @@ export class ListingService {
     return await this.auctionModel
       .findOneAndUpdate({ _id }, auctionPatch, { new: true })
       .exec()
+  }
+
+  async setPaymentDetailsOnAuction(
+    auctionId: MUUID,
+    paymentIntent: Stripe.PaymentIntent,
+    user: User
+  ) {
+    const auction = await this.getAuctionById(auctionId)
+    if (!auction) {
+      const message = `Auction not found ${auctionId}`
+      this.logger.error(`[setPaymentDetailsOnAuction] ${message}`)
+      throw new NotFoundException(message)
+    }
+
+    await this.updateAuctionById(auction._id, {
+      sale: {
+        ...auction.sale!,
+        stripe: {
+          paymentIntentId: paymentIntent.id,
+          paymentMethodId: paymentIntent.payment_method as string,
+          captured: false
+        },
+        owner: { _id: user._id, avnPubKey: user.avnPubKey ?? undefined }
+      }
+    })
+  }
+
+  async completeFreeAuction(auction: Auction, winner: User): Promise<void> {
+    const amount = '0'
+
+    // Throw if NFT not found
+    const nft = await this.getNftById(auction.nft._id)
+    if (!nft) {
+      const message = `NFT not found ${auction.nft._id.toString()}`
+      this.logger.error(`[completeFreeAuction] ${message}`)
+      throw new NotFoundException(message)
+    }
+
+    // Update auction end time
+    await this.updateAuctionById(auction._id, { endTime: new Date() })
+
+    try {
+      if (!nft.isMinted) {
+        // Mint NFT on AvN
+        await this.avnTransactionService.createMintBatchAvnTransaction(
+          nft._id,
+          winner,
+          auction
+        )
+      } else {
+        await this.avnTransactionService.completeAuctionOnAvn(
+          nft,
+          winner,
+          amount
+        )
+      }
+
+      await this.transferOwnership(nft, auction, amount, winner) //!! here
+
+      if (auction.type === AuctionType.airdrop) {
+        await this.emailService.sendAirdropWinnerNotification(
+          auction,
+          winner._id,
+          nft
+        )
+      }
+    } catch (e) {
+      throw e
+    } finally {
+      if (nft.editionId && auction.editionListingId) {
+        if (auction.type === AuctionType.freeClaim) {
+          await this.editionListingService.updateEditionListing(
+            auction.editionListingId,
+            { pendingBuyers: [winner._id] }
+          )
+        }
+      }
+    }
+  }
+
+  async transferOwnership(
+    nft: Nft,
+    auction: Auction,
+    amount: string,
+    winner: User,
+    transactionHash?: string
+  ) {
+    if (!winner.avnPubKey) {
+      throw new Error(
+        `User (${uuidFrom(winner._id).toString()}) avnPubKey not set`
+      )
+    }
+
+    // Add 'purchased' history item to NFT
+    const historyEntry: CreateNftHistoryDto = {
+      nftId: uuidFrom(nft._id).toString(),
+      editionId: nft.editionId,
+      auctionId: auction._id,
+      amount,
+      userAddress: winner.avnPubKey,
+      currency: auction.currency,
+      saleType: auction.type,
+      isSuccessful: true
+    }
+    const newHistory = await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator('nft', 'addHistory'),
+        historyEntry
+      )
+    )
+    if (!newHistory) {
+      const message = `Failed to add NFT history`
+      this.logger.error(`[transferOwnership] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
+
+    const auctionPatch: Partial<Auction> = {
+      status: AuctionStatus.sold,
+      winner: {
+        _id: uuidFrom(winner._id),
+        avnPubKey: winner.avnPubKey
+      }
+    }
+
+    if (auction.type === AuctionType.airdrop) {
+      auctionPatch.endTime = new Date()
+    } else if (auction.type === AuctionType.fixedPrice) {
+      auctionPatch.endTime = new Date()
+
+      switch (auction.currency) {
+        case Currency.ADA:
+          auctionPatch.sale = {
+            value: amount,
+            owner: { _id: winner._id, avnPubKey: winner.avnPubKey },
+            soldAt: new Date()
+          }
+          break
+        case Currency.ETH:
+          auctionPatch.sale = {
+            ...(auction.sale || {}),
+            value: amount,
+            transactionHash,
+            owner: { _id: winner._id, avnPubKey: winner.avnPubKey },
+            soldAt: new Date()
+          }
+          break
+        case Currency.USD:
+          auctionPatch.sale = {
+            ...(auction.sale! ?? {}),
+            value: amount,
+            stripe: {
+              ...(auction.sale?.stripe ?? {}),
+              captured: true,
+              paymentMethodId: auction.sale?.stripe?.paymentMethodId ?? null,
+              paymentIntentId: auction.sale?.stripe?.paymentIntentId ?? null
+            }
+          }
+          break
+        default:
+          break
+      }
+    }
+
+    const isPrimarySale = !auction.isSecondary
+
+    // Update NFT primarySaleCurrency if it's primary sale
+    if (isPrimarySale) {
+      const updatedNft = await firstValueFrom(
+        this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
+          nftId: uuidFrom(nft._id).toString(),
+          nft: { primarySaleCurrency: auction.currency }
+        })
+      )
+      if (!updatedNft) {
+        const message = `Failed to update NFT primarySaleCurrency`
+        this.logger.error(`[transferOwnership] ${message}`)
+        throw new InternalServerErrorException(message)
+      }
+    }
+
+    // Update Auction
+    await this.updateAuctionById(auction._id, auctionPatch)
+
+    // Update NFT winner and status
+    await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
+        nftId: auction.nft._id,
+        nft: { winner, status: NftStatus.owned }
+      })
+    )
+
+    // Add 'transferred' history item to NFT
+    const history: CreateNftHistoryDto = {
+      userAddress: winner.avnPubKey,
+      fromAddress: `${nft.owner.avnPubKey}`,
+      toAddress: winner.avnPubKey,
+      nftId: uuidFrom(nft._id).toString(),
+      currency: auction.currency,
+      auctionId: auction._id
+    }
+    const addedNftHistory = await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator('nft', 'addHistory'),
+        history
+      )
+    )
+    if (!addedNftHistory) {
+      const message = `Failed to add NFT history`
+      this.logger.error(`[transferOwnership] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
   }
 }

@@ -42,10 +42,16 @@ import { StripeService } from '../../payment/stripe/stripe.service'
 import { Bid } from '../../payment/schemas/bid.dto'
 import { S3Service } from '../../common/s3/s3.service'
 import { EmailService } from '../../common/email/email.service'
+import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
   send: jest.fn()
+})
+
+const bullMqServiceMock = () => ({
+  addToQueue: jest.fn(),
+  addSendEmailJob: jest.fn()
 })
 
 describe('AvnTransactionChangeStreamService', () => {
@@ -75,7 +81,8 @@ describe('AvnTransactionChangeStreamService', () => {
         EditionListingService,
         PaymentService,
         ListingService,
-        BullMqService,
+        { provide: BullMqService, useFactory: bullMqServiceMock },
+        FixedPriceService,
         {
           provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
           useValue: mockQueue
@@ -127,5 +134,9 @@ describe('AvnTransactionChangeStreamService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 })

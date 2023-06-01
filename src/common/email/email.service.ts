@@ -2,7 +2,8 @@ import {
   Injectable,
   Logger,
   Inject,
-  NotAcceptableException
+  NotAcceptableException,
+  InternalServerErrorException
 } from '@nestjs/common'
 import { ClientProxy } from '@nestjs/microservices'
 import { firstValueFrom } from 'rxjs'
@@ -144,5 +145,54 @@ export class EmailService {
         jobId: `${params.templateName}:${userUuid}:${params.data.listingId}`
       }
     )
+  }
+
+  /**
+   * Sends email notification to winner of auction
+   * @param auction Auction
+   * @param userId User ID
+   * @param nft NFT
+   */
+  async sendTransferredWinnerNotification(
+    auction: Auction,
+    userId: MUUID,
+    nft: Nft
+  ) {
+    try {
+      const nftData = await this.getNftEmailData(nft, auction)
+      await this.addSendEmailJob({
+        templateName: 'buyer_nft_transferred',
+        userId,
+        data: { nft: nftData }
+      })
+    } catch (err) {
+      const message = `error ${JSON.stringify(err)}`
+      this.logger.error(`[sendTransferredWinnerNotification] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
+  }
+
+  /**
+   * Sends email notification to winner of auction
+   * @param auction Auction
+   * @param userId User ID
+   */
+  async sendAirdropWinnerNotification(
+    auction: Auction,
+    userId: MUUID,
+    nft: Nft
+  ) {
+    try {
+      const nftData = await this.getNftEmailData(nft, auction)
+      await this.addSendEmailJob({
+        templateName: 'buyer_airdrop_received',
+        userId,
+        data: { nft: nftData }
+      })
+    } catch (err) {
+      const message = `error ${JSON.stringify(err)}`
+      this.logger.error(`[sendAirdropWinnerNotification] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
   }
 }

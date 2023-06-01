@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import {
   ClientProxy,
   ClientProxyFactory,
@@ -11,7 +11,6 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { NftEdition, NftEditionSchema } from './schemas/edition.schema'
 import { Nft, NftSchema } from '../nft/schemas/nft.schema'
 import { DbCollections } from '../shared/enum'
-import { NftModule } from '../nft/nft.module'
 import { LogModule } from '../log/log.module'
 import { ConfigService } from '@nestjs/config'
 import appConfig from '../config/app.config'
@@ -24,7 +23,6 @@ import { EditionMsController } from './controllers/edition.ms-controller'
 
 @Module({
   imports: [
-    forwardRef(() => NftModule),
     LogModule,
     MongooseModule.forFeature([
       {

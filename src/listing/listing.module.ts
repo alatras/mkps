@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import {
   ClientProxy,
   ClientProxyFactory,
@@ -11,9 +11,20 @@ import { ListingService } from './listing.service'
 import { Auction, AuctionSchema } from './schemas/auction.schema'
 import { getRedisOptions } from '../utils/get-redis-options'
 import { Bid, BidSchema } from '../payment/schemas/bid.dto'
+import { FixedPriceService } from './fixed-price/fixed-price.service'
+import { AvnTransactionModule } from '../avn-transaction/avn-transaction.module'
+import { ConfigModule } from '@nestjs/config'
+import { EditionListingModule } from '../edition-listing/edition-listing.module'
+import { PaymentModule } from '../payment/payment.module'
+import { CommonModule } from '../common/common.module'
 
 @Module({
   imports: [
+    forwardRef(() => AvnTransactionModule),
+    forwardRef(() => PaymentModule),
+    ConfigModule,
+    CommonModule,
+    EditionListingModule,
     MongooseModule.forFeature([
       {
         name: Auction.name,
@@ -28,7 +39,6 @@ import { Bid, BidSchema } from '../payment/schemas/bid.dto'
     ])
   ],
   providers: [
-    ListingService,
     {
       provide: 'TRANSPORT_CLIENT',
       useFactory: (): ClientProxy & Closeable => {
@@ -37,7 +47,10 @@ import { Bid, BidSchema } from '../payment/schemas/bid.dto'
           options: getRedisOptions()
         })
       }
-    }
-  ]
+    },
+    FixedPriceService,
+    ListingService
+  ],
+  exports: [ListingService, FixedPriceService]
 })
 export class ListingModule {}

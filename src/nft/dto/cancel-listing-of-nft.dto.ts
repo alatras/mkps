@@ -151,7 +151,7 @@ export const cancelListingResponseAuctionFactory = (
 
   response.nft = {
     id: uuidFrom(auction.nft._id).toString(),
-    eid: auction.nft.anvNftId
+    eid: auction.nft.avnNftId
   }
 
   if (auction.sale?.owner) {

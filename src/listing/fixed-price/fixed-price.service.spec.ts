@@ -1,31 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { StripeService } from './stripe.service'
-import { Auth0Service } from '../../user/auth0.service'
-import { ListingService } from '../../listing/listing.service'
+import { FixedPriceService } from './fixed-price.service'
+import { StripeService } from '../../payment/stripe/stripe.service'
+import { ListingService } from '../listing.service'
 
-describe('StripeService', () => {
-  let service: StripeService
+describe('FixedPriceService', () => {
+  let service: FixedPriceService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        StripeService,
+        FixedPriceService,
         {
-          provide: Auth0Service,
+          provide: StripeService,
           useValue: {}
         },
         {
           provide: ListingService,
           useValue: {}
-        },
-        {
-          provide: 'TRANSPORT_CLIENT',
-          useValue: {}
         }
       ]
     }).compile()
 
-    service = module.get<StripeService>(StripeService)
+    service = module.get<FixedPriceService>(FixedPriceService)
   })
 
   it('should be defined', () => {

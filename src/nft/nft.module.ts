@@ -20,13 +20,11 @@ import { LogModule } from '../log/log.module'
 import { ListingModule } from '../listing/listing.module'
 import { PaymentModule } from '../payment/payment.module'
 import { PaymentService } from '../payment/services/payment.service'
-import { ListingService } from '../listing/listing.service'
 import { Auction, AuctionSchema } from '../listing/schemas/auction.schema'
 import {
   AvnNftTransaction,
   AvnNftTransactionSchema
 } from '../avn-transaction/schemas/avn-transaction.schema'
-import { AvnTransactionService } from '../avn-transaction/services/avn-transaction.service'
 import { Bid, BidSchema } from '../payment/schemas/bid.dto'
 import { StripeService } from '../payment/stripe/stripe.service'
 import { Auth0Service } from '../user/auth0.service'
@@ -80,8 +78,6 @@ import { BullMqService, MAIN_BULL_QUEUE_NAME } from '../bull-mq/bull-mq.service'
     StripeService,
     PaymentService,
     Auth0Service,
-    AvnTransactionService,
-    ListingService,
     S3Service,
     EmailService,
     BullMqService,

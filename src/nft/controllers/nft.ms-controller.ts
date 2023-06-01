@@ -9,6 +9,9 @@ import { uuidFrom } from '../../utils'
 import { NftHistory } from '../schemas/nft-history.schema'
 import { Auction } from '../../listing/schemas/auction.schema'
 import { EditionListing } from '../../edition-listing/schemas/edition-listing.schema'
+import { NftDraftContract } from '../schemas/nft-draft-contract'
+import { User } from '../../user/schemas/user.schema'
+import { NftDraftModel } from '../schemas/nft-draft-model'
 
 @Controller()
 export class NftMsController {
@@ -19,10 +22,10 @@ export class NftMsController {
     @Payload()
     payload: {
       nftId: string
-      anvNftId: string
+      avnNftId: string
     }
   ): Promise<void> {
-    await this.nftService.handleNftMinted(payload.nftId, payload.anvNftId)
+    await this.nftService.handleNftMinted(payload.nftId, payload.avnNftId)
   }
 
   @MessagePattern(MessagePatternGenerator('nft', 'findOneById'))
@@ -71,5 +74,72 @@ export class NftMsController {
       payload.listing,
       payload.bidValue
     )
+  }
+
+  /**
+   * Handle Edition NFT minted
+   * @param payload NFT ID and ANV NFT ID
+   */
+  @EventPattern(MessagePatternGenerator('nft', 'handleMintFiatBatchNft'))
+  async handleMintFiatBatchNft(
+    @Payload()
+    payload: {
+      nftId: string
+      avnNftId: string
+    }
+  ): Promise<void> {
+    await this.nftService.handleMintFiatBatchNft(
+      payload.nftId,
+      payload.avnNftId
+    )
+  }
+
+  /**
+   * Update NFT by ID
+   * @param payload NFT ID and NFT data
+   * @returns Updated NFT
+   */
+  @EventPattern(MessagePatternGenerator('nft', 'updateNftById'))
+  async updateNftById(
+    @Payload()
+    payload: {
+      nftId: string
+      nft: Partial<Nft>
+    }
+  ): Promise<Nft> {
+    return await this.nftService.updateOneById(payload.nftId, payload.nft)
+  }
+
+  /**
+   * Update NFT by ID
+   * @param payload NFT ID and NFT data
+   * @returns Updated NFT
+   */
+  @EventPattern(MessagePatternGenerator('nft', 'mapNftDraftToModel'))
+  async mapNftDraftToModel(
+    @Payload()
+    payload: {
+      contract: NftDraftContract
+      owner: User
+    }
+  ): Promise<NftDraftModel> {
+    return await this.nftService.mapNftDraftToModel(
+      payload.contract,
+      payload.owner
+    )
+  }
+
+  /**
+   * Create NFT
+   * @param payload NFT data
+   */
+  @EventPattern(MessagePatternGenerator('nft', 'createNft'))
+  async createNft(
+    @Payload()
+    payload: {
+      nft: NftDraftModel
+    }
+  ): Promise<Nft> {
+    return await this.nftService.createNft(payload.nft)
   }
 }

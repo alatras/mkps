@@ -21,7 +21,7 @@ class AuctionNft {
   @Prop()
   @IsString()
   @IsOptional()
-  anvNftId?: string
+  avnNftId?: string
 
   @Prop()
   @IsString()
@@ -57,10 +57,10 @@ class StripePayment {
   captured: boolean
 
   @Prop({ required: false })
-  failed: boolean
+  failed?: boolean
 
   @Prop({ required: false })
-  canceled: boolean
+  canceled?: boolean
 }
 
 class LeaderboardPoints {
@@ -119,7 +119,7 @@ export class Auction {
 
   @Transform(({ value }) => MUUID.from(value).toString())
   @Prop({ type: 'object', required: false })
-  editionListingId?: object
+  editionListingId?: MUUID.MUUID
 
   @Prop({ required: true })
   seller: AuctionSeller

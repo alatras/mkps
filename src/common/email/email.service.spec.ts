@@ -33,4 +33,8 @@ describe('EmailService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined()
   })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
 })

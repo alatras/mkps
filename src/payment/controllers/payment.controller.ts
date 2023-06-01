@@ -50,7 +50,10 @@ export class PaymentController {
         req.user as User,
         placeBidDto
       )
-      this.logger.debug('bid place succeed:', placeBidResponse)
+      this.logger.debug(
+        '[PaymentController] bid place succeed:' +
+          JSON.stringify(placeBidResponse)
+      )
       return { data: placeBidResponse }
     } catch (err) {
       this.logger.error('cannot place bid:', JSON.stringify(err))

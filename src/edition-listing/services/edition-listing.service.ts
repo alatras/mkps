@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { EditionListingStatus } from '../../shared/enum'
 import { EditionListing } from '../schemas/edition-listing.schema'
+import { MUUID } from 'uuid-mongodb'
 
 @Injectable()
 export class EditionListingService {
@@ -26,5 +27,17 @@ export class EditionListingService {
       .lean()
 
     return listings[0]
+  }
+
+  /**
+   * Update Edition Listing
+   */
+  async updateEditionListing(
+    editionListingId: MUUID,
+    update: Partial<EditionListing>
+  ): Promise<EditionListing> {
+    return await this.editionListingModel
+      .findByIdAndUpdate(editionListingId, update, { new: true })
+      .lean()
   }
 }

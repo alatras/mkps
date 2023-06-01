@@ -9,10 +9,15 @@ describe('BullMqService', () => {
     add: jest.fn()
   }
 
+  const bullMqServiceMock = () => ({
+    addToQueue: jest.fn(),
+    addSendEmailJob: jest.fn()
+  })
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        BullMqService,
+        { provide: BullMqService, useFactory: bullMqServiceMock },
         {
           provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
           useValue: mockQueue
@@ -25,5 +30,9 @@ describe('BullMqService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 })

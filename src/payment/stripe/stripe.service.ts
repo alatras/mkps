@@ -3,7 +3,9 @@ import {
   InternalServerErrorException,
   Inject,
   ConflictException,
-  Logger
+  Logger,
+  NotFoundException,
+  BadRequestException
 } from '@nestjs/common'
 import { Auth0Service } from '../../user/auth0.service'
 import { User } from '../../user/schemas/user.schema'
@@ -19,6 +21,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { Bid } from '../schemas/bid.dto'
 import { ListingService } from '../../listing/listing.service'
 import { StripePaymentIntentStatus } from '../../shared/enum'
+import { Auction } from '../../listing/schemas/auction.schema'
 
 @Injectable()
 export class StripeService {
@@ -111,6 +114,17 @@ export class StripeService {
     })
 
     return methodObject.data
+  }
+
+  /**
+   * Gets a Stripe PaymentMethod object for a given payment method ID.
+   * @param {string} paymentMethodId - The unique identifier of the payment method.
+   * @returns {Promise<Stripe.PaymentMethod>} - A PaymentMethod object.
+   */
+  getPaymentMethod = async (
+    paymentMethodId: string
+  ): Promise<Stripe.PaymentMethod> => {
+    return await this.stripe.paymentMethods.retrieve(paymentMethodId)
   }
 
   createPaymentIntentForBid = async (
@@ -278,6 +292,11 @@ export class StripeService {
     })
   }
 
+  /**
+   * Confirms a Stripe PaymentIntent.
+   * @param {string} paymentIntentId - The ID of the PaymentIntent to confirm.
+   * @returns {Promise<void>} - A Promise that resolves when the PaymentIntent is confirmed.
+   */
   async confirmPaymentIntent(paymentIntentId: string) {
     this.logger.debug(`Confirming PaymentIntent for ${paymentIntentId}`)
 
@@ -295,5 +314,187 @@ export class StripeService {
       this.logger.error(`Could not confirm payment ${paymentIntentId}`)
       throw new InternalServerErrorException('Could not confirm payment')
     }
+  }
+
+  /**
+   * Creates a Stripe Customer for a given User.
+   * @param {User} user - The User for which to create a Stripe Customer.
+   * @returns {Promise<Stripe.Customer>} - The Stripe Customer.
+   */
+  async createStripeCustomer(
+    user: User,
+    updateUser?: boolean
+  ): Promise<Stripe.Customer> {
+    const auth0Id = this.auth0Service.getAuth0UserId(user)
+    const auth0User = await this.auth0Service.getAuth0User(auth0Id)
+
+    const customer: Stripe.Customer = await this.stripe.customers.create({
+      email: auth0User?.email || user.email,
+      name: auth0User?.name || auth0User?.nickname || user.email,
+      metadata: { userId: user._id.toString() }
+    })
+
+    if (updateUser) {
+      await this.updateUserById(user._id.toString(), {
+        stripeCustomerId: customer.id
+      })
+    }
+
+    return customer
+  }
+
+  /**
+   * Update User
+   * @param userId
+   * @param data
+   */
+  async updateUserById(userId: string, data: Partial<User>): Promise<User> {
+    const updated = await firstValueFrom(
+      this.clientProxy.send(MessagePatternGenerator('user', 'updateUserById'), {
+        userId,
+        data
+      })
+    )
+    if (!updated) {
+      this.logger.error(`[updateUserById] User ${userId} update failed`)
+      throw new InternalServerErrorException(
+        'User update failed after Stripe customer creation.'
+      )
+    }
+    return updated
+  }
+
+  /**
+   * Get User by Stripe Customer ID
+   * @param stripeCustomerId
+   * @returns {Promise<User>}
+   * @private
+   */
+  private async getUserByStripeCustomerId(
+    stripeCustomerId: string
+  ): Promise<User> {
+    const user = await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator('user', 'getUserByStripeCustomerId'),
+        { stripeCustomerId }
+      )
+    )
+    if (!user) {
+      const message = `User with Stripe Customer ID ${stripeCustomerId} not found`
+      this.logger.error(`[getUserByStripeCustomerId] ${message}`)
+      throw new NotFoundException(message)
+    }
+    return user
+  }
+
+  /**
+   * Create Payment Intent for Auction
+   * @param auction
+   * @param stripeCustomerId
+   * @returns {Promise<Stripe.PaymentIntent>}
+   */
+  async createPaymentIntentForAuction(
+    auction: Auction,
+    stripeCustomerId: string
+  ): Promise<Stripe.PaymentIntent> {
+    this.logger.debug(
+      `NFT ${uuidFrom(auction.nft._id).toString()} is second hand: ${
+        auction.isSecondary
+      }`
+    )
+
+    // Throw if no user for stripeCustomerId
+    const user: User = await this.getUserByStripeCustomerId(stripeCustomerId)
+    if (!user) {
+      const message = `User with Stripe Customer ID ${stripeCustomerId} not found`
+      this.logger.error(`[createPaymentIntentForAuction] ${message}`)
+      throw new NotFoundException(message)
+    }
+
+    // Throw if no avnPubKey for user
+    if (!user.avnPubKey) {
+      const message = `AvnPubKey not found for user ${uuidFrom(
+        user._id
+      ).toString()}`
+      this.logger.error(`[createPaymentIntentForAuction] ${message}`)
+      throw new NotFoundException(`${message}`)
+    }
+
+    // Factoring payment intent
+    const params: Stripe.PaymentIntentCreateParams = {
+      payment_method_types: ['card'],
+      amount: BigNumber.from(auction.reservePrice).toNumber(),
+      currency: 'usd',
+      capture_method: 'manual',
+      customer: stripeCustomerId,
+      metadata: { auction: uuidFrom(auction._id).toString() }
+    }
+
+    // If the NFT is on a second-hand sale
+    // get the seller's stripeAccountId to use it createPaymentIntentForBid
+    if (auction.isSecondary) {
+      // Throw if no seller
+      const seller = await this.getUserById(auction.seller._id)
+      if (!seller) {
+        throw new NotFoundException('Auction seller not found')
+      }
+
+      // Throw if the seller has no stripeAccountId
+      const sellerStripeAccountId = seller.stripeAccountId
+      if (!sellerStripeAccountId) {
+        const message = `[createPaymentIntentForAuction] User ${uuidFrom(
+          auction.seller._id
+        ).toString()} has no Stripe Account ID`
+        this.logger.error(message)
+        throw new BadRequestException(message)
+      }
+
+      this.logger.log(
+        `[createPaymentIntentForAuction] Seller has a stripe connected account ${sellerStripeAccountId}`
+      )
+
+      // Get the platform fee to apply it to this bid
+      const platformFee = await this.listingService.calculateFeesTotal(
+        auction.reservePrice,
+        auction.nft._id
+      )
+
+      // Apply the platform fee to the payment intent
+      if (sellerStripeAccountId) {
+        this.applyPlatformFeeToPaymentIntent(
+          params,
+          platformFee,
+          sellerStripeAccountId
+        )
+      } else {
+        this.logger.log(
+          `[createPaymentIntentForAuction] Payment intent is not a second hand sale`
+        )
+      }
+
+      this.logger.log(
+        `[createPaymentIntentForAuction] The NFT price is "${auction.reservePrice}" and the platform fee will be "${platformFee}"`
+      )
+    }
+
+    // Create the payment intent
+    const paymentIntent = await this.stripe.paymentIntents.create(params)
+
+    return paymentIntent
+  }
+
+  /**
+   * Connect Payment Method to Payment Intent
+   * @param paymentMethodId
+   * @param paymentIntentId
+   * @returns {Promise<Stripe.PaymentIntent>}
+   */
+  async connectPaymentMethodToIntent(
+    paymentMethodId: string,
+    paymentIntentId: string
+  ): Promise<Stripe.PaymentIntent> {
+    return await this.stripe.paymentIntents.update(paymentIntentId, {
+      payment_method: paymentMethodId
+    })
   }
 }

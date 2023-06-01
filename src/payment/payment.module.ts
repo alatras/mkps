@@ -1,8 +1,7 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose'
 import { PaymentService } from './services/payment.service'
 import { PaymentController } from './controllers/payment.controller'
-import { ListingService } from '../listing/listing.service'
 import { ListingModule } from '../listing/listing.module'
 import { Bid, BidSchema } from './schemas/bid.dto'
 import { DbCollections } from '../shared/enum'
@@ -22,7 +21,8 @@ import { BullMqModule } from '../bull-mq/bull-mq.module'
 
 @Module({
   imports: [
-    ListingModule,
+    // ListingModule,
+    forwardRef(() => ListingModule),
     CommonModule,
     BullMqModule,
     MongooseModule.forFeature([
@@ -39,10 +39,6 @@ import { BullMqModule } from '../bull-mq/bull-mq.module'
     ])
   ],
   providers: [
-    PaymentService,
-    Auth0Service,
-    ListingService,
-    EmailService,
     {
       provide: 'TRANSPORT_CLIENT',
       useFactory: (): ClientProxy & Closeable => {
@@ -52,8 +48,12 @@ import { BullMqModule } from '../bull-mq/bull-mq.module'
         })
       }
     },
+    Auth0Service,
+    EmailService,
+    PaymentService,
     StripeService
   ],
-  controllers: [PaymentController]
+  controllers: [PaymentController],
+  exports: [PaymentService, StripeService]
 })
 export class PaymentModule {}

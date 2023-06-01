@@ -44,4 +44,8 @@ describe('NftService', () => {
       }
     })
   })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
 })

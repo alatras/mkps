@@ -15,4 +15,8 @@ describe('LogService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined()
   })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
 })

@@ -21,7 +21,8 @@ import {
   AuctionStatus,
   AuctionType,
   Currency,
-  HistoryType
+  HistoryType,
+  KycStatus
 } from '../../shared/enum'
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
@@ -52,7 +53,12 @@ import { S3Service } from '../../common/s3/s3.service'
 import { getDateEmailFormat } from '../../utils/date'
 import { formatCurrencyWithSymbol } from '../../utils/currency'
 import { FirstBidNotificationEmailData } from '../../common/email/email-data'
-import { NftEdition } from 'src/edition/schemas/edition.schema'
+import { NftEdition } from '../../edition/schemas/edition.schema'
+import { BuyNftDto, BuyNftResponseDto } from '../dto/buy-nft.dto'
+import { isKycEnabled } from '../../utils/isKycEnabled'
+import { Lock } from 'redlock'
+import { StripeService } from '../../payment/stripe/stripe.service'
+import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
 
 @Injectable()
 export class NftService {
@@ -67,7 +73,9 @@ export class NftService {
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
     private paymentService: PaymentService,
     private listingService: ListingService,
-    private s3Service: S3Service
+    private s3Service: S3Service,
+    private readonly stripeService: StripeService,
+    private readonly fixedPriceService: FixedPriceService
   ) {}
 
   /**
@@ -247,7 +255,7 @@ export class NftService {
         avnPubKey: fullUserObject.avnPubKey,
         username: fullUserObject.username
       },
-      { anvNftId: nft.anvNftId, ...listNftDto },
+      { avnNftId: nft.avnNftId, ...listNftDto },
       isSecondarySale
     )
 
@@ -484,6 +492,24 @@ export class NftService {
       nftId: nftId,
       userAddress: nft.owner.avnPubKey,
       type: HistoryType.minted
+    })
+  }
+
+  /**
+   * Handle status of NFT after minting by adding history
+   * @param nftId NFT ID
+   * @param avnNftId NFT ID on AvN Network
+   */
+  async handleMintFiatBatchNft(nftId: string, avnNftId: string) {
+    const nft: Nft = await this.updateOneById(nftId, {
+      avnNftId,
+      eid: avnNftId,
+      status: NftStatus.minted
+    })
+
+    await this.addHistory({
+      nftId: nftId,
+      userAddress: `${nft.owner.avnPubKey}`
     })
   }
 
@@ -734,5 +760,155 @@ export class NftService {
     }
 
     return bid.value
+  }
+
+  /**
+   * Buy NFT
+   * @param {User} user - The user object
+   * @param {BuyNftDto} buyNftDto - The DTO containing the NFT ID
+   * @param {Express.Request} req - The Express request object
+   * @returns {Promise<BuyNftResponseDto>} - Promise object representing the buy NFT response
+   */
+  async buyNft(user: User, buyNftDto: BuyNftDto): Promise<BuyNftResponseDto> {
+    // Throw if user is not KYC verified
+    if (
+      isKycEnabled() &&
+      user.provider.metadata?.kycStatus !== KycStatus.verified
+    ) {
+      this.logger.error(
+        `[buyNft] User ${user._id} is not KYC verified and cannot buy NFT`
+      )
+      throw new UnauthorizedException('Not KYC verified.')
+    }
+
+    const nftUuid = uuidFrom(buyNftDto.nftId)
+
+    // Throw if NFT does not exist
+    const nft = await this.findOneById(nftUuid)
+    if (!nft) {
+      const message = `[buyNft] NFT not found ${buyNftDto.nftId}`
+      this.logger.error(message)
+      throw new NotFoundException(message)
+    }
+
+    // Acquire lock for NFT
+    const lock: Lock | null = await this.stripeService.acquireBidRedlock(
+      nftUuid
+    )
+
+    let auction: Auction | null
+    try {
+      // Get current auction by NFT ID
+      auction = await this.listingService.getCurrentAuctionByNftId(nftUuid)
+      if (!auction) {
+        const message = `[buyNft] Auction not found for NFT ${nftUuid}`
+        this.logger.error(message)
+        throw new NotFoundException(message)
+      }
+
+      // Throw if user is buying their own NFT
+      if (user._id.toString() === auction.seller._id.toString()) {
+        const message = `[buyNft] Cannot buy own NFT ${nftUuid}`
+        this.logger.error(message)
+        throw new BadRequestException(message)
+      }
+
+      // Throw if auction is not of type Fixed Price
+      if (auction.type !== AuctionType.fixedPrice) {
+        const message = `[buyNft] Auction is not of type Fixed Price ${nftUuid}`
+        this.logger.error(message)
+        throw new BadRequestException(message)
+      }
+
+      // Throw if auction is not active
+      if (auction.status !== AuctionStatus.open) {
+        const message = `[buyNft] Auction is not active ${nftUuid}`
+        this.logger.error(message)
+        throw new BadRequestException(message)
+      }
+
+      // Check if the auction currency is USD and a valid payment method is available
+      if (
+        auction.currency === Currency.USD &&
+        auction?.sale?.stripe?.paymentMethodId
+      ) {
+        const paymentMethod = await this.stripeService.getPaymentMethod(
+          auction?.sale?.stripe?.paymentMethodId
+        )
+
+        // Throw if payment method is not found
+        if (!paymentMethod) {
+          const message = `[buyNft] Payment method not found ${auction?.sale?.stripe?.paymentMethodId}`
+          this.logger.error(message)
+          throw new NotFoundException(message)
+        }
+
+        // Throw if payment method does not belong to user
+        if (paymentMethod.customer !== user.stripeCustomerId) {
+          const message = `[buyNft] Payment method does not belong to user ${auction?.sale?.stripe?.paymentMethodId}`
+          this.logger.error(message)
+          throw new BadRequestException(message)
+        }
+      }
+
+      // Create Stripe customer if auction currency is USD and user does not have a Stripe customer
+      if (auction.currency === Currency.USD && !user.stripeCustomerId) {
+        await this.stripeService.createStripeCustomer(user, true)
+        user = await this.getUserById(user._id)
+        if (!user) {
+          const message = `[buyNft] User not found ${user._id} after creating Stripe customer`
+          this.logger.error(message)
+          throw new NotFoundException(message)
+        }
+      }
+    } catch (error) {
+      // Re-throw the error to propagate it
+      throw error
+    } finally {
+      // Release lock
+      if (lock) {
+        await lock.release()
+      }
+    }
+
+    // Throw if buying with wrong currency
+    if (
+      ![Currency.USD, Currency.ADA, Currency.ETH, Currency.NONE].includes(
+        auction.currency
+      )
+    ) {
+      const message = `Cannot buy with currency ${auction.currency}`
+      this.logger.error(`[buyNft] ${message}`)
+      throw new BadRequestException(message)
+    }
+
+    const { transactionHash } = buyNftDto
+
+    switch (auction.currency) {
+      case Currency.USD:
+        await this.fixedPriceService.purchaseFiatNft(auction, user)
+      case Currency.ETH:
+        await this.fixedPriceService.purchaseEthNft(
+          auction,
+          transactionHash,
+          auction.reservePrice
+        )
+      case Currency.NONE:
+        this.listingService.completeFreeAuction(auction, user)
+        return
+    }
+  }
+
+  /**
+   * Get User from user service
+   * @param userId
+   */
+  private async getUserById(userId: MUUID): Promise<User> {
+    return await firstValueFrom(
+      this.clientProxy.send(
+        MessagePatternGenerator('user', 'getUserById'),
+        userId.toString()
+      )
+    )
   }
 }

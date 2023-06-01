@@ -37,10 +37,16 @@ import { Auth0Service } from '../../user/auth0.service'
 import { Bid } from '../../payment/schemas/bid.dto'
 import { S3Service } from '../../common/s3/s3.service'
 import { EmailService } from '../../common/email/email.service'
+import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
   send: jest.fn()
+})
+
+const bullMqServiceMock = () => ({
+  addToQueue: jest.fn(),
+  addSendEmailJob: jest.fn()
 })
 
 describe('NftMsController', () => {
@@ -68,7 +74,8 @@ describe('NftMsController', () => {
         EmailService,
         LogService,
         ListingService,
-        BullMqService,
+        { provide: BullMqService, useFactory: bullMqServiceMock },
+        FixedPriceService,
         {
           provide: getQueueToken(MAIN_BULL_QUEUE_NAME),
           useValue: mockQueue
@@ -116,7 +123,7 @@ describe('NftMsController', () => {
 
   describe('handleNftMinted', () => {
     it('should call the correct service function with the correct data', async () => {
-      const testData = { nftId: '', anvNftId: '' }
+      const testData = { nftId: '', avnNftId: '' }
 
       jest
         .spyOn(service, 'handleNftMinted')
@@ -126,8 +133,12 @@ describe('NftMsController', () => {
 
       expect(service.handleNftMinted).toBeCalledWith(
         testData.nftId,
-        testData.anvNftId
+        testData.avnNftId
       )
     })
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 })

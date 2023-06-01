@@ -17,6 +17,7 @@ import {
 import { AvnTransactionState, AvnTransactionType } from '../../shared/enum'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { ClientProxy } from '@nestjs/microservices'
+import { firstValueFrom } from 'rxjs'
 
 @Injectable()
 export class AvnTransactionChangeStreamService
@@ -110,6 +111,10 @@ export class AvnTransactionChangeStreamService
             this.handleMintingEdition(transaction as AvnEditionTransaction)
             break
 
+          case AvnTransactionType.AvnMintFiatBatchNft:
+            this.handleMintFiatBatchNft(transaction as AvnEditionTransaction)
+            break
+
           case AvnTransactionType.MintSingleNftApiGateway:
             this.logger.debug(`${logString} needs no handling`)
             break
@@ -200,5 +205,58 @@ export class AvnTransactionChangeStreamService
       nftId,
       eid
     })
+  }
+
+  /**
+   * Handles minting Edition NFT update based on change stream
+   * @param transaction
+   */
+  private async handleMintFiatBatchNft(transaction: AvnEditionTransaction) {
+    const logString =
+      'AVN trx on NFT ID ' +
+      `${transaction.data['unique_external_ref']} type ${transaction.type}`
+
+    const nftId = transaction.data['unique_external_ref']
+
+    const eid =
+      transaction.history[transaction.history.length - 1]?.operation_data[
+        'nftId'
+      ]
+
+    // Check if all keys are present
+    if (nftId === undefined || eid === undefined) {
+      this.logger.error(
+        `${logString} failed to update fiat batch NFT ` +
+          'although state is "PROCESSING_COMPLETE" ' +
+          'because a key is missing. ' +
+          `Request id: ${transaction.request_id}, ` +
+          `nftId: ${nftId}, ` +
+          `eid: ${eid}.`
+      )
+      return
+    }
+
+    this.logger.log(`${logString} is successfully MINTED in AVN`)
+
+    // Call NFT handler to update NFT
+    try {
+      await firstValueFrom(
+        this.clientProxy.send(
+          MessagePatternGenerator('nft', 'handleMintFiatBatchNft'),
+          {
+            nftId,
+            eid
+          }
+        )
+      )
+    } catch (err) {
+      const message =
+        `${logString} failed to update fiat batch NFT ` +
+        'although state is "PROCESSING_COMPLETE" ' +
+        'because the NFT handler "handleMintFiatBatchNft" failed with error: ' +
+        `${JSON.stringify(err)}, `
+      this.logger.error(`[handleMintFiatBatchNft] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
   }
 }

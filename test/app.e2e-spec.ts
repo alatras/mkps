@@ -26,4 +26,8 @@ describe('AppController (e2e)', () => {
         version: process.env.npm_package_version ?? packageJsonVersion
       })
   })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
 })

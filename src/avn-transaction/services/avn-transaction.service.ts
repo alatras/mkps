@@ -1,12 +1,25 @@
-import { Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  forwardRef
+} from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import * as MUUID from 'uuid-mongodb'
+import { ClientProxy } from '@nestjs/microservices'
 import {
   AvnMintTransaction,
   AvnMintNftTransactionData,
   AvnNftTransaction,
-  Royalties
+  Royalties,
+  AvnMintBatchTransaction,
+  AvnMintBatchTransactionData,
+  AvnProcessFiatSaleTransactionData,
+  AvnProcessFiatSaleTransaction
 } from '../schemas/avn-transaction.schema'
 import { User } from '../../user/schemas/user.schema'
 import {
@@ -26,13 +39,25 @@ import { Nft } from '../../nft/schemas/nft.schema'
 import { Auction } from '../../listing/schemas/auction.schema'
 import { ListNftDto } from '../../nft/dto/list-nft.dto'
 import { getDefaultRoyalties } from '../../utils/get-royalties'
+import { firstValueFrom } from 'rxjs'
+import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { EditionService } from '../../edition/edition.service'
+import { EmailService } from '../../common/email/email.service'
+import { ListingService } from '../../listing/listing.service'
 
 @Injectable()
 export class AvnTransactionService {
+  private readonly logger = new Logger(AvnTransactionService.name)
+
   constructor(
     @InjectModel(AvnNftTransaction.name)
     private avnTransactionModel: Model<AvnNftTransaction>,
-    private avnTransactionApiGatewayService: AvnTransactionApiGatewayService
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy,
+    private avnTransactionApiGatewayService: AvnTransactionApiGatewayService,
+    private editionService: EditionService,
+    private emailService: EmailService,
+    @Inject(forwardRef(() => ListingService))
+    private listingService: ListingService
   ) {}
 
   /**
@@ -161,5 +186,142 @@ export class AvnTransactionService {
     requestId: string
   ): Promise<AvnNftTransaction | null> => {
     return await this.avnTransactionModel.findOne({ requestId: requestId })
+  }
+
+  /**
+   * Create AvnTransaction to mint batch NFTs
+   * @param nftId NFT ID
+   * @param user User
+   * @returns AvnTransaction
+   */
+  async createMintBatchAvnTransaction(
+    nftId: MUUID.MUUID,
+    winner: User,
+    auction?: Auction
+  ): Promise<AvnNftTransaction> {
+    // Throw if winner does not have avn address
+    if (!winner.avnAddress) {
+      throw new BadRequestException('avn public key is not set')
+    }
+
+    const nftUuid = uuidFrom(nftId).toString()
+
+    // Throw if nft does not exist
+    let nft: Nft
+    try {
+      nft = await firstValueFrom(
+        this.clientProxy.send(MessagePatternGenerator('nft', 'findOneById'), {
+          nftId: nftUuid
+        })
+      )
+    } catch (err) {
+      const message = `NFT not found for id ${nftId}. Error: ${JSON.stringify(
+        err
+      )}`
+      this.logger.error(`[createMintBatchAvnTransaction] ${message}`)
+      throw new NotFoundException(message)
+    }
+
+    // Throw if NFT is not part of an edition
+    if (!nft.editionId) {
+      const message = `NFT ${nftId} does not have editionId`
+      this.logger.error(`[createMintBatchAvnTransaction] ${message}`)
+      throw new BadRequestException(message)
+    }
+
+    // Throw if edition does not exist
+    const edition = await this.editionService.getEditionById(nft.editionId)
+    if (!edition) {
+      const message = `Edition not found for id ${nft.editionId}`
+      this.logger.error(`[createMintBatchAvnTransaction] ${message}`)
+      throw new NotFoundException(message)
+    }
+
+    const requestId = `avnMint:${nftUuid}`
+
+    // Throw if AvnTransaction already exists
+    const existingAvnTransaction = await this.avnTransactionModel.findOne({
+      request_id: requestId,
+      type: AvnTransactionType.AvnMintFiatBatchNft
+    })
+    if (existingAvnTransaction) {
+      const message = `AvnTransaction already exists for id ${requestId}`
+      this.logger.error(`[createMintBatchAvnTransaction] ${message}`)
+      throw new ConflictException(message)
+    }
+
+    // Create AvnTransaction doc
+    const data: AvnMintBatchTransactionData = {
+      unique_external_ref: nftUuid,
+      userId: nft.owner._id,
+      buyer_avn_address: winner.avnAddress,
+      batch_id: edition.avnId!,
+      totalSupply: edition.quantity,
+      index: nft.editionNumber!
+    }
+    const newDoc: AvnMintBatchTransaction = {
+      request_id: requestId,
+      type: AvnTransactionType.AvnMintFiatBatchNft,
+      data: data,
+      state: AvnTransactionState.NEW,
+      history: []
+    }
+    const newAvnTransaction = await this.avnTransactionModel.create(newDoc)
+
+    if (auction && auction.type !== AuctionType.airdrop) {
+      await this.emailService.sendTransferredWinnerNotification(
+        auction,
+        winner._id,
+        nft
+      )
+    }
+
+    return newAvnTransaction
+  }
+
+  /**
+   * Complete auction on AvN.
+   * This will create a new AvnTransaction doc to process the sale on AvN.
+   * The result is handled by ChangeStream.
+   * @param nftId NFT ID
+   * @param user User
+   */
+  async completeAuctionOnAvn(
+    nft: Nft,
+    winner: User,
+    saleValue: string
+  ): Promise<AvnNftTransaction> {
+    if (!winner.avnPubKey) {
+      const message = `Winner ${winner._id} does not have AvN public key`
+      this.logger.error(`[completeAuctionOnAvn] ${message}`)
+      throw new BadRequestException(message)
+    }
+
+    // Throw if NFT is already on sale
+    const existingAuction = await this.listingService.getCurrentAuctionByNftId(
+      nft._id
+    )
+    const nftId = uuidFrom(nft._id).toString()
+    if (existingAuction) {
+      this.logger.debug(`NFT ${nftId} already has an auction`)
+      throw new ConflictException('alreadyOnSale')
+    }
+
+    const data: AvnProcessFiatSaleTransactionData = {
+      saleValue,
+      nft_id: nft.eid,
+      userId: nft.owner._id,
+      new_owner: winner.avnPubKey
+    }
+
+    const newDoc: AvnProcessFiatSaleTransaction = {
+      request_id: `avnMint:${nftId}`,
+      type: AvnTransactionType.AvnProcessFiatSale,
+      data: data,
+      state: AvnTransactionState.NEW,
+      history: []
+    }
+
+    return await this.avnTransactionModel.create(newDoc)
   }
 }

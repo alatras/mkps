@@ -25,5 +25,5 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run pretty
-      - run: npm run test
+      - run: npm run test --detectOpenHandles
       - run: npm run build

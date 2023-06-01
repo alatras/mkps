@@ -38,7 +38,7 @@ export class ListNftDto {
   @Prop()
   @IsString()
   @IsOptional()
-  anvNftId?: string
+  avnNftId?: string
 
   @ValidateNested()
   @Type(() => Seller)

@@ -86,4 +86,13 @@ export class UserService {
   ): Promise<User> {
     return this.userModel.findOneAndUpdate({ _id }, body, { new: true }).lean()
   }
+
+  /**
+   * Get user by Customer ID
+   * @param customerId Customer ID
+   * @returns User
+   */
+  async findOneByStripeCustomerId(stripeCustomerId: string): Promise<User> {
+    return this.userModel.findOne({ stripeCustomerId }).lean()
+  }
 }

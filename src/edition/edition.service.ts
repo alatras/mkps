@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  forwardRef,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -24,7 +23,6 @@ import { NftEdition } from './schemas/edition.schema'
 import { Nft } from '../nft/schemas/nft.schema'
 import { uuidFrom } from '../utils'
 import { CreateEditionDto, EditionResponseDto } from './dto/edition.dto'
-import { NftService } from '../nft/services/nft.service'
 import { v4 } from 'uuid-mongodb'
 import { User } from '../user/schemas/user.schema'
 import { DataWrapper } from '../common/dataWrapper'
@@ -35,6 +33,7 @@ import {
   AvnEditionTransaction
 } from '../avn-transaction/schemas/avn-transaction.schema'
 import { firstValueFrom } from 'rxjs'
+import { NftDraftModel } from '../nft/schemas/nft-draft-model'
 
 @Injectable()
 export class EditionService {
@@ -45,7 +44,6 @@ export class EditionService {
     @InjectModel(Nft.name) private nftModel: Model<Nft>,
     @InjectModel(AvnEditionTransaction.name)
     private avnTransaction: Model<AvnEditionTransaction>,
-    @Inject(forwardRef(() => NftService)) private nftService: NftService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {}
 
@@ -142,10 +140,27 @@ export class EditionService {
 
     const { quantity: _, ...nftDraftContract } = createEditionDto
 
-    const nftDoc = await this.nftService.mapNftDraftToModel(
-      nftDraftContract,
-      user
-    )
+    // Get nftDoc via client proxy
+    let nftDoc: NftDraftModel
+    try {
+      nftDoc = await firstValueFrom(
+        this.clientProxy.send(
+          MessagePatternGenerator('nft', 'mapNftDraftToModel'),
+          {
+            nftDraftContract,
+            user
+          }
+        )
+      )
+    } catch (err) {
+      const message = `failed to create Edition NFT: ${
+        createEditionDto.name
+      }, ${JSON.stringify(err)}`
+      this.logger.error(
+        `[createEdition] ${message} ${JSON.stringify(createEditionDto)}`
+      )
+      throw new InternalServerErrorException(message)
+    }
 
     const editionDoc: NftEdition = {
       _id: v4(),
@@ -283,19 +298,32 @@ export class EditionService {
       [...Array(updatedEdition!.quantity)].map(async (_, index) => {
         const _id = this.generateNftId(batchId, index + 1)
 
-        await this.nftService.createNft(
-          {
-            ...updatedEdition,
-            _id,
-            description: updatedEdition.description,
-            editionNumber: index + 1,
-            image: updatedEdition.image,
-            owner: updatedEdition.owner,
-            minterId: updatedEdition.owner._id,
-            editionId: uuidFrom(editionId)
-          },
-          NftStatus.minted
-        )
+        // Create NFT
+        try {
+          await firstValueFrom(
+            this.clientProxy.send(MessagePatternGenerator('nft', 'createNft'), {
+              nft: {
+                ...updatedEdition,
+                _id,
+                description: updatedEdition.description,
+                editionNumber: index + 1,
+                image: updatedEdition.image,
+                owner: updatedEdition.owner,
+                minterId: updatedEdition.owner._id,
+                editionId: uuidFrom(editionId)
+              },
+              status: NftStatus.minted
+            })
+          )
+        } catch (err) {
+          const message = `failed to create NFT: ${_id}. Error: ${JSON.stringify(
+            err
+          )}`
+          this.logger.error(
+            `[createNft] ${message}. Edition: ${JSON.stringify(updatedEdition)}`
+          )
+          throw new InternalServerErrorException(message)
+        }
 
         editionNftIds.push(_id)
       })
