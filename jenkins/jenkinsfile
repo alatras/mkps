@@ -1,6 +1,6 @@
 def _ACCOUNT_NAME = env.ACCOUNT_NAME == "eos" || env.ACCOUNT_NAME == "test" ? "eos" : params.account_name
 def _ENV_NAME = env.JOB_NAME.contains('dev') ? "dev" : env.JOB_NAME.contains('qa') ? "qa" : env.JOB_NAME.contains('uat') ? "uat" : env.ENV_NAME
-def _BRANCH = _ENV_NAME == "dev" ? "main" : _ENV_NAME == "qa" ||  _ENV_NAME == "uat" ? "qa" : ""
+def _BRANCH = _ENV_NAME == "dev" ? "main" : ""
 
 pipeline {
     agent any
