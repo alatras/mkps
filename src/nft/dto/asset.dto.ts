@@ -26,11 +26,6 @@ export class ImagesSetDto {
   @ValidateNested()
   @ApiProperty()
   @Type(() => AssetDto)
-  medium: AssetDto
-
-  @ValidateNested()
-  @ApiProperty()
-  @Type(() => AssetDto)
   large: AssetDto
 
   @ValidateNested()

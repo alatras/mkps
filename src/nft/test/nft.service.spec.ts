@@ -142,11 +142,6 @@ describe('NftService', () => {
             key: 'string',
             type: AssetType.image
           },
-          medium: {
-            url: 'string',
-            key: 'string',
-            type: AssetType.image
-          },
           large: {
             url: 'string',
             key: 'string',

@@ -19,6 +19,7 @@ export class AssetService {
   /**
    * Gets presigned URL for small image to upload in 3S
    * @param contentType type of asset file contents
+   * @param nftId
    */
   async getPresignedUrlForSmallImage(
     contentType: string,
@@ -56,6 +57,7 @@ export class AssetService {
   /**
    * Get presigned URL for original image to upload in 3S
    * @param contentType type of asset file contents
+   * @param nftId
    */
   async getPresignedUrlForOriginal(
     contentType: string,

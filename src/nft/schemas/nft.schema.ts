@@ -10,7 +10,8 @@ import { ApiProperty } from '@nestjs/swagger'
 
 export enum AssetType {
   image = 'image',
-  video = 'video'
+  video = 'video',
+  audio = 'audio'
 }
 
 @Schema({ _id: false })
