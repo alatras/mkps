@@ -2,10 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 2
+replicaCount: 1
 
 image:
-  repository: 427700902441.dkr.ecr.us-east-2.amazonaws.com/avn_service
+  repository: 293267276078.dkr.ecr.us-east-2.amazonaws.com/user_service
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: latest
@@ -16,12 +16,12 @@ fullnameOverride: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: false
+  create: true
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: "nft-s3-cdn"
+  name: ""
 
 podAnnotations: {}
 
@@ -35,6 +35,8 @@ securityContext:
   runAsNonRoot: true
   allowPrivilegeEscalation: false
   runAsUser: 9992
+
+serviceAccountName: nft-s3-cdn
 
 service:
   type: ClusterIP
@@ -67,8 +69,8 @@ resources:
 
 autoscaling:
   enabled: enable
-  minReplicas: 2
-  maxReplicas: 4
+  minReplicas: 1
+  maxReplicas: 1
   targetCPUUtilizationPercentage: 75
   targetMemoryUtilizationPercentage: 85
 
@@ -87,5 +89,5 @@ affinity:
             operator: Exists
         topologyKey: topology.kubernetes.io/zone
 
-selectors:
-  node: ohio
+#selectors:
+#  node: ohio

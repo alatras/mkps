@@ -103,7 +103,7 @@ pipeline {
             }
         }
 
-        stage('Clean') {
+        stage('Clean image') {
             steps {
                 sh "docker image rm ${account_id}.dkr.ecr.${params.aws_region}.amazonaws.com/${_SERVICE.toLowerCase()}:${tag}"
             }
@@ -116,5 +116,11 @@ pipeline {
                 }
             }
         }
+
+        stage('Clean') {
+            steps {
+                cleanWs()
+            }
+        }        
     }
 }

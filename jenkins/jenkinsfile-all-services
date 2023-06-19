@@ -1,0 +1,87 @@
+def _ACCOUNT_NAME = env.ACCOUNT_NAME == "eos" || env.ACCOUNT_NAME == "test" ? "eos" : params.account_name
+def _ENV_NAME = env.JOB_NAME.contains('dev') ? "dev" : env.JOB_NAME.contains('qa') ? "qa" : env.JOB_NAME.contains('uat') ? "uat" : env.ENV_NAME
+def _BRANCH = _ENV_NAME == "dev" ? "main" : ""
+
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(
+                artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '5',
+                daysToKeepStr: '60',
+                numToKeepStr: '20')
+        )
+        disableConcurrentBuilds()
+        disableResume()
+        timeout(time: 1, unit: 'HOURS')
+        ansiColor('xterm')
+    }
+
+    parameters {
+        string(name: "account_name", defaultValue: "${env.ACCOUNT_NAME}", description: "Account name to use for deployment")
+        string(name: "environment", defaultValue: "${_ENV_NAME}", description: "Environment name to use for deployment")
+        string(name: "aws_region", defaultValue: "${env.REGION}", description: 'AWS Region to use for deployment')
+        string(name: "branch", defaultValue: "${_BRANCH}", description: 'Add branch name or tag.')
+    }
+
+    stages {    
+        stage ('Run avn-services') {
+            steps {           
+                script {        
+                    service_name = "avn-services"            
+                    if ("${params.account_name}" == "eos") {
+                         service_name += "-${params.environment}"
+                    }                     
+                    build job: "${service_name}", 
+                        parameters: [ 
+                            string(name: 'account_name', value: "${params.account_name}"),
+                            string(name: 'environment',  value: "${params.environment}"), 
+                            string(name: 'aws_region',   value: "${params.aws_region}"),
+                            string(name: 'branch',       value: "${params.branch}")]
+                }
+            }             
+        }
+
+        stage ('Run listing-services') {
+            steps {           
+                script {        
+                    service_name = "listing-services"            
+                    if ("${params.account_name}" == "eos") {
+                        service_name += "-${params.environment}"
+                    }                     
+                    build job: "${service_name}", 
+                        parameters: [ 
+                            string(name: 'account_name', value: "${params.account_name}"),
+                            string(name: 'environment',  value: "${params.environment}"), 
+                            string(name: 'aws_region',   value: "${params.aws_region}"),
+                            string(name: 'branch',       value: "${params.branch}")]
+                }
+            }             
+        }        
+
+        stage ('Run nft-services') {
+            steps {           
+                script {        
+                    service_name = "nft-services"
+                    if ("${params.account_name}" == "eos") {
+                        service_name += "-${params.environment}"
+                    }                     
+                    build job: "${service_name}", 
+                        parameters: [ 
+                            string(name: 'account_name', value: "${params.account_name}"),
+                            string(name: 'environment',  value: "${params.environment}"), 
+                            string(name: 'aws_region',   value: "${params.aws_region}"),
+                            string(name: 'branch',       value: "${params.branch}")]
+                }
+            }             
+        }
+        
+        stage('Clean') {
+            steps {
+                cleanWs()
+            }
+        }                   
+      
+    }
+}
