@@ -185,7 +185,9 @@ export class AvnTransactionService {
   getAvnTransactionByRequestId = async (
     requestId: string
   ): Promise<AvnNftTransaction | null> => {
-    return await this.avnTransactionModel.findOne({ requestId: requestId })
+    return this.avnTransactionModel.findOne({
+      $or: [{ requestId: requestId }, { request_id: requestId }]
+    })
   }
 
   /**

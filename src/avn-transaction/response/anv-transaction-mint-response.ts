@@ -8,7 +8,8 @@ class AvnTransactionMintResponseData {
 
 export class AvnTransactionMintResponse {
   _id?: object
-  request_id: string
+  request_id?: string
+  requestId?: string
   nftId?: string
   type: string
   data: AvnTransactionMintResponseData

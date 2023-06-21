@@ -83,7 +83,10 @@ export type AvnEditionTransactionDocument = AvnEditionTransaction & Document
 
 export class AvnTransactionBase {
   @Prop()
-  request_id: string
+  request_id?: string
+
+  @Prop()
+  requestId?: string
 
   @Prop()
   nftId?: string
