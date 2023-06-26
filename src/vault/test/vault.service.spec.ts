@@ -10,7 +10,7 @@ describe('VaultService', () => {
 
   beforeAll(async () => {
     jest
-      .spyOn(VaultService.prototype as any, 'appLogin')
+      .spyOn(VaultService.prototype as any, 'getAppLoginToken')
       .mockResolvedValue('token')
     jest
       .spyOn(VaultService.prototype as any, 'get')
@@ -25,9 +25,23 @@ describe('VaultService', () => {
       providers: [VaultService]
     }).compile()
 
+    ;(VaultService.prototype as any).config = {
+      baseUrl: process.env.VAULT_BASE_URL,
+      roleId: process.env.VAULT_APP_ROLE_ID,
+      secretId: process.env.VAULT_APP_SECRET_ID,
+      authority: {
+        username: process.env.VAULT_AUTHORITY_USERNAME,
+        password: process.env.VAULT_AUTHORITY_PASSWORD
+      }
+    }
+    ;(VaultService.prototype as any).loginToken = {
+      token: 'token',
+      validUntil: 0
+    }
+
     service = module.get<VaultService>(VaultService)
 
-    jest.spyOn(VaultService.prototype as any, 'appLogin').mockReset()
+    jest.spyOn(VaultService.prototype as any, 'getAppLoginToken').mockReset()
     jest.spyOn(VaultService.prototype as any, 'get').mockReset()
 
     jest
@@ -41,21 +55,12 @@ describe('VaultService', () => {
 
   it('should call get with the correct URL when calling setAuthority and return an address', async () => {
     jest
-      .spyOn(VaultService.prototype as any, 'appLogin')
+      .spyOn(VaultService.prototype as any, 'getAppLoginToken')
       .mockResolvedValueOnce('token')
 
     jest.spyOn(VaultService.prototype as any, 'get').mockResolvedValueOnce({
       address: 'address'
     })
-    ;(VaultService.prototype as any).config = {
-      baseUrl: process.env.VAULT_BASE_URL,
-      roleId: process.env.VAULT_ROLE_ID,
-      secretId: process.env.VAULT_SECRET_ID,
-      authority: {
-        username: process.env.VAULT_AUTHORITY_USERNAME,
-        password: process.env.VAULT_AUTHORITY_PASSWORD
-      }
-    }
 
     const address = await (VaultService.prototype as any).setAuthority()
 
@@ -67,45 +72,13 @@ describe('VaultService', () => {
     expect(address).toBe('address')
   })
 
-  it('should call get with the correct URL when calling setRelayer and return a publicKey', async () => {
-    ;(VaultService.prototype as any).config = {
-      baseUrl: process.env.VAULT_BASE_URL,
-      roleId: process.env.VAULT_ROLE_ID,
-      secretId: process.env.VAULT_SECRET_ID,
-      authority: {
-        username: process.env.VAULT_AUTHORITY_USERNAME,
-        password: process.env.VAULT_AUTHORITY_PASSWORD
-      },
-      relayer: {
-        username: process.env.VAULT_RELAYER_USERNAME,
-        password: process.env.VAULT_RELAYER_PASSWORD
-      }
-    }
-
-    jest
-      .spyOn(VaultService.prototype as any, 'appLogin')
-      .mockResolvedValueOnce('token')
-
-    jest.spyOn(VaultService.prototype as any, 'get').mockResolvedValueOnce({
-      publicKey: 'publicKey'
-    })
-
-    const publicKey = await (VaultService.prototype as any).setRelayer()
-
-    expect((VaultService.prototype as any).get).toHaveBeenCalledWith(
-      'secret/relayer',
-      'token'
-    )
-    expect((VaultService.prototype as any).relayer.set).toBe(true)
-    expect(publicKey).toBe('publicKey')
-  })
-
   it('should be able to create a new user', async () => {
     jest
       .spyOn(VaultService.prototype as any, 'post')
-      .mockResolvedValueOnce({ data: { publicKey: 'publicKey' } })
+      .mockResolvedValueOnce({ publicKey: 'publicKey' })
+
     jest
-      .spyOn(VaultService.prototype as any, 'appLogin')
+      .spyOn(VaultService.prototype as any, 'getAppLoginToken')
       .mockResolvedValueOnce('token')
 
     jest
@@ -118,76 +91,82 @@ describe('VaultService', () => {
       'avn-vault/user/username',
       {
         username: 'username'
-      }
+      },
+      'token'
     )
   })
 
-  it('should call post with the correct URL when calling appLogin', async () => {
+  it('should call post with the correct URL when calling getAppLoginToken', async () => {
     jest
       .spyOn(VaultService.prototype as any, 'post')
-      .mockResolvedValueOnce('token')
+      .mockResolvedValueOnce({ auth: { client_token: 'clientToken' } })
 
-    await service.appLogin('mockRole', 'mockSecret')
+    const token = await service.getAppLoginToken()
 
+    expect(token).toBe('clientToken')
     expect((VaultService.prototype as any).post).toHaveBeenCalledWith(
       'auth/approle/login',
       {
-        role_id: 'mockRole',
-        secret_id: 'mockSecret'
-      }
+        role_id: process.env.VAULT_APP_ROLE_ID,
+        secret_id: process.env.VAULT_APP_SECRET_ID
+      },
+      null
     )
   })
 
   it('should call post with the correct URL when calling userPassLogin', async () => {
     jest
       .spyOn(VaultService.prototype as any, 'post')
-      .mockResolvedValueOnce('token')
+      .mockResolvedValueOnce('userPassLoginToken')
 
-    await (VaultService.prototype as any).userPassLogin('username', 'password')
+    const userPassLoginToken = await (
+      VaultService.prototype as any
+    ).getUserPassLoginToken('username', 'password')
+    expect(userPassLoginToken).toBe('userPassLoginToken')
     expect((VaultService.prototype as any).post).toHaveBeenCalledWith(
       'auth/userpass/login/username',
       {
         password: 'password'
-      }
+      },
+      null
     )
   })
 
   it('should sign the message with the correct signature when calling authoritySign', async () => {
     jest
-      .spyOn(VaultService.prototype as any, 'userPassLogin')
+      .spyOn(VaultService.prototype as any, 'getUserPassLoginToken')
       .mockResolvedValueOnce('token')
     ;(VaultService.prototype as any).authority = {
-      username: 'xxxx',
-      password: 'xxxx',
+      username: process.env.VAULT_AUTHORITY_USERNAME,
+      password: process.env.VAULT_AUTHORITY_PASSWORD,
       set: true
     }
 
     jest
       .spyOn(VaultService.prototype as any, 'post')
-      .mockResolvedValueOnce({ auth: { client_token: 'signature' } })
+      .mockResolvedValueOnce({ signature: 'authoritySignature' })
 
     expect(await (VaultService.prototype as any).authoritySign('data')).toEqual(
-      'signature'
+      'authoritySignature'
     )
   })
 
-  it('should return the correct seed when calling getUserSeed', async () => {
+  it('should sign the message with the correct signature when calling userSign', async () => {
     jest
-      .spyOn(VaultService.prototype as any, 'appLogin')
+      .spyOn(VaultService.prototype as any, 'getAppLoginToken')
       .mockResolvedValueOnce('token')
 
     jest.spyOn(VaultService.prototype as any, 'get').mockResolvedValueOnce({
-      seed: 'seed'
+      address: 'address'
     })
 
-    const seed = await (VaultService.prototype as any).getUserSeed('username')
+    jest
+      .spyOn(VaultService.prototype as any, 'post')
+      .mockResolvedValueOnce({ signature: 'userSignature' })
 
-    expect((VaultService.prototype as any).get).toHaveBeenCalledWith(
-      `avn-vault/user/username`,
-      'token'
+    expect(await (VaultService.prototype as any).userSign('data')).toEqual(
+      'userSignature'
     )
-
-    expect(seed).toEqual('seed')
   })
 
   afterEach(() => {

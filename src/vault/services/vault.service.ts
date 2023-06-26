@@ -11,23 +11,25 @@ interface VaultConfig {
     username: string
     password: string
   }
-  relayer: { username: string; password: string }
+}
+
+interface LoginToken {
+  token: string
+  validUntil: number
 }
 
 @Injectable()
 export class VaultService {
   private readonly logger = new Logger(VaultService.name)
   private readonly config: VaultConfig
+  private readonly loginToken: LoginToken
   private authority: { username: string; password: string; set: boolean } = {
     username: '',
     password: '',
     set: false
   }
-  private relayer: { username: string; password: string; set: boolean } = {
-    username: '',
-    password: '',
-    set: false
-  }
+
+  private readonly EXPIRY = 1000 * 60 * 10 //10 min
 
   constructor(
     private readonly httpService: HttpService,
@@ -43,20 +45,12 @@ export class VaultService {
     }
 
     for (const [key, value] of Object.entries(vaultConfig)) {
-      if (value === undefined || value === null || value === '') {
+      if (!value) {
         throw new Error(`VaultService.constructor: ${key} is undefined`)
       }
     }
 
     this.config = vaultConfig
-
-    // this.setAuthority().then(r =>
-    //   this.logger.log(`Authority set - address: ${r}`)
-    // )
-    //
-    // this.setRelayer().then(r =>
-    //   this.logger.log(`Relayer set - publicKey: ${r}`)
-    // )
   }
 
   private async get(url: string, token: string): Promise<any> {
@@ -73,17 +67,14 @@ export class VaultService {
       return res.data.data
     } catch (error) {
       this.logger.error(`get data error: ${error.message}`)
-      if (error.response) {
-        if (
-          error.response.status === 404 ||
-          error.response.data.errors[0].includes('Error reading user')
-        ) {
-          return null
-        } else {
-          throw new Error(`VaultService.get: ${error.response.data.errors}`)
-        }
+
+      if (
+        error.response?.status === 404 ||
+        error.response?.data?.errors?.[0].includes('Error reading user')
+      ) {
+        return null
       } else {
-        throw new Error(`VaultService.get: ${error.message}`)
+        throw new Error(`VaultService.get: ${JSON.stringify(error)}`)
       }
     }
   }
@@ -91,51 +82,72 @@ export class VaultService {
   private async post<T>(
     url: string,
     data: T,
-    headers?: Record<string, string>
+    token?: string
   ): Promise<string | any> {
-    const defaultHeaders = { 'Content-Type': 'application/json' }
+    const headers = { 'Content-Type': 'application/json' }
+
+    if (token) {
+      headers['X-Vault-Request'] = 'true'
+      headers['X-Vault-Token'] = token!
+    }
+
     try {
       this.logger.debug(`post data for URL: ${url}`)
       const response = await firstValueFrom(
         this.httpService.post(`${this.config.baseUrl}/${url}`, data, {
-          ...defaultHeaders,
           headers
         })
       )
 
-      return response.data
-    } catch (e) {
-      this.logger.error(`post data error: ${e.message}`)
-      if (e.response) {
-        throw new Error(`VaultService.post: ${e.response.data.errors}`)
-      } else {
-        throw new Error(`VaultService.post: ${e.message}`)
-      }
+      return response.data.data
+    } catch (err) {
+      this.logger.error(`post data error: ${err.toString()}`)
+      throw new Error(`VaultService.post: ${err.toString()}`)
     }
   }
 
-  async appLogin(roleId: string, secretId: string): Promise<string> {
-    const res = await this.post(`auth/approle/login`, {
-      role_id: roleId,
-      secret_id: secretId
-    })
+  async getAppLoginToken(): Promise<string> {
+    const url = 'auth/approle/login'
+    const data = {
+      role_id: this.config.roleId,
+      secret_id: this.config.secretId
+    }
 
-    return res.data
+    try {
+      const now = Date.now()
+      if (!this.loginToken.token || this.loginToken.validUntil < now) {
+        this.logger.debug(
+          `token ${this.loginToken.token} has expired on ${this.loginToken.validUntil}. Refreshing...`
+        )
+
+        const response = await this.post(url, data, null)
+        this.loginToken.token = response.auth.client_token
+        this.loginToken.validUntil = now + this.EXPIRY
+      }
+      return this.loginToken.token
+    } catch (err) {
+      this.logger.error(`app login token data error: ${err.toString()}`)
+      throw new Error(`VaultService.getAppLoginToken: ${err.toString()}`)
+    }
   }
 
-  private async userPassLogin(
+  private async getUserPassLoginToken(
     username: string,
     password: string
   ): Promise<string> {
-    const res = await this.post(`auth/userpass/login/${username}`, {
-      password
-    })
+    const url = `auth/userpass/login/${username}`
+    const data = { password }
 
-    return res.data
+    try {
+      return await this.post(url, data, null)
+    } catch (err) {
+      this.logger.error(`user pass login data error: ${err.toString()}`)
+      throw err
+    }
   }
 
   private async setAuthority(): Promise<void> {
-    const token = await this.appLogin(this.config.roleId, this.config.secretId)
+    const token = await this.getAppLoginToken()
 
     const res = await this.get(`secret/authority`, token)
 
@@ -152,26 +164,8 @@ export class VaultService {
     return res.address
   }
 
-  private async setRelayer(): Promise<string> {
-    const token = await this.appLogin(this.config.roleId, this.config.secretId)
-
-    const res = await this.get(`secret/relayer`, token)
-    if (!res) {
-      throw new Error('VaultService.setRelayer: Relayer does not exist')
-    }
-
-    this.relayer = {
-      username: this.config.relayer.username,
-      password: this.config.relayer.password,
-      set: true
-    }
-
-    return res.publicKey
-  }
-
-  // create createNewUser function - takes username, calls appLogin, calls get to check if user exists, if not, calls post to create user
   async createNewUser(username: string): Promise<string> {
-    const token = await this.appLogin(this.config.roleId, this.config.secretId)
+    const token = await this.getAppLoginToken()
 
     const userUrl = `avn-vault/user/${username}`
 
@@ -181,50 +175,38 @@ export class VaultService {
       return existingUser.publicKey
     }
 
-    const res = await this.post(userUrl, {
-      username
-    })
+    const res = await this.post(userUrl, { username }, token)
 
-    return res.data.publicKey
+    return res.publicKey
   }
 
-  private async authoritySign(message: string): Promise<string> {
+  async authoritySign(message: string): Promise<string> {
     if (!this.authority.set) {
       throw new Error('VaultService.authoritySign: Authority not set')
     }
 
     try {
-      const token = await this.userPassLogin(
+      const token = await this.getUserPassLoginToken(
         this.authority.username,
         this.authority.password
       )
 
-      const res = await this.post(
-        `avn-vault/authority/sign`,
-        {
-          message
-        },
-        {
-          'X-Vault-Token': token,
-          'X-Vault-Request': 'true'
-        }
-      )
-
-      return res.auth.client_token
+      return (await this.post(`avn-vault/authority/sign`, { message }, token))
+        .signature
     } catch (error) {
       throw new Error(`VaultService.authoritySign: ${error.message}`)
     }
   }
 
-  // In the case of the NFT Marketplace, the username is the Provider ID
-  private async getUserSeed(username: string): Promise<string> {
-    const token = await this.appLogin(this.config.roleId, this.config.secretId)
-    const existingUser = await this.get(`avn-vault/user/${username}`, token)
-
-    if (!existingUser) {
-      throw new Error('VaultService.getUserSeed: User does not exist')
+  async userSign(message: string, username: string): Promise<string> {
+    const token = await this.getAppLoginToken()
+    const url = 'avn-vault/user/' + username
+    const res = await this.get(url, token)
+    if (res === '') {
+      throw new Error(`User ${username} does not exist in vault`)
     }
 
-    return existingUser.seed
+    const data = { name: username, message: message }
+    return (await this.post(url + '/sign', data, token)).signature
   }
 }
