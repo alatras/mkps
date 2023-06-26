@@ -19,6 +19,7 @@ import { uuidFrom } from '../../utils'
 import { CancelListingAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 import { Auction } from '../../listing/schemas/auction.schema'
 import { BullMqService, Queues } from '../../bull-mq/bull-mq.service'
+import { MUUID } from 'uuid-mongodb'
 
 @Injectable()
 export class AvnTransactionApiGatewayService {
@@ -162,7 +163,11 @@ export class AvnTransactionApiGatewayService {
       }
 
       // Update transaction history for minting and listing
-      await this.updateTransactionHistory(localRequestId, polledState)
+      await this.updateTransactionHistory(
+        localRequestId,
+        polledState,
+        uuidFrom(nftId)
+      )
 
       // If it's minting single NFT and is processed, update NFT data with AvN's NFT ID
       if (
@@ -273,7 +278,11 @@ export class AvnTransactionApiGatewayService {
       )
 
       // Update transaction history for cancelling listing
-      await this.updateTransactionHistory(localRequestId, polledState)
+      await this.updateTransactionHistory(
+        localRequestId,
+        polledState,
+        uuidFrom(auctionId)
+      )
 
       // If transaction is not committed, log error
       if (!transactionCommitted) {
@@ -324,35 +333,52 @@ export class AvnTransactionApiGatewayService {
    */
   private async updateTransactionHistory(
     localRequestId: string,
-    polledState: AvnPolState
+    polledState: AvnPolState,
+    nftId: MUUID
   ): Promise<void> {
-    let state: AvnTransactionState
-    switch (polledState.status) {
-      case PollingTransactionStatus.processed:
-        state = AvnTransactionState.PROCESSING_COMPLETE
-        break
-      case PollingTransactionStatus.rejected:
-        state = AvnTransactionState.AVN_REJECTED
-        break
-      default:
-        state = AvnTransactionState.PROCESSING_FAILED
-    }
+    const state: AvnTransactionState =
+      polledState.status === PollingTransactionStatus.processed
+        ? AvnTransactionState.PROCESSING_COMPLETE
+        : polledState.status === PollingTransactionStatus.rejected
+        ? AvnTransactionState.AVN_REJECTED
+        : AvnTransactionState.PROCESSING_FAILED
 
-    await this.avnTransactionModel.updateOne(
-      { request_id: localRequestId },
-      {
-        $set: { state: state },
-        $push: {
-          history: {
+    const existingTransaction = await this.avnTransactionModel.findOne({
+      request_id: localRequestId
+    })
+
+    if (existingTransaction) {
+      await this.avnTransactionModel.updateOne(
+        { request_id: localRequestId },
+        {
+          $set: { state: state },
+          $push: {
+            history: {
+              state: state,
+              txHash: polledState.txHash,
+              blockNumber: polledState.blockNumber,
+              transactionIndex: polledState.transactionIndex,
+              timestamp: new Date().toISOString()
+            }
+          }
+        }
+      )
+    } else {
+      await this.avnTransactionModel.create({
+        request_id: localRequestId,
+        state: state,
+        nftId,
+        history: [
+          {
             state: state,
             txHash: polledState.txHash,
             blockNumber: polledState.blockNumber,
             transactionIndex: polledState.transactionIndex,
             timestamp: new Date().toISOString()
           }
-        }
-      }
-    )
+        ]
+      })
+    }
 
     this.logger.debug(
       `Transaction ${localRequestId} history updated to: ${state}`
