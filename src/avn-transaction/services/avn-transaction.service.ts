@@ -100,6 +100,7 @@ export class AvnTransactionService {
     // Mint NFT with AvN network
     this.avnTransactionApiGatewayService.mintSingleNft(
       nftId,
+      user,
       avnTransaction.request_id,
       royalties
     )
@@ -116,7 +117,8 @@ export class AvnTransactionService {
   async listNft(
     listNftDto: ListNftDto,
     auction: Auction,
-    nft: Nft
+    nft: Nft,
+    user: User
   ): Promise<void> {
     // Create AvnTransactions doc to list NFT
     const listNftAvnTransaction: ListAvnTransactionDto = {
@@ -140,6 +142,7 @@ export class AvnTransactionService {
     // List NFT in AvN network
     await this.avnTransactionApiGatewayService.listSingleNft(
       listNftAvnTransaction.data.nftId,
+      user,
       listNftAvnTransaction.data.avnNftId,
       listNftAvnTransaction.request_id,
       auction
@@ -178,7 +181,8 @@ export class AvnTransactionService {
     // Cancel listing of the NFT in AvN network
     await this.avnTransactionApiGatewayService.cancelFiatNftListing(
       cancelListAvnTransaction,
-      nft
+      nft,
+      user
     )
   }
 

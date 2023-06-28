@@ -56,7 +56,7 @@ export class NftHttpController {
         req.user as User,
         createNftDto
       )
-      this.logger.debug('mint NFT succeed:', mintResult)
+      this.logger.debug('1st phase of mint NFT succeed:', mintResult)
       return { data: mintResult }
     } catch (err) {
       this.logger.error('cannot mint NFT:', JSON.stringify(err))

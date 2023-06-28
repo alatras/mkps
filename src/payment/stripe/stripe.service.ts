@@ -15,13 +15,13 @@ import { firstValueFrom } from 'rxjs'
 import { Lock, ResourceLockedError } from 'redlock'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { MUUID } from 'uuid-mongodb'
-import { redlock } from '../../utils/redis'
 import { uuidFrom } from '../../utils'
 import { BigNumber } from '@ethersproject/bignumber'
 import { Bid } from '../schemas/bid.dto'
 import { ListingService } from '../../listing/listing.service'
 import { StripePaymentIntentStatus } from '../../shared/enum'
 import { Auction } from '../../listing/schemas/auction.schema'
+import { RedisService } from '../../common/redis/redis.service'
 
 @Injectable()
 export class StripeService {
@@ -32,6 +32,7 @@ export class StripeService {
   constructor(
     private readonly auth0Service: Auth0Service,
     private readonly listingService: ListingService,
+    private readonly redisService: RedisService,
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -85,13 +86,9 @@ export class StripeService {
    * @param {MUUID} nftId - The ID of the NFT bid to acquire a lock for.
    */
   acquireBidRedlock = async (nftId: MUUID): Promise<Lock> => {
-    if (!redlock) {
-      return null
-    }
-
     try {
       const resource = `bid:${nftId}`
-      return await redlock.acquire([resource], 120000)
+      return await this.redisService.acquireRedLock([resource], 120000)
     } catch (e) {
       if (e instanceof ResourceLockedError) {
         throw new ConflictException('Higher bid exists.')

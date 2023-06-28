@@ -38,6 +38,13 @@ import { Bid } from '../../payment/schemas/bid.dto'
 import { S3Service } from '../../common/s3/s3.service'
 import { EmailService } from '../../common/email/email.service'
 import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
+import { AvnTransactionApiSetupService } from '../../avn-transaction/services/avn-transaction-api-setup.service'
+import { VaultService } from '../../vault/services/vault.service'
+import { UserService } from '../../user/user.service'
+import { HttpService } from '@nestjs/axios'
+import { UserMock, getMockUser } from '../../user/test/mocks'
+import { User } from '../../user/schemas/user.schema'
+import { RedisService } from '../../common/redis/redis.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -47,6 +54,15 @@ const ClientProxyMock = () => ({
 const bullMqServiceMock = () => ({
   addToQueue: jest.fn(),
   addSendEmailJob: jest.fn()
+})
+
+const mockAxios = () => ({
+  get: jest.fn(),
+  post: jest.fn()
+})
+
+const mockVaultService = () => ({
+  someMethod: jest.fn()
 })
 
 describe('NftMsController', () => {
@@ -64,13 +80,32 @@ describe('NftMsController', () => {
         NftService,
         EditionService,
         Auth0Service,
+        AvnTransactionApiSetupService,
+        {
+          provide: RedisService,
+          useValue: {}
+        },
         StripeService,
         EditionListingService,
         AvnTransactionService,
         AvnTransactionApiGatewayService,
         ConfigService,
+        HttpService,
+        {
+          provide: 'AXIOS_INSTANCE_TOKEN',
+          useFactory: mockAxios
+        },
         PaymentService,
         S3Service,
+        {
+          provide: VaultService,
+          useFactory: mockVaultService
+        },
+        UserService,
+        {
+          provide: getModelToken(User.name),
+          useValue: new UserMock(getMockUser())
+        },
         EmailService,
         LogService,
         ListingService,
@@ -109,7 +144,8 @@ describe('NftMsController', () => {
         {
           provide: getModelToken(EditionListing.name),
           useValue: getEditionListing()
-        }
+        },
+        { provide: getQueueToken(MAIN_BULL_QUEUE_NAME), useValue: mockQueue }
       ],
       imports: [ConfigModule.forRoot({ load: [config] })]
     }).compile()

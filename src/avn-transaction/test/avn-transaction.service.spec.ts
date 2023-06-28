@@ -1,11 +1,12 @@
 import { getModelToken } from '@nestjs/mongoose'
+import { HttpService } from '@nestjs/axios'
 import { Test, TestingModule } from '@nestjs/testing'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import config from '../../config/app.config'
 import { getQueueToken } from '@nestjs/bull'
 import { User } from '../../user/schemas/user.schema'
 import { NftService } from '../../nft/services/nft.service'
-import { getMockUser } from '../../user/test/mocks'
+import { UserMock, getMockUser } from '../../user/test/mocks'
 import { UserService } from '../../user/user.service'
 import { AvnTransactionService } from '../services/avn-transaction.service'
 import {
@@ -41,6 +42,9 @@ import { Bid } from '../../payment/schemas/bid.dto'
 import { S3Service } from '../../common/s3/s3.service'
 import { EmailService } from '../../common/email/email.service'
 import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
+import { AvnTransactionApiSetupService } from '../services/avn-transaction-api-setup.service'
+import { VaultService } from '../../vault/services/vault.service'
+import { RedisService } from '../../common/redis/redis.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -50,6 +54,15 @@ const ClientProxyMock = () => ({
 const bullMqServiceMock = () => ({
   addToQueue: jest.fn(),
   addSendEmailJob: jest.fn()
+})
+
+const mockAxios = () => ({
+  get: jest.fn(),
+  post: jest.fn()
+})
+
+const mockVaultService = () => ({
+  someMethod: jest.fn()
 })
 
 describe('AvnTransactionService', () => {
@@ -65,15 +78,33 @@ describe('AvnTransactionService', () => {
         LogService,
         ConfigService,
         UserService,
+        {
+          provide: getModelToken(User.name),
+          useValue: new UserMock(getMockUser())
+        },
         StripeService,
         Auth0Service,
         AvnTransactionService,
         AvnTransactionApiGatewayService,
         NftService,
+        {
+          provide: RedisService,
+          useValue: {}
+        },
         EditionService,
         S3Service,
         EmailService,
+        {
+          provide: VaultService,
+          useFactory: mockVaultService
+        },
+        HttpService,
+        {
+          provide: 'AXIOS_INSTANCE_TOKEN',
+          useFactory: mockAxios
+        },
         EditionListingService,
+        AvnTransactionApiSetupService,
         PaymentService,
         ListingService,
         { provide: BullMqService, useFactory: bullMqServiceMock },

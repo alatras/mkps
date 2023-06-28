@@ -5,13 +5,14 @@ import { firstValueFrom } from 'rxjs'
 import { ClientProxy } from '@nestjs/microservices'
 import { InjectModel } from '@nestjs/mongoose'
 import { AvnNftTransaction, Royalties } from '../schemas/avn-transaction.schema'
+import { User } from '../../user/schemas/user.schema'
 import {
   ApiGateWayPollingOption,
   AuctionStatus,
   AvnTransactionState,
   PollingTransactionStatus
 } from '../../shared/enum'
-import { AvnApi, AvnPolState } from '../schemas/avn-api'
+import { AvnPolState } from '../schemas/avn-api'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { NftStatus } from '../../shared/enum'
 import { Nft } from '../../nft/schemas/nft.schema'
@@ -19,11 +20,12 @@ import { uuidFrom } from '../../utils'
 import { CancelListingAvnTransactionDto } from '../dto/mint-avn-transaction.dto'
 import { Auction } from '../../listing/schemas/auction.schema'
 import { BullMqService, Queues } from '../../bull-mq/bull-mq.service'
+import { AvnTransactionApiSetupService } from './avn-transaction-api-setup.service'
+import { AvnApi } from '../schemas/avn-api'
 import { MUUID } from 'uuid-mongodb'
 
 @Injectable()
 export class AvnTransactionApiGatewayService {
-  private avnApi: AvnApi
   private avnPollingInterval: number
   private avnPollingTimeout: number
   private pollingLoops: number
@@ -32,6 +34,7 @@ export class AvnTransactionApiGatewayService {
   constructor(
     private configService: ConfigService,
     private bullMqService: BullMqService,
+    private apiSetupService: AvnTransactionApiSetupService,
     @InjectModel(AvnNftTransaction.name)
     private avnTransactionModel: Model<AvnNftTransaction>,
     @InjectModel(Auction.name)
@@ -39,7 +42,6 @@ export class AvnTransactionApiGatewayService {
     @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {
     this.configService = configService
-    this.initTheApi()
 
     this.avnPollingInterval =
       this.configService.get<number>('app.avn.pollingInterval') || 5000 // 5 seconds
@@ -60,6 +62,7 @@ export class AvnTransactionApiGatewayService {
    */
   async mintSingleNft(
     nftId: string,
+    user: User,
     localRequestId: string,
     royalties: Royalties[]
   ): Promise<void> {
@@ -68,8 +71,9 @@ export class AvnTransactionApiGatewayService {
       const avnAuthority = this.configService.get<string>(
         'app.avn.avnAuthority'
       )
+      const avnApi = await this.apiSetupService.avnApi(user)
 
-      const mintResult = await this.avnApi.send.mintSingleNft(
+      const mintResult = await avnApi.send.mintSingleNft(
         externalRef,
         royalties,
         avnAuthority
@@ -78,6 +82,7 @@ export class AvnTransactionApiGatewayService {
       this.logger.debug(`Mint NFT result from API Gateway: ${mintResult}`)
 
       this.getConfirmationOnMintingOrListing(
+        avnApi,
         mintResult,
         nftId,
         ApiGateWayPollingOption.mintSingleNft,
@@ -85,6 +90,13 @@ export class AvnTransactionApiGatewayService {
         null,
         externalRef
       )
+
+      /**
+       * @important
+       * Consider the avnApi instance above to be locked until
+       * the asynchronous 'getConfirmation...' operation is completed.
+       * Take this into account when adding any additional logic in this section.
+       */
     } catch (e) {
       this.logger.error(`Error minting NFT via API Gateway: ${nftId}`)
       throw e
@@ -121,6 +133,7 @@ export class AvnTransactionApiGatewayService {
    * @param externalRef external reference of NFT
    */
   private getConfirmationOnMintingOrListing(
+    avnApi: AvnApi,
     avnRequestId: string,
     nftId: string,
     pollingOperation: ApiGateWayPollingOption,
@@ -137,7 +150,7 @@ export class AvnTransactionApiGatewayService {
         await new Promise(resolve =>
           setTimeout(resolve, this.avnPollingInterval)
         )
-        polledState = await this.avnApi.poll.requestState(avnRequestId)
+        polledState = await avnApi.poll.requestState(avnRequestId)
 
         this.logger.debug(
           `Polling for ${pollingOperation}. ` +
@@ -175,7 +188,7 @@ export class AvnTransactionApiGatewayService {
         polledState.status === PollingTransactionStatus.processed
       ) {
         this.logger.debug(`Updating NFT ${nftId} with AvN's NFT ID...`)
-        await this.updateNftAvnNftId(nftId, externalRef)
+        await this.updateNftAvnNftId(avnApi, nftId, externalRef)
       }
 
       // If it's listing NFT and is processed, update NFT status to forSale
@@ -210,7 +223,11 @@ export class AvnTransactionApiGatewayService {
         }
       }
 
+      // Add task to update cached item
       await this.addUpdateCachedItemTask(nftId)
+
+      // Release avnAPI lock
+      await this.apiSetupService.unlockAvnApiInstance()
     })()
   }
 
@@ -232,6 +249,7 @@ export class AvnTransactionApiGatewayService {
    *
    */
   private getConfirmationOnCancellingListing(
+    avnApi: AvnApi,
     avnRequestId: string,
     auctionId: string,
     pollingOperation: ApiGateWayPollingOption.cancelListingSingleNft,
@@ -247,7 +265,7 @@ export class AvnTransactionApiGatewayService {
         await new Promise(resolve =>
           setTimeout(resolve, this.avnPollingInterval)
         )
-        polledState = await this.avnApi.poll.requestState(avnRequestId)
+        polledState = await avnApi.poll.requestState(avnRequestId)
 
         this.logger.debug(
           `Polling for ${pollingOperation}. ` +
@@ -293,7 +311,11 @@ export class AvnTransactionApiGatewayService {
         )
       }
 
+      // Add task to update cached item
       await this.addUpdateCachedItemTask(nft._id.toString())
+
+      // Release avnAPI lock
+      await this.apiSetupService.unlockAvnApiInstance()
     })()
   }
 
@@ -307,23 +329,6 @@ export class AvnTransactionApiGatewayService {
       polledState.status === PollingTransactionStatus.processed ||
       polledState.status === PollingTransactionStatus.rejected
     )
-  }
-
-  /**
-   * Initialize API Gateway instance
-   */
-  private async initTheApi(): Promise<void> {
-    /* eslint @typescript-eslint/no-var-requires: "off" */
-    const AvnApi = require('avn-api')
-    const avnGatewayUrl = this.configService.get<string>('app.avn.gatewayUrl')
-    const avnRelayer = this.configService.get<string>('app.avn.relayer')
-    const suri = this.configService.get<string>('app.avn.suri')
-    const options = { suri, relayer: avnRelayer, hasPayer: true }
-
-    const API = new AvnApi(avnGatewayUrl, options)
-    await API.init()
-
-    this.avnApi = API
   }
 
   /**
@@ -523,11 +528,12 @@ export class AvnTransactionApiGatewayService {
    * @param externalRef External reference
    */
   private async updateNftAvnNftId(
+    avnApi: AvnApi,
     nftId: string,
     externalRef: string
   ): Promise<void> {
     this.logger.debug(`Getting NFT ID from AvN...`)
-    const avnNftId = await this.getNftIdFromAvn(externalRef)
+    const avnNftId = await this.getNftIdFromAvn(avnApi, externalRef)
 
     firstValueFrom(
       this.clientProxy.send(
@@ -546,10 +552,13 @@ export class AvnTransactionApiGatewayService {
    * Get NFT ID from AvN via API Gateway
    * @param externalRef the External reference used to mint the NFT
    */
-  private async getNftIdFromAvn(externalRef: string): Promise<string> {
+  private async getNftIdFromAvn(
+    avnApi: AvnApi,
+    externalRef: string
+  ): Promise<string> {
     let res = null
     for (let i = 0; i < 3 && !res; i++) {
-      res = await this.avnApi.query.getNftId(externalRef)
+      res = await avnApi.query.getNftId(externalRef)
       if (!res) {
         await new Promise(resolve => setTimeout(resolve, 3000))
       } else {
@@ -574,16 +583,19 @@ export class AvnTransactionApiGatewayService {
    */
   async listSingleNft(
     nftId: string,
+    user: User,
     avnNftId: string,
     localRequestId: string,
     auction: Auction
   ): Promise<void> {
     try {
-      const avnRequestId = await this.avnApi.send.listFiatNftForSale(avnNftId)
+      const avnApi = await this.apiSetupService.avnApi(user)
+      const avnRequestId = await avnApi.send.listFiatNftForSale(avnNftId)
 
       this.logger.debug(`List NFT result via API Gateway: ${avnRequestId}`)
 
       this.getConfirmationOnMintingOrListing(
+        avnApi,
         avnRequestId,
         nftId,
         ApiGateWayPollingOption.listSingleNft,
@@ -603,10 +615,12 @@ export class AvnTransactionApiGatewayService {
    */
   async cancelFiatNftListing(
     cancelListAvnTransaction: CancelListingAvnTransactionDto,
-    nft: Nft
+    nft: Nft,
+    user: User
   ): Promise<void> {
     try {
-      const avnRequestId = await this.avnApi.send.cancelFiatNftListing(
+      const avnApi = await this.apiSetupService.avnApi(user)
+      const avnRequestId = await avnApi.send.cancelFiatNftListing(
         cancelListAvnTransaction.data.avnNftId
       )
 
@@ -615,6 +629,7 @@ export class AvnTransactionApiGatewayService {
       )
 
       this.getConfirmationOnCancellingListing(
+        avnApi,
         avnRequestId,
         cancelListAvnTransaction.auctionId,
         ApiGateWayPollingOption.cancelListingSingleNft,

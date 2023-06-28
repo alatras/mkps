@@ -1,6 +1,8 @@
 import { AvnTransactionHttpController } from './controllers/avn-transaction.http-controller'
 import { AvnTransactionApiGatewayService } from './services/avn-transaction-api-gateway.service'
 import { AvnTransactionService } from './services/avn-transaction.service'
+import { AvnTransactionApiSetupService } from './services/avn-transaction-api-setup.service'
+import { VaultService } from '../vault/services/vault.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import {
   AvnNftTransaction,
@@ -22,6 +24,8 @@ import { BullMqModule } from '../bull-mq/bull-mq.module'
 import { ListingModule } from '../listing/listing.module'
 import { EditionModule } from '../edition/edition.module'
 import { CommonModule } from '../common/common.module'
+import { UserModule } from '../user/user.module'
+import { RedisService } from '../common/redis/redis.service'
 
 @Module({
   imports: [
@@ -42,7 +46,8 @@ import { CommonModule } from '../common/common.module'
       }
     ]),
     HttpModule,
-    BullMqModule
+    BullMqModule,
+    UserModule
   ],
   providers: [
     {
@@ -55,9 +60,16 @@ import { CommonModule } from '../common/common.module'
       }
     },
     AvnTransactionApiGatewayService,
-    AvnTransactionService
+    AvnTransactionService,
+    AvnTransactionApiSetupService,
+    VaultService,
+    RedisService
   ],
   controllers: [AvnTransactionHttpController],
-  exports: [AvnTransactionService, AvnTransactionApiGatewayService]
+  exports: [
+    AvnTransactionService,
+    AvnTransactionApiGatewayService,
+    AvnTransactionApiSetupService
+  ]
 })
 export class AvnTransactionModule {}

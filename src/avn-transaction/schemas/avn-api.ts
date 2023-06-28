@@ -12,7 +12,8 @@ export interface AvnApi {
   }
   poll?: any
   query?: { getNftId: (query: string) => Promise<string> }
-  init: () => Promise<AvnApi>
+  setSigner: (signer: ApiSigner) => Promise<any>
+  signer: () => ApiSigner
 }
 
 export interface AvnPolState {
@@ -20,4 +21,10 @@ export interface AvnPolState {
   status: string
   blockNumber: string
   transactionIndex: string
+}
+
+export interface ApiSigner {
+  sign: (message: string) => Promise<string>
+  address: string
+  publicKey: string
 }

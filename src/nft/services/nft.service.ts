@@ -17,6 +17,9 @@ import { CreateNftDto, CreateNftResponseDto } from '../dto/nft.dto'
 import { Nft, UnlockableContent } from '../schemas/nft.schema'
 import { EditionService } from '../../edition/edition.service'
 import { NftHistory } from '../schemas/nft-history.schema'
+import { Lock } from 'redlock'
+import { firstValueFrom } from 'rxjs'
+import { MUUID, v4 } from 'uuid-mongodb'
 import {
   AuctionStatus,
   AuctionType,
@@ -27,14 +30,12 @@ import {
 import { uuidFrom } from '../../utils'
 import { CreateNftHistoryDto } from '../dto/nft-history.dto'
 import { NftStatus } from '../../shared/enum'
-import { MUUID, v4 } from 'uuid-mongodb'
 import { NftDraftContract } from '../schemas/nft-draft-contract'
 import { User } from '../../user/schemas/user.schema'
 import { NftDraftModel } from '../schemas/nft-draft-model'
 import { ImagesSet } from '../schemas/asset.schema'
 import { getNftRoyalties } from '../../utils/get-royalties'
 import { AvnTransactionService } from '../../avn-transaction/services/avn-transaction.service'
-import { firstValueFrom } from 'rxjs'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import { InvalidDataError } from '../../core/errors'
 import { ListNftDto, ListNftResponseDto } from '../dto/list-nft.dto'
@@ -56,7 +57,6 @@ import { FirstBidNotificationEmailData } from '../../common/email/email-data'
 import { NftEdition } from '../../edition/schemas/edition.schema'
 import { BuyNftDto, BuyNftResponseDto } from '../dto/buy-nft.dto'
 import { isKycEnabled } from '../../utils/isKycEnabled'
-import { Lock } from 'redlock'
 import { StripeService } from '../../payment/stripe/stripe.service'
 import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
 
@@ -272,7 +272,12 @@ export class NftService {
     await this.addHistory(nftHistoryEntry)
 
     // List NFT with AvN trx service
-    await this.avnTransactionService.listNft(listNftDto, auction, nft)
+    await this.avnTransactionService.listNft(
+      listNftDto,
+      auction,
+      nft,
+      fullUserObject
+    )
 
     // Formulate response
     const responseAuction = cancelListingResponseAuctionFactory(auction)

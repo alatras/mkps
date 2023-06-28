@@ -38,6 +38,13 @@ import { Bid } from '../../payment/schemas/bid.dto'
 import { EmailService } from '../../common/email/email.service'
 import { S3Service } from '../../common/s3/s3.service'
 import { FixedPriceService } from '../../listing/fixed-price/fixed-price.service'
+import { AvnTransactionApiSetupService } from '../../avn-transaction/services/avn-transaction-api-setup.service'
+import { VaultService } from '../../vault/services/vault.service'
+import { HttpService } from '@nestjs/axios'
+import { UserService } from '../../user/user.service'
+import { User } from '../../user/schemas/user.schema'
+import { UserMock, getMockUser } from '../../user/test/mocks'
+import { RedisService } from '../../common/redis/redis.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -47,6 +54,15 @@ const ClientProxyMock = () => ({
 const bullMqServiceMock = () => ({
   addToQueue: jest.fn(),
   addSendEmailJob: jest.fn()
+})
+
+const mockAxios = () => ({
+  get: jest.fn(),
+  post: jest.fn()
+})
+
+const mockVaultService = () => ({
+  someMethod: jest.fn()
 })
 
 describe('EditionController', () => {
@@ -63,10 +79,33 @@ describe('EditionController', () => {
         AvnTransactionApiGatewayService,
         ConfigService,
         StripeService,
+        {
+          provide: RedisService,
+          useValue: {}
+        },
         Auth0Service,
+        {
+          provide: RedisService,
+          useValue: {}
+        },
         AvnTransactionService,
         PaymentService,
+        UserService,
+        {
+          provide: getModelToken(User.name),
+          useValue: new UserMock(getMockUser())
+        },
+        {
+          provide: VaultService,
+          useFactory: mockVaultService
+        },
+        HttpService,
+        {
+          provide: 'AXIOS_INSTANCE_TOKEN',
+          useFactory: mockAxios
+        },
         ListingService,
+        AvnTransactionApiSetupService,
         EmailService,
         S3Service,
         { provide: BullMqService, useFactory: bullMqServiceMock },

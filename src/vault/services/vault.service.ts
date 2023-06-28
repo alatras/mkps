@@ -51,6 +51,8 @@ export class VaultService {
     }
 
     this.config = vaultConfig
+
+    this.loginToken = { token: null, validUntil: 0 }
   }
 
   private async get(url: string, token: string): Promise<any> {
@@ -99,7 +101,7 @@ export class VaultService {
         })
       )
 
-      return response.data.data
+      return token ? response.data.data : response.data
     } catch (err) {
       this.logger.error(`post data error: ${err.toString()}`)
       throw new Error(`VaultService.post: ${err.toString()}`)
@@ -115,7 +117,8 @@ export class VaultService {
 
     try {
       const now = Date.now()
-      if (!this.loginToken.token || this.loginToken.validUntil < now) {
+
+      if (!this.loginToken?.token || this.loginToken?.validUntil < now) {
         this.logger.debug(
           `token ${this.loginToken.token} has expired on ${this.loginToken.validUntil}. Refreshing...`
         )
@@ -200,13 +203,16 @@ export class VaultService {
 
   async userSign(message: string, username: string): Promise<string> {
     const token = await this.getAppLoginToken()
+
     const url = 'avn-vault/user/' + username
     const res = await this.get(url, token)
+
     if (res === '') {
       throw new Error(`User ${username} does not exist in vault`)
     }
 
     const data = { name: username, message: message }
+
     return (await this.post(url + '/sign', data, token)).signature
   }
 }

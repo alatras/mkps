@@ -18,10 +18,10 @@ import { Auth0Service } from '../user/auth0.service'
 import { EmailService } from '../common/email/email.service'
 import { CommonModule } from '../common/common.module'
 import { BullMqModule } from '../bull-mq/bull-mq.module'
+import { RedisService } from '../common/redis/redis.service'
 
 @Module({
   imports: [
-    // ListingModule,
     forwardRef(() => ListingModule),
     CommonModule,
     BullMqModule,
@@ -51,6 +51,7 @@ import { BullMqModule } from '../bull-mq/bull-mq.module'
     Auth0Service,
     EmailService,
     PaymentService,
+    RedisService,
     StripeService
   ],
   controllers: [PaymentController],

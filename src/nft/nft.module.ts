@@ -1,6 +1,7 @@
+import { HttpModule } from '@nestjs/axios'
 import { forwardRef, Module } from '@nestjs/common'
-import { NftService } from './services/nft.service'
 import { BullModule } from '@nestjs/bull'
+import { NftService } from './services/nft.service'
 import { NftHttpController } from './controllers/nft.http-controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { Nft, NftSchema } from './schemas/nft.schema'
@@ -31,12 +32,14 @@ import { Auth0Service } from '../user/auth0.service'
 import { S3Service } from '../common/s3/s3.service'
 import { EmailService } from '../common/email/email.service'
 import { BullMqService, MAIN_BULL_QUEUE_NAME } from '../bull-mq/bull-mq.service'
+import { RedisService } from '../common/redis/redis.service'
 
 @Module({
   imports: [
     PaymentModule,
     LogModule,
     ListingModule,
+    HttpModule,
     AvnTransactionModule,
     BullModule.registerQueue({
       name: MAIN_BULL_QUEUE_NAME
@@ -78,6 +81,7 @@ import { BullMqService, MAIN_BULL_QUEUE_NAME } from '../bull-mq/bull-mq.service'
     StripeService,
     PaymentService,
     Auth0Service,
+    RedisService,
     S3Service,
     EmailService,
     BullMqService,

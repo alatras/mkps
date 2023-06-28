@@ -25,5 +25,19 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run pretty
-      - run: npm run test --detectOpenHandles
+      - name: Run tests
+        run: npm run test --detectOpenHandles
+        env:
+          VAULT_BASE_URL: ${{ secrets.VAULT_BASE_URL || 'defaultBaseUrl' }}
+          VAULT_URL: ${{ secrets.VAULT_URL || 'defaultUrl' }}
+          VAULT_APP_ROLE_ID: ${{ secrets.VAULT_APP_ROLE_ID || 'defaultRoleId' }}
+          VAULT_APP_SECRET_ID: ${{ secrets.VAULT_APP_SECRET_ID || 'defaultSecretId' }}
+          VAULT_AUTHORITY_USERNAME: ${{ secrets.VAULT_AUTHORITY_USERNAME || 'defaultUsername' }}
+          VAULT_AUTHORITY_PASSWORD: ${{ secrets.VAULT_AUTHORITY_PASSWORD || 'defaultPassword' }}
+          VAULT_RELAYER_USERNAME: ${{ secrets.VAULT_RELAYER_USERNAME || 'defaultUsername' }}
+          VAULT_RELAYER_PASSWORD: ${{ secrets.VAULT_RELAYER_PASSWORD || 'defaultPassword' }}
+          REDIS_URL: ${{ secrets.REDIS_URL || 'defaultRedisUrl' }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT || 'defaultRedisPort' }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST || 'defaultRedisHost' }}
+
       - run: npm run build

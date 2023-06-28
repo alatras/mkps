@@ -1,5 +1,6 @@
 import { getModelToken } from '@nestjs/mongoose'
-import { ConfigService } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { HttpService } from '@nestjs/axios'
 import {
   AvnEditionTransaction,
   AvnNftTransaction
@@ -18,6 +19,14 @@ import { ListingService } from './listing.service'
 import { EditionService } from '../edition/edition.service'
 import { Nft } from '../nft/schemas/nft.schema'
 import { BullMqService } from '../bull-mq/bull-mq.service'
+import { AvnTransactionApiSetupService } from '../avn-transaction/services/avn-transaction-api-setup.service'
+import { VaultService } from '../vault/services/vault.service'
+import { User } from '../user/schemas/user.schema'
+import { UserMock, getMockUser } from '../user/test/mocks'
+import { UserService } from '../user/user.service'
+import { Auth0Service } from '../user/auth0.service'
+import config from '../config/app.config'
+import { RedisService } from '../common/redis/redis.service'
 
 const ClientProxyMock = () => ({
   emit: jest.fn(),
@@ -29,6 +38,15 @@ const bullMqServiceMock = () => ({
   addSendEmailJob: jest.fn()
 })
 
+const mockAxios = () => ({
+  get: jest.fn(),
+  post: jest.fn()
+})
+
+const mockVaultService = () => ({
+  someMethod: jest.fn()
+})
+
 describe('ListingService', () => {
   let service: ListingService
 
@@ -38,9 +56,29 @@ describe('ListingService', () => {
         ListingService,
         ConfigService,
         LogService,
+        {
+          provide: RedisService,
+          useValue: {}
+        },
         EmailService,
+        UserService,
+        {
+          provide: getModelToken(User.name),
+          useValue: new UserMock(getMockUser())
+        },
+        {
+          provide: VaultService,
+          useFactory: mockVaultService
+        },
+        HttpService,
+        {
+          provide: 'AXIOS_INSTANCE_TOKEN',
+          useFactory: mockAxios
+        },
         EditionListingService,
         EditionService,
+        Auth0Service,
+        AvnTransactionApiSetupService,
         AvnTransactionService,
         { provide: BullMqService, useFactory: bullMqServiceMock },
         AvnTransactionApiGatewayService,
@@ -73,7 +111,8 @@ describe('ListingService', () => {
           provide: 'TRANSPORT_CLIENT',
           useFactory: () => ClientProxyMock()
         }
-      ]
+      ],
+      imports: [ConfigModule.forRoot({ load: [config] })]
     }).compile()
 
     service = module.get<ListingService>(ListingService)

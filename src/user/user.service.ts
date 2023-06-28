@@ -95,4 +95,20 @@ export class UserService {
   async findOneByStripeCustomerId(stripeCustomerId: string): Promise<User> {
     return this.userModel.findOne({ stripeCustomerId }).lean()
   }
+
+  /**
+   * Get user by Avn Public Key
+   * @param avnPublicKey Avn Public Key
+   * @returns User
+   */
+  async findOneByAvnAccount(avnAddressOrPublicKey: string): Promise<User> {
+    return this.userModel
+      .findOne({
+        $or: [
+          { avnAddress: avnAddressOrPublicKey },
+          { avnPubKey: avnAddressOrPublicKey }
+        ]
+      })
+      .lean()
+  }
 }
