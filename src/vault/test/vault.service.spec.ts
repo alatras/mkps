@@ -26,7 +26,7 @@ describe('VaultService', () => {
     }).compile()
 
     ;(VaultService.prototype as any).config = {
-      baseUrl: process.env.VAULT_BASE_URL,
+      baseUrl: process.env.VAULT_URL,
       roleId: process.env.VAULT_APP_ROLE_ID,
       secretId: process.env.VAULT_APP_SECRET_ID,
       authority: {
