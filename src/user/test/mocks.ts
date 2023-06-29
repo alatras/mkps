@@ -1,4 +1,4 @@
-import { Provider, User } from '../schemas/user.schema'
+import { NotificationPreferences, Provider, User } from '../schemas/user.schema'
 import * as MUUID from 'uuid-mongodb'
 
 export const getMockUser = (): User => {
@@ -14,6 +14,7 @@ export const getMockUser = (): User => {
       updatedAt: new Date('2022-05-18T13:23:39.468Z')
     },
     ethAddresses: [],
+    notificationPreferences: new NotificationPreferences(),
     createdAt: new Date('2022-05-18T13:23:39.468Z'),
     updatedAt: new Date('2022-05-18T13:23:39.468Z')
   }

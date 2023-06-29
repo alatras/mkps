@@ -37,6 +37,10 @@ export class UserService {
     })
   }
 
+  async deleteUserById(_id: MUUID): Promise<User> {
+    return await this.userModel.findOneAndDelete({ _id }).lean()
+  }
+
   async updateUserByProvider(
     id: string,
     name: Provider,

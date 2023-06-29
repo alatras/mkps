@@ -31,7 +31,7 @@ export class AvnTransactionApiSetupService {
    * Get the avnApi instance
    * @param user
    */
-  async avnApi(user: User): Promise<AvnApi> {
+  async initializeAvnApiInstance(user: User): Promise<AvnApi> {
     this.user = user
 
     // Lock the avnApi instance for this user
@@ -134,7 +134,7 @@ export class AvnTransactionApiSetupService {
    */
   async lockAvnApiInstance(retryCount = 0): Promise<Lock> {
     const maxRetry = 12 // define max retry count
-    const retryDelay = 5000 // delay before retrying, in milliseconds (5 seconds)
+    const retryDelay = 5000 // 5 seconds delay before retrying
     const resource = 'avn-api-instance'
     try {
       return await this.redisService.acquireRedLock([resource], 120000) // 2 minutes
@@ -173,5 +173,24 @@ export class AvnTransactionApiSetupService {
       this.logger.error(error)
       throw new InternalServerErrorException('Unable to release red lock.')
     }
+  }
+
+  /**
+   * Convert public key to address using avnApi instance for a given user
+   * @param publicKey
+   * @param user
+   * @returns address string
+   */
+  async convertPublicKeyToAddress(
+    publicKey: string,
+    user: User
+  ): Promise<string> {
+    if (!this._avnApi) {
+      const avnApi = await this.initializeAvnApiInstance(user)
+      const address = await avnApi.publicKeyToAddress(publicKey)
+      this.unlockAvnApiInstance()
+      return address
+    }
+    return await this._avnApi.publicKeyToAddress(publicKey)
   }
 }

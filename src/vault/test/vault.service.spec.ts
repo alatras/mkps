@@ -85,7 +85,7 @@ describe('VaultService', () => {
       .spyOn(VaultService.prototype as any, 'get')
       .mockResolvedValueOnce(undefined)
 
-    const publicKey = await service.createNewUser('username')
+    const publicKey = await service.getUserKeyOrCreateNewUser('username')
     expect(publicKey).toBe('publicKey')
     expect((VaultService.prototype as any).post).toHaveBeenCalledWith(
       'avn-vault/user/username',

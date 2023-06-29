@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common'
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException
+} from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import { ConfigService } from '@nestjs/config'
 import { firstValueFrom } from 'rxjs'
@@ -39,15 +44,18 @@ export class VaultService {
     // create VaultOptions object
     const vaultConfig = this.configService.get<VaultConfig>('app.vault')
 
-    // loop through vaultConfig object and check if any values are undefined or null - if so, throw error
     if (!vaultConfig) {
-      this.logger.error('constructor: vaultConfig is undefined')
-      throw new Error('VaultService.constructor: vaultConfig is undefined')
+      const message = 'vaultConfig is undefined'
+      this.logger.error(`[constructor] ${message}`)
+      throw new NotFoundException(message)
     }
 
+    // loop through vaultConfig object and check if any values are undefined or null - if so, throw error
     for (const [key, value] of Object.entries(vaultConfig)) {
       if (!value) {
-        throw new Error(`VaultService.constructor: ${key} is undefined`)
+        const message = `${key} is undefined`
+        this.logger.error(`[constructor] ${message}`)
+        throw new NotFoundException(message)
       }
     }
 
@@ -64,6 +72,12 @@ export class VaultService {
     this.logger.debug(`[constructor] Vault URL: ${this.vaultUrl}`)
   }
 
+  /**
+   * This method gets the data from the specified URL using the provided Vault token.
+   * @param url - The URL to fetch the data from.
+   * @param token - The Vault token to authenticate the request.
+   * @returns The fetched data.
+   */
   private async get(url: string, token: string): Promise<any> {
     try {
       this.logger.debug(`get data for URL: ${url}`)
@@ -78,7 +92,7 @@ export class VaultService {
         throw err
       })
 
-      return res.data.data
+      return res?.data?.data
     } catch (error) {
       this.logger.error(`get data error: ${error.message}`)
 
@@ -86,13 +100,25 @@ export class VaultService {
         error.response?.status === 404 ||
         error.response?.data?.errors?.[0].includes('Error reading user')
       ) {
+        this.logger.debug(
+          `[get] ${error.response.data.errors[0]}. Returning null.`
+        )
         return null
       } else {
-        throw new Error(`VaultService.get: ${JSON.stringify(error)}`)
+        const message = `Failed to get: URL: ${url}. Error: ${error.toString()}. Token: ${token}.`
+        this.logger.error(`[get] ${message}`)
+        throw new InternalServerErrorException(message)
       }
     }
   }
 
+  /**
+   * This method posts data to the specified URL with the provided headers.
+   * @param url - The URL to post the data to.
+   * @param data - The data to be posted.
+   * @param headers - Additional headers for the request.
+   * @returns The response data from the post request.
+   */
   private async post<T>(
     url: string,
     data: T,
@@ -118,8 +144,9 @@ export class VaultService {
 
       return token ? response.data.data : response.data
     } catch (err) {
-      this.logger.error(`post data error: ${err.toString()}`)
-      throw new Error(`VaultService.post: ${err.toString()}`)
+      const message = `Failed to post: ${err.toString()}`
+      this.logger.error(`[post] ${message}`)
+      throw new InternalServerErrorException(message)
     }
   }
 
@@ -144,8 +171,9 @@ export class VaultService {
       }
       return this.loginToken.token
     } catch (err) {
-      this.logger.error(`app login token data error: ${err.toString()}`)
-      throw new Error(`VaultService.getAppLoginToken: ${err.toString()}`)
+      const message = `app login token data error: ${err.toString()}`
+      this.logger.error(`[getAppLoginToken] ${message}`)
+      throw new InternalServerErrorException(message)
     }
   }
 
@@ -159,8 +187,9 @@ export class VaultService {
     try {
       return await this.post(url, data, null)
     } catch (err) {
-      this.logger.error(`user pass login data error: ${err.toString()}`)
-      throw err
+      const message = `user pass login token data error: ${err.toString()}`
+      this.logger.error(`[getUserPassLoginToken] ${message}`)
+      throw new InternalServerErrorException(message)
     }
   }
 
@@ -170,7 +199,9 @@ export class VaultService {
     const res = await this.get(`secret/authority`, token)
 
     if (!res) {
-      throw new Error('VaultService.setAuthority: Authority does not exist')
+      throw new InternalServerErrorException(
+        'VaultService.setAuthority: Authority does not exist'
+      )
     }
 
     this.authority = {
@@ -182,20 +213,77 @@ export class VaultService {
     return res.address
   }
 
-  async createNewUser(username: string): Promise<string> {
+  /**
+   * This method retries the provided operation a specified number of times with a delay between each attempt.
+   * @param operation - The operation to be performed.
+   * @param retries - The number of times to retry the operation.
+   * @param delay - The delay between each retry attempt.
+   * @returns The result of the operation.
+   * @throws The error from the operation if it fails after all retries.
+   */
+  private retry = async (
+    operation: () => Promise<any>,
+    retries: number,
+    delay: number
+  ): Promise<any> => {
+    try {
+      return await operation()
+    } catch (error) {
+      if (retries <= 0) {
+        this.logger.error(`Failed after all retries: ${JSON.stringify(error)}`)
+        throw error
+      }
+
+      this.logger.warn(`Retrying after failure: ${JSON.stringify(error)}`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      return this.retry(operation, retries - 1, delay)
+    }
+  }
+
+  /**
+   * This method gets the user key from Vault or creates a new user if one does not exist.
+   * It retries the operation a specified number of times with a delay between each attempt.
+   * @param username - The username of the user.
+   * @returns The user key.
+   */
+  async getUserKeyOrCreateNewUser(username: string): Promise<string> {
     const token = await this.getAppLoginToken()
 
     const userUrl = `avn-vault/user/${username}`
 
-    const existingUser = await this.get(userUrl, token)
-
-    if (existingUser) {
-      return existingUser.publicKey
+    // Check if user exists
+    try {
+      const existingUser = await this.retry(
+        () => this.get(userUrl, token),
+        3,
+        500
+      )
+      if (existingUser) {
+        return existingUser.publicKey
+      }
+    } catch (error) {
+      const message = `Failed to get user from Vault: ${JSON.stringify(
+        error
+      )}. Url: ${userUrl}`
+      this.logger.error(`[getUserKeyOrCreateNewUser] ${message}`)
+      throw new InternalServerErrorException(message)
     }
 
-    const res = await this.post(userUrl, { username }, token)
-
-    return res.publicKey
+    // Create new user
+    try {
+      const res = await this.retry(
+        () => this.post(userUrl, { username }, token),
+        3,
+        500
+      )
+      return res.publicKey
+    } catch (error) {
+      const message = `Failed to create a user with Vault: ${JSON.stringify(
+        error
+      )}. Url: ${userUrl}`
+      this.logger.error(`[getUserKeyOrCreateNewUser] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
   }
 
   async authoritySign(message: string): Promise<string> {
@@ -209,25 +297,40 @@ export class VaultService {
         this.authority.password
       )
 
-      return (await this.post(`avn-vault/authority/sign`, { message }, token))
-        .signature
+      const signRes = await this.post(
+        `avn-vault/authority/sign`,
+        { message },
+        token
+      )
+
+      return signRes?.signature
     } catch (error) {
-      throw new Error(`VaultService.authoritySign: ${error.message}`)
+      const message = `error in authority signing:  ${error.toString()}`
+      this.logger.error(`[authoritySign] ${message}`)
+      throw new InternalServerErrorException(message)
     }
   }
 
   async userSign(message: string, username: string): Promise<string> {
-    const token = await this.getAppLoginToken()
+    try {
+      const token = await this.getAppLoginToken()
 
-    const url = 'avn-vault/user/' + username
-    const res = await this.get(url, token)
+      const url = 'avn-vault/user/' + username
+      const res = await this.get(url, token)
 
-    if (res === '') {
-      throw new Error(`User ${username} does not exist in vault`)
+      if (res === '') {
+        throw new InternalServerErrorException(
+          `User ${username} does not exist in vault`
+        )
+      }
+
+      const data = { name: username, message: message }
+
+      return (await this.post(url + '/sign', data, token)).signature
+    } catch (error) {
+      const message = `error in user signing:  ${error.toString()}`
+      this.logger.error(`[userSign] ${message}`)
+      throw new InternalServerErrorException(message)
     }
-
-    const data = { name: username, message: message }
-
-    return (await this.post(url + '/sign', data, token)).signature
   }
 }

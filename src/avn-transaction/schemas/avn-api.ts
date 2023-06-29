@@ -14,6 +14,7 @@ export interface AvnApi {
   query?: { getNftId: (query: string) => Promise<string> }
   setSigner: (signer: ApiSigner) => Promise<any>
   signer: () => ApiSigner
+  publicKeyToAddress: (avnPubKey: string) => Promise<string>
 }
 
 export interface AvnPolState {

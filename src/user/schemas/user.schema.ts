@@ -4,6 +4,7 @@ import { Transform, Type } from 'class-transformer'
 import * as MUUID from 'uuid-mongodb'
 import { DbCollections } from '../../shared/enum'
 import { ApiProperty } from '@nestjs/swagger'
+import { IsBoolean } from 'class-validator'
 
 export enum Provider {
   auth0 = 'auth0',
@@ -52,7 +53,20 @@ export class AuthProvider {
   }
 }
 
-export type UserDocument = User & Document
+@Schema()
+export class NotificationPreferences {
+  @IsBoolean()
+  @Prop({ type: Boolean, default: false })
+  unsubscribedEmail: boolean
+
+  @IsBoolean()
+  @Prop({ type: Boolean, default: true })
+  sellerEmail: boolean
+
+  @IsBoolean()
+  @Prop({ type: Boolean, default: true })
+  bidderEmail: boolean
+}
 
 @Schema({
   collection: DbCollections.Users,
@@ -94,6 +108,13 @@ export class User {
   @Prop({ required: false, default: null })
   avnAddress?: string
 
+  @Prop({
+    type: NotificationPreferences,
+    default: new NotificationPreferences()
+  })
+  @Type(() => NotificationPreferences)
+  notificationPreferences: NotificationPreferences
+
   @Prop()
   createdAt?: Date
 
@@ -102,3 +123,5 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)
+
+export type UserDocument = User & Document

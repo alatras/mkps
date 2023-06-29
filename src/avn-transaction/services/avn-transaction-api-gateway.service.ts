@@ -71,7 +71,7 @@ export class AvnTransactionApiGatewayService {
       const avnAuthority = this.configService.get<string>(
         'app.avn.avnAuthority'
       )
-      const avnApi = await this.apiSetupService.avnApi(user)
+      const avnApi = await this.apiSetupService.initializeAvnApiInstance(user)
 
       const mintResult = await avnApi.send.mintSingleNft(
         externalRef,
@@ -589,7 +589,7 @@ export class AvnTransactionApiGatewayService {
     auction: Auction
   ): Promise<void> {
     try {
-      const avnApi = await this.apiSetupService.avnApi(user)
+      const avnApi = await this.apiSetupService.initializeAvnApiInstance(user)
       const avnRequestId = await avnApi.send.listFiatNftForSale(avnNftId)
 
       this.logger.debug(`List NFT result via API Gateway: ${avnRequestId}`)
@@ -619,7 +619,7 @@ export class AvnTransactionApiGatewayService {
     user: User
   ): Promise<void> {
     try {
-      const avnApi = await this.apiSetupService.avnApi(user)
+      const avnApi = await this.apiSetupService.initializeAvnApiInstance(user)
       const avnRequestId = await avnApi.send.cancelFiatNftListing(
         cancelListAvnTransaction.data.avnNftId
       )
