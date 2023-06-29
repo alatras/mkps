@@ -28,6 +28,7 @@ export class VaultService {
     password: '',
     set: false
   }
+  private vaultUrl: string
 
   private readonly EXPIRY = 1000 * 60 * 10 //10 min
 
@@ -53,18 +54,29 @@ export class VaultService {
     this.config = vaultConfig
 
     this.loginToken = { token: null, validUntil: 0 }
+
+    // Avoiding double slash in URL
+    this.vaultUrl = this.config.baseUrl
+    if (this.config.baseUrl.endsWith('/')) {
+      this.vaultUrl = this.config.baseUrl.slice(0, -1)
+    }
+
+    this.logger.debug(`[constructor] Vault URL: ${this.vaultUrl}`)
   }
 
   private async get(url: string, token: string): Promise<any> {
     try {
       this.logger.debug(`get data for URL: ${url}`)
       const res = await firstValueFrom(
-        this.httpService.get(`${this.config.baseUrl}/${url}`, {
+        this.httpService.get(`${this.vaultUrl}/${url}`, {
           headers: {
             'X-Vault-Token': token
           }
         })
-      )
+      ).catch(err => {
+        this.logger.error(`get data error: ${err.message}`)
+        throw err
+      })
 
       return res.data.data
     } catch (error) {
@@ -96,10 +108,13 @@ export class VaultService {
     try {
       this.logger.debug(`post data for URL: ${url}`)
       const response = await firstValueFrom(
-        this.httpService.post(`${this.config.baseUrl}/${url}`, data, {
+        this.httpService.post(`${this.vaultUrl}/${url}`, data, {
           headers
         })
-      )
+      ).catch(err => {
+        this.logger.error(`post data error: ${err.toString()}`)
+        throw err
+      })
 
       return token ? response.data.data : response.data
     } catch (err) {
