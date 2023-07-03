@@ -10,6 +10,7 @@ import { User } from '../../user/schemas/user.schema'
 import { AvnApi } from '../schemas/avn-api'
 import { VaultService } from '../../vault/services/vault.service'
 import { RedisService } from '../../common/redis/redis.service'
+import { ApiSigner } from '../schemas/avn-api'
 
 @Injectable()
 export class AvnTransactionApiSetupService {
@@ -17,7 +18,6 @@ export class AvnTransactionApiSetupService {
   private readonly logger = new Logger(AvnTransactionApiSetupService.name)
   private currentAvnUser: User
   private currentRedLock: Lock
-  private user: User
 
   constructor(
     private configService: ConfigService,
@@ -25,26 +25,43 @@ export class AvnTransactionApiSetupService {
     private redisService: RedisService
   ) {
     this.configService = configService
+
+    /* eslint @typescript-eslint/no-var-requires: "off" */
+    const AvnApi = require('avn-api')
+    const avnGatewayUrl = this.configService.get<string>('app.avn.gatewayUrl')
+    const avnRelayer = this.configService.get<string>('app.avn.relayer')
+    const options = {
+      relayer: avnRelayer,
+      hasPayer: true
+    }
+
+    try {
+      const api = new AvnApi(avnGatewayUrl, options)
+      this._avnApi = api
+      this._avnApi.isInitialised = false
+    } catch (error) {
+      const message = `Failed to build avnApi. Error: ${error}`
+      this.logger.debug(message)
+      throw new InternalServerErrorException(message)
+    }
   }
 
   /**
    * Get the avnApi instance
    * @param user
    */
-  async initializeAvnApiInstance(user: User): Promise<AvnApi> {
-    this.user = user
-
+  async getAndLockAvnApiInstance(user: User): Promise<AvnApi> {
     // Lock the avnApi instance for this user
     this.currentRedLock = await this.lockAvnApiInstance()
 
+    this.currentAvnUser = user
+
     try {
-      if (!this._avnApi) {
-        const api = await this.buildTheApi(user)
-        this._avnApi = api
-        this.currentAvnUser = user
-        await api.init()
+      if (this._avnApi.isInitialised === false) {
+        ;(this._avnApi as any).options['signer'] = this.getSigner(user)
+        await this._avnApi.init()
+        this._avnApi.isInitialised = true
       } else {
-        this.currentAvnUser = user
         await this.setAvnApiSigner(user)
       }
       return this._avnApi
@@ -70,11 +87,10 @@ export class AvnTransactionApiSetupService {
     ) {
       const message = `Invalid user ${signerAddressOrPubKey} found when attempting to sign avn operation.`
       this.logger.debug(message)
-      this.unlockAvnApiInstance()
       throw new InternalServerErrorException(message)
     }
 
-    const signerVaultUserName = this.user.provider.id
+    const signerVaultUserName = this.currentAvnUser.provider.id
 
     return await this.vaultService.userSign(message, signerVaultUserName)
   }
@@ -84,46 +100,24 @@ export class AvnTransactionApiSetupService {
    */
   private async setAvnApiSigner(user: User) {
     try {
-      await this._avnApi.setSigner({
-        sign: async (encodedMessage: string) => {
-          return await this.remoteSign(encodedMessage)
-        },
-        address: user.avnAddress,
-        publicKey: user.avnPubKey
-      })
+      await this._avnApi.setSigner(this.getSigner(user))
     } catch (error) {
       const message = `Failed to set avnApi signer. Error: ${error}`
       this.logger.debug(message)
-      this.unlockAvnApiInstance()
       throw new InternalServerErrorException(message)
     }
   }
 
   /**
-   * Build API Gateway instance
+   * Get an api signer object based on a user
+   * @param user current user
    */
-  async buildTheApi(user: User): Promise<any> {
-    try {
-      /* eslint @typescript-eslint/no-var-requires: "off" */
-      const AvnApi = require('avn-api')
-      const avnGatewayUrl = this.configService.get<string>('app.avn.gatewayUrl')
-      const avnRelayer = this.configService.get<string>('app.avn.relayer')
-      const options = {
-        signer: {
-          sign: async (encodedMessage: string) => {
-            return await this.remoteSign(encodedMessage)
-          },
-          address: user.avnAddress
-        },
-        relayer: avnRelayer,
-        hasPayer: true
-      }
-      return new AvnApi(avnGatewayUrl, options)
-    } catch (error) {
-      const message = `Failed to build avnApi. Error: ${error}`
-      this.logger.debug(message)
-      this.unlockAvnApiInstance()
-      throw new InternalServerErrorException(message)
+  private getSigner(user: User): ApiSigner {
+    return {
+      sign: async (encodedMessage: string) => {
+        return await this.remoteSign(encodedMessage)
+      },
+      address: user.avnAddress
     }
   }
 
@@ -176,21 +170,11 @@ export class AvnTransactionApiSetupService {
   }
 
   /**
-   * Convert public key to address using avnApi instance for a given user
+   * Convert public key to address using avnApi instance
    * @param publicKey
-   * @param user
    * @returns address string
    */
-  async convertPublicKeyToAddress(
-    publicKey: string,
-    user: User
-  ): Promise<string> {
-    if (!this._avnApi) {
-      const avnApi = await this.initializeAvnApiInstance(user)
-      const address = await avnApi.publicKeyToAddress(publicKey)
-      this.unlockAvnApiInstance()
-      return address
-    }
-    return await this._avnApi.publicKeyToAddress(publicKey)
+  convertPublicKeyToAddress(publicKey: string): string {
+    return this._avnApi.utils.publicKeyToAddress(publicKey)
   }
 }

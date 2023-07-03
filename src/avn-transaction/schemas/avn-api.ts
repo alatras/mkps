@@ -1,6 +1,7 @@
 import { Royalties } from './avn-transaction.schema'
 
 export interface AvnApi {
+  isInitialised: boolean
   send?: {
     mintSingleNft: (
       externalRef: string,
@@ -12,9 +13,12 @@ export interface AvnApi {
   }
   poll?: any
   query?: { getNftId: (query: string) => Promise<string> }
+  utils: {
+    publicKeyToAddress: (accountAddressOrPublicKey: string) => string
+  }
+  init: () => Promise<any>
   setSigner: (signer: ApiSigner) => Promise<any>
   signer: () => ApiSigner
-  publicKeyToAddress: (avnPubKey: string) => Promise<string>
 }
 
 export interface AvnPolState {
@@ -27,5 +31,5 @@ export interface AvnPolState {
 export interface ApiSigner {
   sign: (message: string) => Promise<string>
   address: string
-  publicKey: string
+  publicKey?: string
 }

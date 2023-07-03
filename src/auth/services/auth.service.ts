@@ -64,9 +64,8 @@ export class AuthService {
       try {
         //
         avnAddress =
-          await this.avnTransactionApiSetupService.convertPublicKeyToAddress(
-            userAvnPubKey,
-            user
+          this.avnTransactionApiSetupService.convertPublicKeyToAddress(
+            userAvnPubKey
           )
         user = await this.userService.updateUserById(user._id, {
           avnPubKey: userAvnPubKey,
