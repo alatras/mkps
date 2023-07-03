@@ -1,4 +1,4 @@
-import { Exclude, Expose, Transform, Type } from 'class-transformer'
+import { Exclude, Expose, Type } from 'class-transformer'
 import {
   IsArray,
   IsBoolean,
@@ -6,8 +6,7 @@ import {
   ValidateNested,
   IsEmail
 } from 'class-validator'
-import { AuthProvider, User } from '../schemas/user.schema'
-import * as MUUID from 'uuid-mongodb'
+import { AuthProvider, User, UserLeaderboard } from '../schemas/user.schema'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class AuthProviderDto {
@@ -72,15 +71,17 @@ export class UpdateAuth0Dto {
 @Exclude()
 export class UserResponseDto {
   @Expose()
-  @Transform(({ value }) => MUUID.from(value).toString())
-  @IsString()
-  @ApiProperty()
-  _id: string
+  id?: string
 
   @Expose()
   @IsString()
   @ApiProperty()
   avnPubKey: string
+
+  @Expose()
+  @IsString()
+  @ApiProperty()
+  avnAddress: string
 
   @Expose()
   @IsString()
@@ -108,11 +109,26 @@ export class UserResponseDto {
   ethAddresses: string[]
 
   @Expose()
+  @Type(() => UserLeaderboard)
+  @ApiProperty()
+  leaderboard?: LeaderboardDto
+
+  @Expose()
+  @IsString()
+  @ApiProperty()
+  avatarUrl?: string
+
+  @Expose()
   @Type(() => AuthProvider)
   @ApiProperty()
   provider: AuthProvider
 
   constructor(partial: Partial<User>) {
-    Object.assign(this, partial)
+    const { _id, ...rest } = partial
+
+    Object.assign(this, {
+      ...rest,
+      id: partial._id.toString()
+    })
   }
 }

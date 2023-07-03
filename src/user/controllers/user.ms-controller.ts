@@ -4,7 +4,7 @@ import { Payload, MessagePattern } from '@nestjs/microservices'
 import { Permissions } from '../../auth/decorators/permissions.decorator'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import * as MUUID from 'uuid-mongodb'
-import { User } from '../schemas/user.schema'
+import { Provider, User } from '../schemas/user.schema'
 import { CreateUserDto } from '../dto/user.dto'
 
 @Controller('users')
@@ -23,8 +23,11 @@ export class UserMsController {
 
   @Permissions('read:users')
   @MessagePattern(MessagePatternGenerator('user', 'getUserByProvider'))
-  async getUserByProvider(@Payload('userId') userId: string): Promise<User> {
-    return await this.userService.findOneById(this.mUUID.from(userId))
+  async getUserByProvider(
+    @Payload('providerId') providerId: string,
+    @Payload('providerName') providerName: Provider
+  ): Promise<User> {
+    return await this.userService.findOneByProvider(providerId, providerName)
   }
 
   /**

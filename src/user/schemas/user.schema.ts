@@ -54,6 +54,18 @@ export class AuthProvider {
 }
 
 @Schema()
+export class UserLeaderboard {
+  @Prop({ default: false })
+  optIn: boolean
+
+  @Prop({ required: false, default: undefined })
+  rank?: number
+
+  @Prop({ required: false, default: 0 })
+  points?: number
+}
+
+@Schema()
 export class NotificationPreferences {
   @IsBoolean()
   @Prop({ type: Boolean, default: false })
@@ -114,6 +126,17 @@ export class User {
   })
   @Type(() => NotificationPreferences)
   notificationPreferences: NotificationPreferences
+
+  @Prop({
+    required: false,
+    type: UserLeaderboard,
+    default: new UserLeaderboard()
+  })
+  @Type(() => UserLeaderboard)
+  leaderboard?: UserLeaderboard
+
+  @Prop({ required: false, default: null })
+  avatarUrl?: string
 
   @Prop()
   createdAt?: Date
