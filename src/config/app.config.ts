@@ -57,5 +57,11 @@ export default registerAs('app', () => ({
     suri: process.env.SUBSTRATE_ACCOUNT_PRIVATE_KEY,
     anvPollingInterval: process.env.AVN_POLLING_INTERVAL,
     avnPollingTimeout: process.env.AVN_POLLING_TIMEOUT
+  },
+  splitFee: {
+    baseUrl: process.env.SPLIT_FEE_BASE_URL,
+    username: process.env.SPLIT_FEE_USERNAME,
+    password: process.env.SPLIT_FEE_PASSWORD,
+    payerId: process.env.PAYER_ID
   }
 }))

@@ -8,11 +8,15 @@ import { DbCollections } from '../shared/enum'
 import { ConfigModule } from '@nestjs/config'
 import { LogModule } from '../log/log.module'
 import { Auth0Service } from './auth0.service'
+import { SplitFeeService } from './split.fee.service'
+import { HttpModule } from '@nestjs/axios'
+import config from '../config/app.config'
 
 @Module({
   imports: [
     LogModule,
-    ConfigModule,
+    ConfigModule.forRoot({ load: [config] }),
+    HttpModule,
     MongooseModule.forFeature([
       {
         name: User.name,
@@ -21,7 +25,7 @@ import { Auth0Service } from './auth0.service'
       }
     ])
   ],
-  providers: [UserService, Auth0Service],
+  providers: [UserService, Auth0Service, SplitFeeService],
   controllers: [UserHttpController, UserMsController],
   exports: [UserService]
 })

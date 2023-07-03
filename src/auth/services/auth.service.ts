@@ -4,6 +4,7 @@ import {
   Logger
 } from '@nestjs/common'
 import { MUUID } from 'uuid-mongodb'
+import { uuidFrom } from '../../utils'
 import { JwtPayload } from '../jwt.strategy'
 import {
   NotificationPreferences,
@@ -12,6 +13,7 @@ import {
 } from '../../user/schemas/user.schema'
 import { UserService } from '../../user/user.service'
 import { VaultService } from '../../vault/services/vault.service'
+import { SplitFeeService } from '../..//user/split.fee.service'
 import { AvnTransactionApiSetupService } from '../../avn-transaction/services/avn-transaction-api-setup.service'
 
 @Injectable()
@@ -21,6 +23,7 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private vaultService: VaultService,
+    private splitFeeService: SplitFeeService,
     private avnTransactionApiSetupService: AvnTransactionApiSetupService
   ) {}
 
@@ -69,6 +72,13 @@ export class AuthService {
           avnPubKey: userAvnPubKey,
           avnAddress
         })
+        // Register as a split fee user
+        await this.splitFeeService.registerAsSplitFeeUser(
+          userAvnPubKey,
+          `Marketplace user id: ${uuidFrom(
+            user._id
+          ).toString()}, providerId: ${id}`
+        )
       } catch (err) {
         this.logger.error(
           `[validateUser] Error converting public key to address: ${err}`

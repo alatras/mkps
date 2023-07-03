@@ -5,6 +5,7 @@ import { JwtStrategy } from './jwt.strategy'
 import { UserModule } from '../user/user.module'
 import { AuthService } from './services/auth.service'
 import { VaultService } from '../vault/services/vault.service'
+import { SplitFeeService } from '../user/split.fee.service'
 import { AvnTransactionApiSetupService } from '../avn-transaction/services/avn-transaction-api-setup.service'
 import { RedisService } from '../common/redis/redis.service'
 import { CommonModule } from '../common/common.module'
@@ -21,7 +22,8 @@ import { CommonModule } from '../common/common.module'
     AuthService,
     VaultService,
     AvnTransactionApiSetupService,
-    RedisService
+    RedisService,
+    SplitFeeService
   ]
 })
 export class AuthModule {}
