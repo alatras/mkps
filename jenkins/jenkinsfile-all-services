@@ -76,6 +76,23 @@ pipeline {
                 }
             }             
         }
+
+        stage ('Run user-services') {
+            steps {           
+                script {        
+                    service_name = "user-services"
+                    if ("${params.account_name}" == "eos") {
+                        service_name += "-${params.environment}"
+                    }                     
+                    build job: "${service_name}", 
+                        parameters: [ 
+                            string(name: 'account_name', value: "${params.account_name}"),
+                            string(name: 'environment',  value: "${params.environment}"), 
+                            string(name: 'aws_region',   value: "${params.aws_region}"),
+                            string(name: 'branch',       value: "${params.branch}")]
+                }
+            }             
+        }
         
         stage('Clean') {
             steps {
