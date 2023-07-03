@@ -390,7 +390,31 @@ spec:
                 configMapKeyRef:
                   name: market-place-be
                   key: avn_polling_timeout
-                  optional: true                  
+                  optional: true
+            - name: "SPLIT_FEE_BASE_URL"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: split_fee_base_url
+                  optional: true
+            - name: "SPLIT_FEE_USERNAME"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: split_fee_username
+                  optional: true 
+            - name: "SPLIT_FEE_PASSWORD"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: split_fee_password
+                  optional: true
+            - name: "PAYER_ID"
+              valueFrom:
+                configMapKeyRef:
+                  name: market-place-be
+                  key: payer_id
+                  optional: true                         
           ports:
             - name: http
               containerPort: 5002
