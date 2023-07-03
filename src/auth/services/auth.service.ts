@@ -1,7 +1,9 @@
 import {
+  Inject,
   Injectable,
   InternalServerErrorException,
-  Logger
+  Logger,
+  NotFoundException
 } from '@nestjs/common'
 import { MUUID } from 'uuid-mongodb'
 import { uuidFrom } from '../../utils'
@@ -11,29 +13,29 @@ import {
   Provider,
   User
 } from '../../user/schemas/user.schema'
-import { UserService } from '../../user/user.service'
 import { VaultService } from '../../vault/services/vault.service'
-import { SplitFeeService } from '../..//user/split.fee.service'
+import { SplitFeeService } from '../../user/split.fee.service'
 import { AvnTransactionApiSetupService } from '../../avn-transaction/services/avn-transaction-api-setup.service'
+import { ClientProxy } from '@nestjs/microservices'
+import { firstValueFrom } from 'rxjs'
+import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
+import { CreateUserDto } from '../../user/dto/user.dto'
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name)
 
   constructor(
-    private userService: UserService,
     private vaultService: VaultService,
     private splitFeeService: SplitFeeService,
-    private avnTransactionApiSetupService: AvnTransactionApiSetupService
+    private avnTransactionApiSetupService: AvnTransactionApiSetupService,
+    @Inject('TRANSPORT_CLIENT') private clientProxy: ClientProxy
   ) {}
 
   async validateUser(payload: JwtPayload): Promise<User> {
     const [provider, id] = payload.sub.split('|')
 
-    let user = await this.userService.findOneByProvider(
-      id,
-      provider as Provider
-    )
+    let user = await this.getUserByProvider(id, provider as Provider)
 
     if (user) {
       // Update the user with notification preferences if they don't exist
@@ -44,7 +46,7 @@ export class AuthService {
 
     if (!user) {
       // Create user in DB
-      user = await this.userService.createUser({
+      user = await this.createUser({
         provider: {
           name: provider as Provider,
           id
@@ -67,7 +69,7 @@ export class AuthService {
           this.avnTransactionApiSetupService.convertPublicKeyToAddress(
             userAvnPubKey
           )
-        user = await this.userService.updateUserById(user._id, {
+        user = await this.updateUserById(user._id, {
           avnPubKey: userAvnPubKey,
           avnAddress
         })
@@ -95,7 +97,7 @@ export class AuthService {
    * @throws InternalServerErrorException
    */
   async rollbackUserCreation(user: User) {
-    await this.userService.deleteUserById(user._id)
+    await this.deleteUserById(user._id)
     const message = 'Could not create Vault user'
     this.logger.error(`[validateUser] ${message}`)
     throw new InternalServerErrorException(message)
@@ -108,7 +110,7 @@ export class AuthService {
    */
   async updateUserNotificationPreferences(userId: MUUID): Promise<User> {
     try {
-      return await this.userService.updateUserById(userId, {
+      return await this.updateUserById(userId, {
         notificationPreferences: new NotificationPreferences()
       })
     } catch (err) {
@@ -116,6 +118,70 @@ export class AuthService {
         err
       )}`
       this.logger.error(`[updateUserNotificationPreferences] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
+  }
+
+  private async getUserByProvider(
+    providerId: string,
+    providerName: Provider
+  ): Promise<User> {
+    try {
+      return await firstValueFrom(
+        this.clientProxy.send<User>(
+          MessagePatternGenerator('user', 'getUserByProvider'),
+          { providerId, providerName }
+        )
+      )
+    } catch (err) {
+      const message = `Error finding user by provider: ${JSON.stringify(err)}`
+      this.logger.error(`[findUserByProvider] ${message}`)
+      throw new NotFoundException(message)
+    }
+  }
+
+  // write a function just like getUserByProvider but for createUser
+  private async createUser(data: CreateUserDto): Promise<User> {
+    try {
+      return await firstValueFrom(
+        this.clientProxy.send<User>(
+          MessagePatternGenerator('user', 'createUser'),
+          { data }
+        )
+      )
+    } catch (err) {
+      const message = `Error creating user: ${JSON.stringify(err)}`
+      this.logger.error(`[createUser] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
+  }
+
+  private async updateUserById(userId: MUUID, data: any): Promise<User> {
+    try {
+      return await firstValueFrom(
+        this.clientProxy.send<User>(
+          MessagePatternGenerator('user', 'updateUserById'),
+          { userId: uuidFrom(userId).toString(), data }
+        )
+      )
+    } catch (err) {
+      const message = `Error updating user: ${JSON.stringify(err)}`
+      this.logger.error(`[updateUserById] ${message}`)
+      throw new InternalServerErrorException(message)
+    }
+  }
+
+  private async deleteUserById(userId: MUUID): Promise<User> {
+    try {
+      return await firstValueFrom(
+        this.clientProxy.send<User>(
+          MessagePatternGenerator('user', 'deleteUserById'),
+          { userId: uuidFrom(userId).toString() }
+        )
+      )
+    } catch (err) {
+      const message = `Error deleting user: ${JSON.stringify(err)}`
+      this.logger.error(`[deleteUserById] ${message}`)
       throw new InternalServerErrorException(message)
     }
   }

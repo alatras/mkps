@@ -9,7 +9,6 @@ import config from './config/app.config'
 import { AuthModule } from './auth/auth.module'
 import { LogModule } from './log/log.module'
 import { getActiveMicroservices } from '../utils/microservices'
-import { UserModule } from './user/user.module'
 import { EditionListingModule } from './edition-listing/edition-listing.module'
 import { AssetModule } from './asset/asset.module'
 import { PaymentModule } from './payment/payment.module'
@@ -48,7 +47,6 @@ const GENERAL_IMPORTS = [
 // TODO: remove UserModule, EditionListingModule and AssetModule when they're ready to be completely separated
 const imports = [
   ...GENERAL_IMPORTS,
-  UserModule,
   EditionListingModule,
   AssetModule,
   PaymentModule,

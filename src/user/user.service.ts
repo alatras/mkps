@@ -30,7 +30,7 @@ export class UserService {
     return this.userModel.findOne({ _id }).lean()
   }
 
-  async createUser(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
     return await this.userModel.create({
       provider: createUserDto.provider,
       ethAddresses: []

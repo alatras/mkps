@@ -5,6 +5,7 @@ import { Permissions } from '../../auth/decorators/permissions.decorator'
 import { MessagePatternGenerator } from '../../utils/message-pattern-generator'
 import * as MUUID from 'uuid-mongodb'
 import { User } from '../schemas/user.schema'
+import { CreateUserDto } from '../dto/user.dto'
 
 @Controller('users')
 export class UserMsController {
@@ -17,6 +18,12 @@ export class UserMsController {
   @Permissions('read:users')
   @MessagePattern(MessagePatternGenerator('user', 'getUserById'))
   async getUserById(@Payload('userId') userId: string): Promise<User> {
+    return await this.userService.findOneById(this.mUUID.from(userId))
+  }
+
+  @Permissions('read:users')
+  @MessagePattern(MessagePatternGenerator('user', 'getUserByProvider'))
+  async getUserByProvider(@Payload('userId') userId: string): Promise<User> {
     return await this.userService.findOneById(this.mUUID.from(userId))
   }
 
@@ -43,6 +50,21 @@ export class UserMsController {
     return await this.userService.updateUserById(
       this.mUUID.from(payload.userId),
       payload.data
+    )
+  }
+
+  @Permissions('read:users, write:users')
+  @MessagePattern(MessagePatternGenerator('user', 'createUser'))
+  async createUser(@Payload() payload: { data: CreateUserDto }): Promise<User> {
+    return await this.userService.createUser(payload.data)
+  }
+
+  // implement deleteUserById
+  @Permissions('read:users, write:users')
+  @MessagePattern(MessagePatternGenerator('user', 'deleteUserById'))
+  async deleteUserById(@Payload() payload: { userId: string }): Promise<User> {
+    return await this.userService.deleteUserById(
+      this.mUUID.from(payload.userId)
     )
   }
 }
