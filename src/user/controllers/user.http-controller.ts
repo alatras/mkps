@@ -19,6 +19,7 @@ import MongooseClassSerializerInterceptor from '../../interceptors/mongoose-clas
 import { Provider, User } from '../schemas/user.schema'
 import { ApiResponse, ApiTags } from '@nestjs/swagger'
 import { errorResponseGenerator } from '../../core/errors/error-response-generator'
+import { DataWrapper } from '../../common/dataWrapper'
 
 @ApiTags('users')
 @Controller('users')
@@ -43,13 +44,15 @@ export class UserHttpController {
   @Get('me')
   async getLoggedInUser(
     @Request() req: ExpressRequest
-  ): Promise<UserResponseDto> {
+  ): Promise<DataWrapper<UserResponseDto>> {
     const user = await this.userService.findOneByProvider(
       (req.user as User).provider.id,
       (req.user as User).provider.name
     )
 
-    return new UserResponseDto(user)
+    const data = new UserResponseDto(user)
+
+    return { data }
   }
 
   @UseInterceptors(MongooseClassSerializerInterceptor(UserResponseDto))

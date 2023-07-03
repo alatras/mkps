@@ -42,6 +42,16 @@ export class AuthService {
       if (!user.notificationPreferences) {
         user = await this.updateUserNotificationPreferences(user._id)
       }
+
+      if (!user.avnAddress && !user.avnPubKey) {
+        try {
+          await this.setupAvnAccount(user)
+        } catch (err) {
+          this.logger.error(
+            `[validateUser] Error creating keypair for existing user. ProviderId: ${user.provider.id}. ${err}`
+          )
+        }
+      }
     }
 
     if (!user) {
@@ -53,42 +63,58 @@ export class AuthService {
         }
       })
 
-      // Create user on network via Vault
-      const userAvnPubKey = await this.vaultService.getUserKeyOrCreateNewUser(
-        id
-      )
-      if (!userAvnPubKey) {
-        await this.rollbackUserCreation(user)
-      }
-
-      // Update user in DB with AVN public key
-      let avnAddress: string
       try {
-        //
-        avnAddress =
-          this.avnTransactionApiSetupService.convertPublicKeyToAddress(
-            userAvnPubKey
-          )
-        user = await this.updateUserById(user._id, {
-          avnPubKey: userAvnPubKey,
-          avnAddress
-        })
-        // Register as a split fee user
-        await this.splitFeeService.registerAsSplitFeeUser(
-          userAvnPubKey,
-          `Marketplace user id: ${uuidFrom(
-            user._id
-          ).toString()}, providerId: ${id}`
-        )
+        await this.setupAvnAccount(user)
       } catch (err) {
         this.logger.error(
-          `[validateUser] Error converting public key to address: ${err}`
+          `[validateUser] Error creating keypair for new user. ProviderId: ${user.provider.id}. ${err}`
         )
         await this.rollbackUserCreation(user)
       }
     }
 
     return user
+  }
+
+  async setupAvnAccount(user: User) {
+    // Create user on network via Vault
+    const userAvnPubKey = await this.vaultService.getUserKeyOrCreateNewUser(
+      user.provider.id
+    )
+
+    if (!userAvnPubKey) {
+      throw new Error(
+        `[setupAvnAccount] Failed to create an avn keypair in vault for providerId: ${user.provider.id}`
+      )
+    }
+
+    // Update user in DB with AVN public key
+    let avnAddress: string
+    try {
+      //
+      avnAddress =
+        this.avnTransactionApiSetupService.convertPublicKeyToAddress(
+          userAvnPubKey
+        )
+
+      user = await this.updateUserById(user._id, {
+        avnPubKey: userAvnPubKey,
+        avnAddress
+      })
+
+      // Register as a split fee user
+      await this.splitFeeService.registerAsSplitFeeUser(
+        userAvnPubKey,
+        `Marketplace user id: ${uuidFrom(user._id).toString()}, providerId: ${
+          user.provider.id
+        }`
+      )
+    } catch (err) {
+      this.logger.error(
+        `[setupAvnAccount] Error creating avn keypair for providerId: ${user.provider.id}. ${err}`
+      )
+      throw err
+    }
   }
 
   /**
