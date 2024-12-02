@@ -61,7 +61,7 @@
     "ethers": "^5.7.2",
     "express-jwt": "^7.7.5",
     "jwks-rsa": "^2.1.4",
-    "mock-jwks": "^1.0.8",
+    "mock-jwks": "^1.0.10",
     "mongoose": "^6.3.3",
     "nanoid": "^3.3.4",
     "nest-winston": "^1.8.0",
